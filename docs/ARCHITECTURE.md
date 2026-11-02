@@ -1,10 +1,10 @@
 # Architecture
 
-Status: Milestones 1–3 implemented; the FastAPI service remains Milestone 4. One compiled LangGraph `StateGraph`, no dynamic supervisor. See [actual orchestration behavior](ORCHESTRATION.md).
+Status: Milestones 1–4 implemented. One compiled LangGraph `StateGraph`, no dynamic supervisor. See [actual orchestration behavior](ORCHESTRATION.md) and [HTTP application](API.md). Real-provider adapters remain Milestone 5.
 
 ## Boundaries
 
-Target package layout (Milestones 1–3 implement all boundaries below except API and real-provider adapters):
+Package layout (Milestones 1–4 implement all boundaries below except real-provider adapters):
 
 | Location | Responsibility |
 | --- | --- |
@@ -81,13 +81,17 @@ Invariants: writer requires a validated plan; quality requires a validated draft
 
 Plan and story validation checks page counts and narrative requirements against the resolved profile, not a global six-item schema. Profile ID/version is server-assigned metadata, not an LLM-selected band. Technical output/token limits remain separate from audience age policy; a larger future profile must pass startup capacity validation rather than silently truncate stories or introduce an age cutoff.
 
-## API proposal
+## Implemented API
 
 - `POST /v1/stories/generate`: synchronous typed request; HTTP 200 with accepted result.
 - HTTP 422: input validation; 400: content-policy rejection; 502: unusable provider output; 503: transient provider unavailability; 504: deadline exceeded. Use 422 with `QUALITY_REJECTED` for a valid request whose generated story fails quality, distinguished by error code.
 - HTTP 503 with `BUDGET_EXCEEDED` when generation cannot continue under server limits; configuration errors fail startup.
 - Normalize framework validation errors into the documented error envelope. Include request ID and available usage on runtime failures; no failed story text.
 - `GET /health`: process readiness only, no paid provider call.
+
+Milestone 4 preserves the planned versioned route and `422 QUALITY_REJECTED` mapping; that code denotes generated quality failure, not necessarily invalid client input. Input-policy rejections map to 400, while provider-produced unsafe content maps to 502 by stage. Internal unexpected/configuration/result failures map to 500; cancellation maps to best-effort 499. Startup configuration errors still fail startup. See [the full mapping](API.md).
+
+The application factory and async dependencies build a request-local engine with the existing default settings and local fixture provider. Resources load in lifespan and contain immutable configuration only. A boundary-only JSON validator preserves domain tuple/strict scalar semantics without parallel story DTOs. Sanitized route/exception handling produces existing success/failure contracts and server-generated request IDs. After body validation, a request-scoped disconnect watcher cancels and awaits engine execution; it is not a background job. No API-layer retries or quality checks are added.
 
 No automatic client retry or idempotency guarantee: repeating a POST is a new generation and may incur cost. Cancellation stops further scheduling; an in-flight remote request may still be billed.
 

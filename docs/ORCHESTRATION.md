@@ -1,6 +1,6 @@
 # Bounded LangGraph execution (Milestone 3)
 
-Milestone 3 is implemented with one compiled `StateGraph`, four named nodes and explicit conditional edges. The supported entry point is `await StoryEngine(...).generate(request)`. No HTTP endpoint, persistence, checkpoint store, real LLM SDK or remote runtime exists. Framework dependencies include LangGraph's transitive client/checkpoint packages; they are not used to contact or store anything.
+Milestone 3 is implemented with one compiled `StateGraph`, four named nodes and explicit conditional edges. The supported engine entry point is `await StoryEngine(...).generate(request)`. Milestone 4 adds a thin [HTTP application](API.md) around this entry point without changing execution policy. No persistence, checkpoint store, real LLM SDK or remote runtime exists. Framework dependencies include LangGraph's transitive client/checkpoint packages; they are not used to contact or store anything.
 
 ## Flow
 
@@ -65,6 +65,6 @@ From the repository root in Windows PowerShell, after the README setup:
 
 The demo uses synthetic names and scripted fixture text, not paid/generated literature. It prints only status, request ID, profile, attempt count and usage/cost metadata. Quality acceptance remains a limited deterministic result, not a literary-quality claim.
 
-Work is on `feature/milestone-3-langgraph`. Git was initialized from the tested Milestone 2 source baseline using the existing author identity. No identity or credential settings were changed; no remote was created. Environments, `.env` variants (except sample/template files), key files, caches, generated archives and build artifacts are ignored. For future changes: inspect status/diff, make a small coherent change, run relevant tests, review staged files, then commit with a meaningful `feat:`, `fix:`, `test:`, `docs:` or `chore:` message. Never create empty commits, commit failing changes or include sensitive content. No pushes or deployment without user approval.
+Milestone 3 work is recorded on `feature/milestone-3-langgraph`; Milestone 4 continues on `feature/milestone-4-fastapi`. Git was initialized from the tested Milestone 2 source baseline using the existing author identity. No identity or credential settings were changed; no remote was created. Environments, `.env` variants (except sample/template files), key files, caches, generated archives and build artifacts are ignored. For future changes: inspect status/diff, make a small coherent change, run relevant tests, review staged files, then commit with a meaningful `feat:`, `fix:`, `test:`, `docs:` or `chore:` message. Never create empty commits, commit failing changes or include sensitive content. No pushes or deployment without user approval.
 
-Open decisions remain model/provider selection, real tokenizer/capacity/pricing validation and spend ceiling, bilingual prompt evaluation, reviewed moderation expansion and human release criteria. Stop after Milestone 3; HTTP endpoints belong to Milestone 4.
+Open decisions remain model/provider selection, real tokenizer/capacity/pricing validation and spend ceiling, bilingual prompt evaluation, reviewed moderation expansion and human release criteria. Milestone 4's HTTP layer is separate from this engine and has its own approved local branch; do not begin real providers (Milestone 5) without approval.

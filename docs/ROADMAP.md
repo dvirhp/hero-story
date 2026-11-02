@@ -1,13 +1,13 @@
 # Implementation roadmap
 
-Milestones 1–3 are approved and implemented. Milestone 4 and later await separate approval. Each should be a small reviewable change; no frontend or infrastructure work.
+Milestones 1–4 are approved and implemented. Milestone 5 and later await separate approval. Each should be a small reviewable change; no frontend or infrastructure work.
 
 | Milestone | Deliverables | Required validation |
 | --- | --- | --- |
 | 1. Contracts and offline foundation | `pyproject.toml`, Python 3.12+ package skeleton, Pydantic contracts with strict nonnegative `age_months`, separate versioned developmental configuration and pure resolver, settings, provider protocol and scripted fake; runnable setup instructions | Offline bilingual contracts and profile resolution across newborn/infant/toddler/preschool/older-child bands; strict age and configuration validation, variable page/plan contracts, fake success/error scripts; import/package smoke check |
 | 2. Validation and quality rules | Normalization with immutable profile snapshot, language rubrics, profile-aware deterministic quality reports, safe error types | Fixtures for both scripts, niqqud, names/pronouns, bidi controls, per-profile length boundaries, intentional repetition, plot-free baby stories, unsafe/repairable classification; document semantic limits |
 | 3. Bounded LangGraph engine | Four nodes, explicit conditional routes, prompt versions, attempt ledger, deadlines and conservative budget reservations | Fake-provider paths: success, zero-call rejection, planner/writer schema repair, transient failure, rewrite success/failure, safety stop, cancellation, unknown usage; never over three attempts; use fake clock for deadline tests |
-| 4. FastAPI boundary | Generate endpoint, health endpoint, dependency injection, response/error envelopes and OpenAPI examples | TestClient with fake provider: accepted stories in both languages, error/status mapping, request IDs, validation envelope, no failed drafts or sensitive diagnostics |
+| 4. FastAPI boundary | Generate endpoint, health endpoint, dependency injection, response/error envelopes and OpenAPI examples | HTTPX ASGITransport with explicit lifespan and fake providers: accepted stories in both languages, error/status mapping, request IDs, validation envelope, no failed drafts or sensitive diagnostics |
 | 5. First real adapter | One selected provider, capability validation, structured outputs, pricing config, normalized usage, explicit no-retry SDK setup | Mock transport adapter-contract tests for usage, malformed JSON, refusal, timeout, rate limit, unknown usage and retry counts; default suite remains offline |
 | 6. Bilingual evaluation and tuning | Reviewed evaluation set spanning all profiles, adult read-aloud trials, opt-in runner and cost report, tuned prompts/rubrics/profile targets, documented limitations and release checklist | Approved small paid trial plus fluent human review; assess baby read-aloud flow and profile-appropriate coherence; report acceptance, quality defects, token/cost and latency distributions; verify budgets and no unaccepted stories escape; no scientific validation claim |
 
@@ -26,6 +26,12 @@ Verification: 270 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3, includi
 Implemented: one compiled four-node LangGraph, typed immutable state and request-local journal, language-aware versioned prompts, shared three-attempt limit, one quality rewrite, conditional schema/transport recovery, time/token/cost reservations, unknown usage accounting and cancellation. Existing 270 tests are preserved. An optional sanitized quality report on provider failures closes the malformed-output safety gap without returning raw responses. See [execution and Git workflow](ORCHESTRATION.md). No real provider, HTTP endpoint, remote Git repository, push or deployment is included. Stop until Milestone 4 is approved.
 
 Verification: 330 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3; wheel and source distribution builds passed. The original 270 tests are unchanged; 60 new cases cover execution/foundation behavior.
+
+## Milestone 4 scope and stop boundary
+
+Implemented: a FastAPI application factory, lifespan configuration, async dependency injection, `/health`, `/v1/stories/generate`, strict domain JSON validation, sanitized failure/status mappings, request IDs, and request-scoped disconnect/cancellation cleanup. The default local fixture adapter shares the existing demo fixtures and delegates to `FakeProvider`; it is not a real LLM integration. Original 330 tests remain unchanged. See [API reference and commands](API.md). No remote, push, merge or deployment is included. Stop until Milestone 5 is approved.
+
+Verification: 393 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3, with 63 new cases and the original 330 unchanged; wheel/source builds and an isolated installed-wheel API smoke check passed.
 
 ## Proposed offline test matrix
 

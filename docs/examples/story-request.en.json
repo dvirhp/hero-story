@@ -1,0 +1,17 @@
+{
+  "language": "en",
+  "display_name": "Nori",
+  "age_months": 180,
+  "theme": "A gentle moonlit adventure",
+  "interests": ["moon", "music"],
+  "narrative_pronouns": {
+    "language": "en",
+    "subject": "they",
+    "object": "them",
+    "possessive_determiner": "their",
+    "possessive_pronoun": "theirs",
+    "reflexive": "themself",
+    "verb_agreement": "plural"
+  },
+  "guidance": "Keep a reassuring resolution and shared read-aloud guidance."
+}

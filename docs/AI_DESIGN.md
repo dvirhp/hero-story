@@ -2,6 +2,8 @@
 
 ## Model strategy
 
+Milestone 4 exposes the existing fake-only engine through FastAPI. Its default `LocalFixtureProvider` delegates to scripted `FakeProvider` steps built from the normalized brief; no real semantic generation or moderation service is added. The HTTP layer does not change prompts, budgets, retries or quality policy. See [API behavior](API.md). Provider/model/pricing decisions below remain unimplemented Milestone 5 work.
+
 Use one configurable provider/model initially for both planning and writing. Allow optional per-stage model overrides through validated settings, without introducing routing agents. Select the first real model using a small Hebrew/English evaluation, schema adherence, latency, and cost; no vendor or model is selected in this plan.
 
 Define an asynchronous provider protocol accepting stage, versioned instructions, validated input, output schema, output-token cap, and remaining deadline. Return validated payload or a normalized error plus usage metadata. Prefer native schema-constrained output. For adapters lacking it, request JSON and validate locally; malformed output uses the same bounded recovery budget. No silent provider fallback. Disable SDK automatic retries.

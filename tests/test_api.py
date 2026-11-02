@@ -386,3 +386,12 @@ def test_disconnect_and_server_cancellation_drain_generation(run_async, mode):
             assert provider.calls == 1
         assert app.state.resources is None
     run_async(perform())
+
+
+@pytest.mark.parametrize("language", ["he", "en"])
+def test_documented_json_examples_work(call_api, language):
+    from pathlib import Path
+    source = Path(__file__).resolve().parents[1] / "docs" / "examples" / f"story-request.{language}.json"
+    response = call_api(create_app(), content=source.read_bytes(), headers={"Content-Type": "application/json; charset=utf-8"})
+    assert response.status_code == 200, response.text
+    assert response.json()["story"]["language"] == language

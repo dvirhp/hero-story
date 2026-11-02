@@ -2,7 +2,7 @@
 
 A personalized children's story engine supporting Hebrew and English from birth. Age uses strict nonnegative integer `age_months`, including newborns at zero; no upper age cutoff is imposed.
 
-**Milestones 1–3 are implemented: offline contracts, validation/quality rules and bounded LangGraph execution.** There is no HTTP server or real provider integration. Milestone 4 and later require approval.
+**Milestones 1–4 are implemented: offline contracts, validation/quality rules, bounded LangGraph execution and a local FastAPI application.** Default HTTP generation uses synthetic fixture text, not a real LLM. Milestone 5 and later require approval.
 
 ## Implemented foundation
 
@@ -15,6 +15,7 @@ A personalized children's story engine supporting Hebrew and English from birth.
 - Pure `normalize_request` resolves an immutable brief from a validated request and rejects prohibited controls/directives without rewriting names, Unicode or pronouns.
 - Pure `assess_story` checks schema, metadata, personalization, profile lengths, controls, coarse script evidence and narrow dangerous directives. Existing `QualityReport` distinguishes repairable/terminal failures from advisory observations.
 - One compiled four-node LangGraph with typed immutable state, versioned language-aware prompts, shared attempt/token/cost reservations, conditional recovery, cancellation and timeout handling. Only planner/writer invoke the fake provider.
+- A FastAPI factory with lifespan configuration, async dependency injection, health and generation endpoints, sanitized errors and request-scoped cancellation cleanup. No provider calls occur at import/startup.
 
 Domain models and adapters do not depend on provider SDKs, FastAPI or LangGraph. The orchestration package owns the LangGraph dependency. `Story.validate_for(brief)` checks structural/length constraints only; it is not a quality or safety gate. Fake scripts are fixtures, not generated literature. The fake supplies scripted usage/latency and does not retry; the engine enforces the shared budgets. An optional sanitized quality report on provider failures preserves terminal safety findings from schema-invalid outputs without retaining raw responses.
 
@@ -50,6 +51,35 @@ Milestone 1 verification: **115 passed, 0 failed** on Windows with Python 3.12.1
 Milestone 2 verification: **270 passed, 0 failed**, including the unchanged 115 Milestone 1 tests, on Windows with Python 3.12.16 and 3.13.3. No dependencies were added; pure validation/assessment tests make no provider calls, require no credentials and run with network sockets blocked.
 
 Milestone 3 adds LangGraph and 60 execution/foundation cases, preserving all 270 earlier tests. **330 passed, 0 failed** on Windows/Python 3.12.16 and 3.13.3. Wheel/source builds passed. The complete suite remains offline; no real LLM provider SDK or credentials are used.
+
+Milestone 4 verification: **393 passed, 0 failed** on Python 3.12.16 and 3.13.3, preserving all original 330 tests unchanged. The 63 new cases cover HTTP contracts, injected providers, sanitized failures, cancellation, lifecycle and documented JSON examples. HTTP tests use in-process ASGI transport with sockets blocked; no listening server is needed. Wheel/source builds and isolated installed-wheel API smoke checks passed.
+
+## Local HTTP API
+
+After synchronization, start the development server in the foreground:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn storyforge.api.app:create_app --factory --host 127.0.0.1 --port 8000 --no-access-log
+```
+
+In a second PowerShell window at the repository root:
+
+```powershell
+Start-Process 'http://127.0.0.1:8000/docs'
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health'
+
+$heBody = Get-Content -Raw -Encoding UTF8 .\docs\examples\story-request.he.json
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/v1/stories/generate' -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($heBody))
+
+$enBody = Get-Content -Raw -Encoding UTF8 .\docs\examples\story-request.en.json
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/v1/stories/generate' -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($enBody))
+```
+
+Use Ctrl+C to stop the server. The [Hebrew newborn](docs/examples/story-request.he.json) and [English older-child](docs/examples/story-request.en.json) requests have synthetic names and explicit pronouns. UTF-8 bytes preserve Hebrew on Windows PowerShell 5.1. No `.env`, API key, account or paid service is required. Access logging is disabled by the command. Swagger UI may need internet for its default CDN assets; the API, OpenAPI JSON and tests do not.
+
+`POST /v1/stories/generate` returns the existing approved `GenerationSuccess` or a sanitized `GenerationFailure`, with `X-Request-ID` and `Cache-Control: no-store`. Invalid input is 422; input policy rejection 400; provider output/refusal/unsafe output 502; availability or budget exhaustion 503; deadline 504; internal failure 500. The existing `422 QUALITY_REJECTED` remains distinct from invalid input by code/stage. Observed cancellation has a best-effort non-standard 499 response, which a disconnected client usually cannot receive.
+
+The API calls the existing engine, without duplicating retries, budgets or quality rules. The default request-local fixture adapter delegates to `FakeProvider`; it does not fulfill creative guidance semantically. Disconnect detection depends on ASGI events and cooperative cancellation; no detached generation job is created. See [API contracts, response examples, injection and limitations](docs/API.md).
 
 ## Local fake generation
 
@@ -89,6 +119,8 @@ Deliberate dependency updates use `uv.exe lock --upgrade` followed by lockfile r
 | `src/storyforge/orchestration/` | Compiled graph, typed state, request-local attempt journal and synthetic budget accounting |
 | `src/storyforge/prompts/` | Versioned planner/writer instructions and serialized untrusted data |
 | `src/storyforge/demo.py` | Offline fixture-generation command; prints metadata only |
+| `src/storyforge/api/` | Application factory, dependencies, HTTP routes, sanitized errors and disconnect cleanup |
+| `src/storyforge/llm/fixtures.py` | Shared synthetic fixture builder and local default adapter delegating to FakeProvider |
 | `tests/` | Original 270 tests plus bounded execution, deadlines, cancellation, budgets and recovery |
 
 - [Product scope and acceptance criteria](docs/PRODUCT_SPEC.md)
@@ -97,8 +129,9 @@ Deliberate dependency updates use `uv.exe lock --upgrade` followed by lockfile r
 - [Roadmap and offline test matrix](docs/ROADMAP.md)
 - [Implemented validation and quality policies](docs/VALIDATION_AND_QUALITY.md)
 - [Implemented orchestration and Git workflow](docs/ORCHESTRATION.md)
+- [Implemented HTTP API and PowerShell examples](docs/API.md)
 - [Coding agent rules](AGENTS.md)
 
-Implemented flow: Input Validation -> Story Planner -> Story Writer -> Quality Gate, with bounded conditional recovery. No supervisor, database, frontend, RAG, Docker or real provider is included. Next is Milestone 4's FastAPI boundary, only after approval. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, real pricing ceiling and human evaluation/release criteria remain open.
+Implemented flow: HTTP/Pydantic validation -> engine -> Input Validation -> Story Planner -> Story Writer -> Quality Gate, with bounded conditional recovery. No supervisor, database, frontend, RAG, Docker or real provider is included. Next is Milestone 5's first real provider adapter, only after approval. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, real pricing ceiling and human evaluation/release criteria remain open.
 
-Git work is local on `feature/milestone-3-langgraph`. Use small tested commits; inspect `git status` and staged diffs before committing. Existing author/credential settings are preserved. No remote, push or deployment is configured or authorized. Generated ZIPs under `new/`, environments, secrets, caches and builds are ignored.
+Git work is local on `feature/milestone-4-fastapi`, branched from completed Milestone 3. Use small tested commits; inspect `git status` and staged diffs before committing. Existing author/credential settings are preserved. No remote, push, merge or deployment is configured or authorized. Generated ZIPs under `new/`, environments, secrets, caches and builds are ignored.

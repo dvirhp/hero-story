@@ -2,10 +2,11 @@
 
 ## Scope and authority
 
-- Milestones 1–3 are approved. Stop after Milestone 3; Milestone 4 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
+- Milestones 1–4 are approved. Stop after Milestone 4; Milestone 5 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
 - Read `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/AI_DESIGN.md`, and `docs/ROADMAP.md` before implementation. Mark new assumptions and open decisions; do not silently resolve product policy through code.
 - For implemented normalization and quality behavior, read `docs/VALIDATION_AND_QUALITY.md`. Insufficient script evidence is explicitly advisory; do not restore the superseded rejection policy or claim a language pass from missing evidence. Any terminal issue prevents automatic repair.
 - Read `docs/ORCHESTRATION.md` before changing execution. Use `StoryEngine.generate` for bounded public execution; do not bypass the ledger with direct graph/provider calls. Keep tracing and persistence disabled for child data.
+- Read `docs/API.md` before changing HTTP behavior. Preserve `/v1/stories/generate`, strict JSON-mode domain validation, sanitized failure envelopes and request-local cancellation cleanup. Do not duplicate engine rules, expose validation inputs or enable access logging of private URLs by default.
 - Keep scope on the AI story engine. No frontend, database, RAG, microservices, dynamic supervisor, or extra agents without a justified requirement and approval.
 
 ## Coding conventions once approved
