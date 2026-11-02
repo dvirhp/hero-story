@@ -1,0 +1,21 @@
+{
+  "status": "proposal_only_not_an_API_request_or_enforced_contract",
+  "title": "רועי וגיבורי ממלכת האותיות",
+  "page_count": 27,
+  "sentences_per_page": {"minimum": 2, "maximum": 3},
+  "target_sequence": ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט", "י", "כ", "ל", "מ", "נ", "ס", "ע", "פ", "צ", "ק", "ר", "ש", "ת", "ך", "ם", "ן", "ף", "ץ"],
+  "one_focus_letter_per_page": true,
+  "other_letters_allowed_in_ordinary_words": true,
+  "active_protagonist_on_every_page": "רועי",
+  "continuous_adventure": true,
+  "final_forms": [
+    {"page": 23, "target": "ך", "base": "כ", "example_word": "מלך"},
+    {"page": 24, "target": "ם", "base": "מ", "example_word": "ים"},
+    {"page": 25, "target": "ן", "base": "נ", "example_word": "גן"},
+    {"page": 26, "target": "ף", "base": "פ", "example_word": "אף"},
+    {"page": 27, "target": "ץ", "base": "צ", "example_word": "עץ"}
+  ],
+  "pronouns": "Proposed explicit masculine-singular Hebrew forms in request.he.json require approval; they are not inferred from the name.",
+  "length_hypothesis": "12–24 whitespace-delimited words per page, 324–648 total; proposed for this evaluation only, not a scientifically validated age standard.",
+  "acceptance": "Current Quality Gate passing is insufficient; require separate page-by-page structural review and fluent adult review before accepting this educational story."
+}

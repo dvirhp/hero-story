@@ -1,0 +1,24 @@
+{
+  "status": "offline_proposal_valid_but_not_ready_for_live_execution",
+  "guidance_characters": 375,
+  "current_profile_pages": 6,
+  "proposed_profile_pages": 27,
+  "top_level_page_count_rejected": true,
+  "default_profile_rejects_27_page_plan": true,
+  "proposed_profile_accepts_27_page_structure": true,
+  "existing_gate_accepts_deliberately_non_alphabet_fixture": true,
+  "illustrative_input_reservations_utf8_units": {
+    "planner": 4870,
+    "writer": 8633,
+    "rewrite": 15379
+  },
+  "illustrative_output_json_utf8_bytes": {
+    "planner": 3863,
+    "writer": 6531
+  },
+  "sample_page_words": 24,
+  "normal_path_max_configured_cost_usd": 0.0417,
+  "three_attempt_max_configured_cost_usd": 0.0663,
+  "proposed_request_cost_ceiling_usd": 0.075,
+  "provider_calls": 0
+}

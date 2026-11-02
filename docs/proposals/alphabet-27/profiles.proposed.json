@@ -1,0 +1,295 @@
+{
+  "version": "development-alphabet-proposed-v1",
+  "bands": [
+    {
+      "band_id": "newborn",
+      "min_months": 0,
+      "max_months": 3,
+      "provisional": true,
+      "languages": [
+        {
+          "language": "en",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "sensory",
+          "hard": {
+            "page_count": 4,
+            "words_per_page": {
+              "minimum": 5,
+              "maximum": 15
+            },
+            "total_words": {
+              "minimum": 20,
+              "maximum": 60
+            }
+          },
+          "soft": {
+            "vocabulary": "Familiar people, sounds and touch.",
+            "sentence_words": {
+              "minimum": 2,
+              "maximum": 5
+            },
+            "repetition": "Short refrain on each page.",
+            "developmental_guidance": "Soothing sensory moments and closeness; no conflict required."
+          }
+        },
+        {
+          "language": "he",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "sensory",
+          "hard": {
+            "page_count": 4,
+            "words_per_page": {
+              "minimum": 5,
+              "maximum": 15
+            },
+            "total_words": {
+              "minimum": 20,
+              "maximum": 60
+            }
+          },
+          "soft": {
+            "vocabulary": "Familiar people, sounds and touch.",
+            "sentence_words": {
+              "minimum": 2,
+              "maximum": 5
+            },
+            "repetition": "Short refrain on each page.",
+            "developmental_guidance": "Soothing sensory moments and closeness; no conflict required."
+          }
+        }
+      ]
+    },
+    {
+      "band_id": "infant",
+      "min_months": 3,
+      "max_months": 12,
+      "provisional": true,
+      "languages": [
+        {
+          "language": "en",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "noticing",
+          "hard": {
+            "page_count": 4,
+            "words_per_page": {
+              "minimum": 10,
+              "maximum": 20
+            },
+            "total_words": {
+              "minimum": 40,
+              "maximum": 80
+            }
+          },
+          "soft": {
+            "vocabulary": "Concrete familiar objects and actions.",
+            "sentence_words": {
+              "minimum": 2,
+              "maximum": 6
+            },
+            "repetition": "Recurring sound or phrase.",
+            "developmental_guidance": "Gentle noticing and predictable sequences."
+          }
+        },
+        {
+          "language": "he",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "noticing",
+          "hard": {
+            "page_count": 4,
+            "words_per_page": {
+              "minimum": 10,
+              "maximum": 20
+            },
+            "total_words": {
+              "minimum": 40,
+              "maximum": 80
+            }
+          },
+          "soft": {
+            "vocabulary": "Concrete familiar objects and actions.",
+            "sentence_words": {
+              "minimum": 2,
+              "maximum": 6
+            },
+            "repetition": "Recurring sound or phrase.",
+            "developmental_guidance": "Gentle noticing and predictable sequences."
+          }
+        }
+      ]
+    },
+    {
+      "band_id": "toddler",
+      "min_months": 12,
+      "max_months": 36,
+      "provisional": true,
+      "languages": [
+        {
+          "language": "en",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "routine",
+          "hard": {
+            "page_count": 5,
+            "words_per_page": {
+              "minimum": 15,
+              "maximum": 30
+            },
+            "total_words": {
+              "minimum": 75,
+              "maximum": 150
+            }
+          },
+          "soft": {
+            "vocabulary": "Concrete nouns and verbs.",
+            "sentence_words": {
+              "minimum": 3,
+              "maximum": 8
+            },
+            "repetition": "Refrain or repeated action.",
+            "developmental_guidance": "Familiar routine, simple action and reassuring closure."
+          }
+        },
+        {
+          "language": "he",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "routine",
+          "hard": {
+            "page_count": 5,
+            "words_per_page": {
+              "minimum": 15,
+              "maximum": 30
+            },
+            "total_words": {
+              "minimum": 75,
+              "maximum": 150
+            }
+          },
+          "soft": {
+            "vocabulary": "Concrete nouns and verbs.",
+            "sentence_words": {
+              "minimum": 3,
+              "maximum": 8
+            },
+            "repetition": "Refrain or repeated action.",
+            "developmental_guidance": "Familiar routine, simple action and reassuring closure."
+          }
+        }
+      ]
+    },
+    {
+      "band_id": "preschool",
+      "min_months": 36,
+      "max_months": 72,
+      "provisional": true,
+      "languages": [
+        {
+          "language": "en",
+          "reading_mode": "shared_read_aloud",
+          "strategy": "simple_goal",
+          "hard": {
+            "page_count": 6,
+            "words_per_page": {
+              "minimum": 25,
+              "maximum": 45
+            },
+            "total_words": {
+              "minimum": 150,
+              "maximum": 270
+            }
+          },
+          "soft": {
+            "vocabulary": "Familiar vocabulary with contextual new words.",
+            "sentence_words": {
+              "minimum": 5,
+              "maximum": 12
+            },
+            "repetition": "Optional recurring phrase.",
+            "developmental_guidance": "Simple goal, gentle obstacle and resolution."
+          }
+        },
+        {
+          "language": "he",
+          "reading_mode": "adult_read_aloud",
+          "strategy": "simple_goal",
+          "hard": {
+            "page_count": 27,
+            "words_per_page": {
+              "minimum": 12,
+              "maximum": 24
+            },
+            "total_words": {
+              "minimum": 324,
+              "maximum": 648
+            }
+          },
+          "soft": {
+            "vocabulary": "Familiar vocabulary with contextual new words.",
+            "sentence_words": {
+              "minimum": 5,
+              "maximum": 12
+            },
+            "repetition": "Optional recurring phrase.",
+            "developmental_guidance": "Simple goal, gentle obstacle and resolution."
+          }
+        }
+      ]
+    },
+    {
+      "band_id": "older_child",
+      "min_months": 72,
+      "max_months": null,
+      "provisional": true,
+      "languages": [
+        {
+          "language": "en",
+          "reading_mode": "shared_read_aloud",
+          "strategy": "connected_scenes",
+          "hard": {
+            "page_count": 6,
+            "words_per_page": {
+              "minimum": 40,
+              "maximum": 70
+            },
+            "total_words": {
+              "minimum": 240,
+              "maximum": 420
+            }
+          },
+          "soft": {
+            "vocabulary": "Richer contextual vocabulary.",
+            "sentence_words": {
+              "minimum": 8,
+              "maximum": 18
+            },
+            "repetition": "Optional thematic recurrence.",
+            "developmental_guidance": "Connected scenes, character goal, choices and resolution; do not infer independent reading."
+          }
+        },
+        {
+          "language": "he",
+          "reading_mode": "shared_read_aloud",
+          "strategy": "connected_scenes",
+          "hard": {
+            "page_count": 6,
+            "words_per_page": {
+              "minimum": 40,
+              "maximum": 70
+            },
+            "total_words": {
+              "minimum": 240,
+              "maximum": 420
+            }
+          },
+          "soft": {
+            "vocabulary": "Richer contextual vocabulary.",
+            "sentence_words": {
+              "minimum": 8,
+              "maximum": 18
+            },
+            "repetition": "Optional thematic recurrence.",
+            "developmental_guidance": "Connected scenes, character goal, choices and resolution; do not infer independent reading."
+          }
+        }
+      ]
+    }
+  ]
+}
