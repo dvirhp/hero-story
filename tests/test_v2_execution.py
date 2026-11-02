@@ -217,3 +217,46 @@ def test_repetition_is_advisory_even_when_entire_pages_repeat():
     report = assess_story(fixture_steps_v2(brief(req))[1].response_json, brief(req))
     assert report.passed
     assert any(i.code == "FORMULAIC_PAGE_REPETITION" and i.severity == "advisory" for i in report.issues)
+
+
+@pytest.mark.parametrize("kind", ["missing_example", "missing_base", "too_many_units", "unassigned_target"])
+def test_roy_learning_contract_failures(kind):
+    req = StoryRequestV2.model_validate_json((EXAMPLES / "roy-alphabet-request.v2.he.json").read_text(encoding="utf-8"))
+    context = brief(req)
+    raw = json.loads(fixture_steps_v2(context)[1].response_json)
+    page, target = raw["pages"][-1], req.structure.targets[-1]
+    if kind in ("missing_example", "missing_base"):
+        value = target.example_word if kind == "missing_example" else target.base_form
+        page["sentence_units"] = [" ".join("אור" if word.strip(".,") == value else word for word in unit.split())
+                                  for unit in page["sentence_units"]]
+    elif kind == "too_many_units":
+        page["sentence_units"] = ["רועי אור רך."] * 4
+    else:
+        page["target_id"] = None
+    report = assess_story(raw, context)
+    assert not report.passed
+    expected = {"missing_example": "TARGET_EXAMPLE_MISSING", "missing_base": "TARGET_BASE_FORM_MISSING",
+                "too_many_units": "SENTENCE_UNIT_COUNT", "unassigned_target": "TARGET_SEQUENCE_MISMATCH"}[kind]
+    assert any(issue.code == expected for issue in report.issues)
+
+
+def test_mixed_script_is_not_accepted_as_hebrew():
+    req = request("he", 36, 2)
+    context = brief(req)
+    raw = json.loads(fixture_steps_v2(context)[1].response_json)
+    for page in raw["pages"]:
+        page["sentence_units"] = [req.display_name + " " + " ".join(["moonlight"] * 25)]
+    report = assess_story(raw, context)
+    assert not report.passed and any(i.code == "SCRIPT_MISMATCH" for i in report.issues)
+
+
+@pytest.mark.parametrize("language", ["en", "he"])
+def test_multiword_name_and_target_remain_intact_in_sentence_units(run_async, profiles, language):
+    raw = request(language, 36, 1, story_type="educational").model_dump(mode="json")
+    raw["display_name"] = "Or Lee" if language == "en" else "אור לי"
+    raw["structure"] = {"targets": [{"target_id": "concept", "label": "bright moon" if language == "en" else "ירח בהיר"}],
+                        "sentence_units_per_page": {"minimum": 2, "maximum": 3}}
+    result = run_async(engine(profiles).generate(raw))
+    assert result.status == "success"
+    assert raw["display_name"] in result.story.pages[0].text
+    assert raw["structure"]["targets"][0]["label"] in result.story.pages[0].text

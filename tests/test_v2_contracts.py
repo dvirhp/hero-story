@@ -100,3 +100,43 @@ def test_new_profiles_reject_age_owned_page_counts_and_invalid_coverage():
         DevelopmentProfilesV2.model_validate_json(json.dumps(data))
     with pytest.raises(ValidationError):
         resolve_v2(load_profiles_v2(), True, "en")
+
+
+@pytest.mark.parametrize("defect", ["gap", "overlap", "duplicate_id", "finite_end", "missing_language",
+                                  "missing_density", "duplicate_density", "inverted_words", "unknown_strategy"])
+def test_invalid_v2_development_configuration(defect):
+    raw = load_profiles_v2().model_dump(mode="json")
+    band = raw["bands"][0]
+    language = band["languages"][0]
+    if defect == "gap": raw["bands"][1]["min_months"] += 1
+    elif defect == "overlap": raw["bands"][1]["min_months"] -= 1
+    elif defect == "duplicate_id": raw["bands"][1]["band_id"] = band["band_id"]
+    elif defect == "finite_end": raw["bands"][-1]["max_months"] = 200
+    elif defect == "missing_language": band["languages"].pop()
+    elif defect == "missing_density": language["densities"].pop()
+    elif defect == "duplicate_density": language["densities"][1] = language["densities"][0]
+    elif defect == "inverted_words": language["densities"][0]["words_per_page"] = {"minimum": 20, "maximum": 10}
+    else: language["strategy"] = "six_beats"
+    with pytest.raises(ValidationError):
+        DevelopmentProfilesV2.model_validate_json(json.dumps(raw))
+
+
+@pytest.mark.parametrize("defect", ["missing_language", "duplicate_language", "zero_ratio", "negative_allowance"])
+def test_invalid_sizing_configuration(defect):
+    raw = PagePolicy().model_dump(mode="json")
+    if defect == "missing_language": raw["language_estimates"].pop()
+    elif defect == "duplicate_language": raw["language_estimates"][1] = raw["language_estimates"][0]
+    elif defect == "zero_ratio": raw["language_estimates"][0]["tokens_per_word"] = 0.0
+    else: raw["thinking_allowance_tokens"] = -1
+    with pytest.raises(ValidationError):
+        PagePolicy.model_validate_json(json.dumps(raw))
+
+
+def test_minimum_sentence_units_must_fit_hard_density():
+    raw = request().model_dump(mode="json")
+    raw["structure"] = {"targets": [{"target_id": f"t{i}", "label": "moon"} for i in range(4)],
+                        "sentence_units_per_page": {"minimum": 16, "maximum": 20}}
+    req = StoryRequestV2.model_validate_json(json.dumps(raw))
+    with pytest.raises(NormalizationError) as error:
+        normalize_v2(req, load_profiles_v2())
+    assert error.value.error.code == "INPUT_INVALID"
