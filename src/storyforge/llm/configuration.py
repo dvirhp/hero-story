@@ -7,7 +7,7 @@ from pydantic import Field, SecretStr, field_validator
 from storyforge.domain.base import Contract, Label, PositiveInt
 
 
-class OpenAIConfig(Contract):
+class ProviderCredentials(Contract):
     api_key: SecretStr = Field(exclude=True, repr=False)
     timeout_seconds: Annotated[float, Field(gt=0, allow_inf_nan=False)]
 
@@ -17,6 +17,14 @@ class OpenAIConfig(Contract):
         if not key.get_secret_value().strip():
             raise ValueError("An explicitly supplied API key is required")
         return key
+
+
+class OpenAIConfig(ProviderCredentials):
+    """Explicit OpenAI credentials."""
+
+
+class GeminiConfig(ProviderCredentials):
+    """Explicit Gemini Developer API credentials, never ambient SDK discovery."""
 
 
 class ModelCapabilities(Contract):

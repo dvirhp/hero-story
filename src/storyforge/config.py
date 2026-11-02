@@ -8,7 +8,7 @@ from storyforge.domain.base import Contract, Label, PositiveInt
 
 
 class AppSettings(Contract):
-    provider: Literal["fake", "openai"] = "fake"
+    provider: Literal["fake", "openai", "gemini"] = "fake"
     model: Label = "scripted-v1"
     planner_model: Label | None = None
     writer_model: Label | None = None
@@ -28,8 +28,8 @@ class AppSettings(Contract):
     def valid_limits(self) -> "AppSettings":
         if self.provider == "fake" and any(self.model_for(stage) != "scripted-v1" for stage in ("planner", "writer")):
             raise ValueError("fake mode requires the scripted model")
-        if self.provider == "openai" and any(self.model_for(stage) == "scripted-v1" for stage in ("planner", "writer")):
-            raise ValueError("OpenAI mode requires an explicit model ID")
+        if self.provider != "fake" and any(self.model_for(stage) == "scripted-v1" for stage in ("planner", "writer")):
+            raise ValueError("Real provider mode requires an explicit model ID")
         if self.max_attempts < 2:
             raise ValueError("planner and writer require at least two attempt slots")
         if self.attempt_timeout_seconds > self.request_timeout_seconds:

@@ -24,7 +24,7 @@ from storyforge.domain.generation import (
 from storyforge.domain.story import Story, StoryPlan, StoryRequest
 from storyforge.llm.protocol import LLMProvider, LLMRequest, ProviderFailure
 from storyforge.llm.configuration import ModelCapabilities
-from storyforge.orchestration.budget import BudgetLimits, FakePricing, ModelPricing, input_token_bound, openai_input_bound
+from storyforge.orchestration.budget import BudgetLimits, FakePricing, ModelPricing, reservation_policy
 from storyforge.orchestration.state import GraphState, RunState
 from storyforge.prompts.builders import PLANNER_VERSION, WRITER_VERSION, build_request
 from storyforge.quality.gate import assess_story, inspect_output_safety
@@ -68,11 +68,12 @@ class StoryEngine:
         self.provider, self.profiles = provider, profiles
         self.settings, self.limits, self.pricing, self.rules, self.clock = settings, limits, pricing, rules, clock
         self.capabilities, self.sleep = capabilities, sleep
+        self.input_bound = reservation_policy(settings.provider)
         if getattr(provider, "provider_name", settings.provider) != settings.provider:
             raise ValueError("Provider identity must match explicit application settings")
         self.writer_capabilities = writer_capabilities or capabilities
         self.writer_pricing = writer_pricing or pricing
-        if settings.provider == "openai":
+        if settings.provider != "fake":
             for stage in ("planner", "writer"):
                 cap, tariff = self._stage_capabilities(stage), self._stage_pricing(stage)
                 output = settings.planner_output_tokens if stage == "planner" else settings.writer_output_tokens
@@ -151,9 +152,9 @@ class StoryEngine:
             run = self._refresh(run.updated(retry_after_seconds=0.0))
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED"), None
-        tokens_in = (openai_input_bound(request, schema, self._stage_capabilities(request.stage).input_overhead_tokens)
-                     if self.settings.provider == "openai"
-                     else input_token_bound(request, schema, self.limits.schema_overhead_tokens))
+        capabilities = self._stage_capabilities(request.stage)
+        overhead = capabilities.input_overhead_tokens if capabilities else self.limits.schema_overhead_tokens
+        tokens_in = self.input_bound(request, schema, overhead)
         reserve_tokens = tokens_in + request.max_output_tokens
         reserve_cost = self._stage_pricing(request.stage).reservation_cost(tokens_in, request.max_output_tokens)
         future_tokens = (self.settings.max_input_tokens + self.settings.writer_output_tokens

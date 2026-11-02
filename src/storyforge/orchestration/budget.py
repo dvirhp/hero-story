@@ -9,6 +9,7 @@ from storyforge.domain.base import Contract, Label, Money, PositiveInt
 from storyforge.domain.generation import TokenUsage
 from storyforge.llm.protocol import LLMRequest
 from storyforge.llm.schema import structured_schema
+from storyforge.llm.gemini_schema import gemini_schema
 
 
 class FakePricing(Contract):
@@ -88,3 +89,14 @@ def openai_input_bound(request: LLMRequest, schema: type[Contract], overhead: in
     parts = (request.instructions, request.input_json,
              json.dumps(structured_schema(schema), ensure_ascii=False, sort_keys=True))
     return sum(len(part.encode("utf-8")) for part in parts) + overhead
+
+
+def gemini_input_bound(request: LLMRequest, schema: type[Contract], overhead: int) -> int:
+    parts = (request.instructions, request.input_json,
+             json.dumps(gemini_schema(schema), ensure_ascii=False, sort_keys=True))
+    return sum(len(part.encode("utf-8")) for part in parts) + overhead
+
+
+def reservation_policy(provider: str):
+    """Composition-time policy selection, outside graph nodes; no SDK imports."""
+    return {"fake": input_token_bound, "openai": openai_input_bound, "gemini": gemini_input_bound}[provider]
