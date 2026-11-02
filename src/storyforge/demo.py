@@ -5,8 +5,9 @@ import asyncio
 import json
 
 from storyforge.development.defaults import load_default_profiles
-from storyforge.domain.story import PageIntent, PlotElements, Story, StoryPage, StoryPlan, StoryRequest
-from storyforge.llm.fake import FakeProvider, FakeStep
+from storyforge.domain.story import StoryRequest
+from storyforge.llm.fake import FakeProvider
+from storyforge.llm.fixtures import fixture_steps
 from storyforge.orchestration.engine import StoryEngine
 from storyforge.validation.normalization import normalize_request
 
@@ -19,27 +20,7 @@ async def run_demo(language: str = "en", age_months: int = 0) -> dict[str, objec
                            theme="אור ירח" if language == "he" else "Moonlight")
     brief = normalize_request(request, profiles)
     profile = brief.profile
-    plan = StoryPlan(
-        language=language, title_concept="לילה" if language == "he" else "Night",
-        protagonist=request.display_name, strategy=profile.requirements.strategy,
-        pages=tuple(PageIntent(page_number=i, intent="רגע שקט" if language == "he" else "A quiet moment")
-                    for i in range(1, profile.requirements.hard.page_count + 1)),
-        plot=(PlotElements(goal="מטרה" if language == "he" else "A goal",
-                           obstacle_or_choices="בחירה" if language == "he" else "A choice",
-                           resolution="שלווה" if language == "he" else "Reassurance")
-              if profile.requirements.strategy in ("simple_goal", "connected_scenes") else None),
-    )
-    words = ("אור רך צליל שקט לילה נעים" if language == "he" else "soft light quiet sounds gentle night").split()
-    count = profile.requirements.hard.words_per_page.minimum
-    text = " ".join([request.display_name + ","] + [words[i % len(words)] for i in range(count - 1)]) + "."
-    story = Story(
-        title="לילה" if language == "he" else "Night", language=language,
-        direction="rtl" if language == "he" else "ltr", profile_id=profile.band_id,
-        profile_version=profile.version,
-        pages=tuple(StoryPage(page_id=f"p{i}", page_number=i, text=text)
-                    for i in range(1, profile.requirements.hard.page_count + 1)),
-    )
-    provider = FakeProvider((FakeStep(response_json=plan.model_dump_json()), FakeStep(response_json=story.model_dump_json())))
+    provider = FakeProvider(fixture_steps(brief))
     result = await StoryEngine(provider, profiles).generate(request)
     return {
         "status": result.status, "request_id": result.request_id, "language": language,
