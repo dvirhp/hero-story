@@ -202,3 +202,16 @@ def test_future_writer_price_reserved_before_planner(run_async, profiles):
                          writer_pricing=metadata(cap.model, 100.0)[1])
     result = run_async(engine.generate(StoryRequest(language="en", display_name="Or", age_months=0, theme="Night")))
     assert result.error.code == "BUDGET_EXCEEDED" and not result.usage.attempts
+
+
+def test_real_settings_never_silently_fall_back_to_fake(run_async, profiles):
+    async def run():
+        app = create_app(resources=Resources(profiles=profiles, settings=AppSettings(provider="openai", model="offline-model")))
+        async with app.router.lifespan_context(app):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as api:
+                response = await api.post("/v1/stories/generate", json={
+                    "language": "en", "display_name": "Or", "age_months": 0, "theme": "Night"})
+                assert response.status_code == 500
+                assert response.json()["error"]["code"] == "CONFIGURATION_ERROR"
+                assert not response.json()["usage"]["attempts"]
+    run_async(run())

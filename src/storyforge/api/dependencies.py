@@ -39,6 +39,8 @@ async def get_resources(request: Request) -> Resources:
 
 
 async def get_provider(resources: Annotated[Resources, Depends(get_resources)]) -> LLMProvider:
+    if resources.provider is None and resources.settings.provider != "fake":
+        raise ValueError("Real mode requires an explicitly injected provider")
     return resources.provider if resources.provider is not None else LocalFixtureProvider(rules=resources.rules)
 
 
