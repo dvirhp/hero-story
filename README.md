@@ -151,3 +151,5 @@ Use `AppSettings(provider="gemini", ...)` through explicit runtime JSON and the 
 See [Gemini setup, error/accounting policies and the proposed live smoke test](docs/GEMINI.md). The proposed live run needs separate approval and uses a synthetic newborn request. The model and prices are documented config data, never orchestration defaults. Tests and development require no real key. Stop after Milestone 6.
 
 Milestone 6 verification: **541 passed, 0 failed** on Python 3.12.16 and 3.13.3, preserving all 450 existing tests. Source/wheel builds and the full installed-wheel suite passed. See the [completion report](docs/MILESTONE_6.md) for modules, exact commands, Git commits, live proposal and remaining decisions.
+
+For a locally stored Gemini key, the configured server supports explicit `--env-file .env` loading; default startup still does not discover `.env`. See [offline preflight results and the approval-gated live commands](docs/GEMINI_PREFLIGHT.md). `python-dotenv` is included in the locked setup. Do not run the live POST before approval.

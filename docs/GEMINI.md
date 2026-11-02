@@ -8,7 +8,7 @@ Milestone 6 implements Gemini only. Fake remains the default; OpenAI is preserve
 
 `GeminiConfig` uses the common strict secret/timeout contract. `load_configuration` reads only the selected provider's key after explicit external-call opt-in. The normal `create_app` does not read configuration environment variables or discover credentials. Real settings without an injected provider fail rather than silently selecting Fake.
 
-The configured factory constructs a client without probes during lifespan, validates capacities before serving, and closes both async and sync SDK pools on shutdown/failure. The client uses an explicit key, Developer API mode (`vertexai=False`), the official endpoint and `v1beta`, with proxy environment discovery and redirects disabled. Ambient Google provider/base-URL choices cannot override this selection. SDK-internal environment reads may still occur, but the explicit key wins; ordinary application code never falls back to `GOOGLE_API_KEY` or cloud credentials. No `.env` auto-loading is added. Custom mock HTTP transports are caller-owned and explicitly closed in tests.
+The configured factory constructs a client without probes during lifespan, validates capacities before serving, and closes both async and sync SDK pools on shutdown/failure. The client uses an explicit key, Developer API mode (`vertexai=False`), the official endpoint and `v1beta`, with proxy environment discovery and redirects disabled. Ambient Google provider/base-URL choices cannot override this selection. SDK-internal environment reads may still occur, but the explicit key wins; ordinary application code never falls back to `GOOGLE_API_KEY` or cloud credentials. No implicit `.env` discovery is added. Explicit Uvicorn `--env-file .env` loading is supported by the locked `python-dotenv` dependency. Custom mock HTTP transports are caller-owned and explicitly closed in tests.
 
 ## One attempt means one request
 
@@ -69,12 +69,13 @@ Published standard text prices at review: **USD 0.30 per million input tokens an
 
 No billing activation or Cloud changes are required by this procedure, and none will be performed automatically. Before approval, confirm the account can access this model and review the current tier/quotas in AI Studio yourself. Free-tier content may be used to improve Google's products; paid-tier handling differs. Use synthetic data only and review the applicable [Gemini API terms](https://ai.google.dev/gemini-api/terms). Do not enable SDK/HTTP debug logs or external tracing. Local service authentication and aggregate cross-request spend controls remain outside this milestone.
 
-**Do not run the following live procedure until explicitly approved.** It sends the synthetic brief to Google and can incur charges. Arrange `GEMINI_API_KEY` locally through your existing secret-management method; never paste it into chat, commit it, echo it or place it in shell history. Required environment configuration:
+**Do not run the following live procedure until explicitly approved.** It sends the synthetic brief to Google and can incur charges. Arrange `GEMINI_API_KEY` locally through your existing secret-management method; never paste it into chat, commit it, echo it or place it in shell history. The key may be stored in the Git-ignored local `.env` file. Uvicorn loads it only when explicitly passed `--env-file .env`; it preserves existing process variables. The command below clears a stale process key so the file supplies it. Required environment configuration:
 
 ```powershell
+Remove-Item Env:GEMINI_API_KEY -ErrorAction SilentlyContinue
 $env:STORYFORGE_CONFIG = (Resolve-Path .\docs\examples\gemini-smoke-runtime.json).Path
 $env:STORYFORGE_ALLOW_PAID_CALLS = 'true'
-.\.venv\Scripts\python.exe -m uvicorn storyforge.api.configured:create_configured_app --factory --host 127.0.0.1 --port 8000 --no-access-log
+.\.venv\Scripts\python.exe -m uvicorn storyforge.api.configured:create_configured_app --factory --env-file .env --workers 1 --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
 The server starts without Gemini calls. In a second shell at the repository root, run this **single POST**, only after approval:
@@ -99,3 +100,7 @@ Remove-Item Env:GEMINI_API_KEY -ErrorAction SilentlyContinue
 Gemini receives Unicode input and language-aware profile/prompt snapshots without translation or script conversion. No new language restriction is introduced. Current executable contracts remain Hebrew/English; neither provider coverage nor JSON success establishes fluency in any language. Before adding another language, native reviewers must assess pronouns/agreement, adult read-aloud quality and all developmental bands; registry, segmentation and script checks need the changes already proposed in [EXTENSIBILITY.md](EXTENSIBILITY.md). No-space scripts cannot inherit current whitespace word targets blindly. Token reservations depend on UTF-8 byte length and will vary across scripts; use measured per-language usage later to tune caps without weakening quality.
 
 Open: approved live-run/model availability and tier, real literary quality, framing estimate calibration, language-specific reviewer thresholds, provider comparison/fallback policy, privacy/release requirements and future languages. Stop after Milestone 6; no Milestone 7 work is authorized.
+
+## Local preflight follow-up
+
+The explicit `.env` path and current smoke files were verified without starting a server, constructing an SDK client or making any provider request. The real local key was read only in a disposable process and never displayed; its value is excluded from secret repr/serialization. See [preflight report and commands](GEMINI_PREFLIGHT.md). Loading a secret is not authentication or project-access verification. No limits were changed.
