@@ -10,6 +10,7 @@ from pydantic import model_validator
 from storyforge.api.app import create_app
 from storyforge.api.dependencies import Resources
 from storyforge.config import AppSettings
+from storyforge.validation.page_policy import PagePolicy
 from storyforge.development.defaults import load_default_profiles
 from storyforge.domain.base import Contract
 from storyforge.llm.configuration import GeminiConfig, ModelCapabilities, OpenAIConfig
@@ -25,6 +26,7 @@ class StageConfiguration(Contract):
 
 
 class RuntimeConfiguration(Contract):
+    page_policy: PagePolicy = PagePolicy()
     settings: AppSettings
     limits: BudgetLimits
     planner: StageConfiguration
@@ -83,7 +85,7 @@ def create_configured_app():
                 profiles=profiles, settings=runtime.settings, limits=runtime.limits,
                 pricing=runtime.planner.pricing, capabilities=runtime.planner.capabilities,
                 writer_pricing=runtime.writer.pricing, writer_capabilities=runtime.writer.capabilities,
-                provider=provider,
+                provider=provider, page_policy=runtime.page_policy,
             )
             # Fail startup on invalid capacity/budget metadata without generating.
             StoryEngine(provider, profiles, settings=resources.settings, limits=resources.limits,

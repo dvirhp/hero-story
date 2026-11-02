@@ -6,6 +6,8 @@ from fastapi import Request
 
 from storyforge.domain.generation import GenerationError, GenerationFailure, GenerationResult, UsageSummary
 from storyforge.domain.story import StoryRequest
+from storyforge.domain.story_v2 import StoryRequestV2
+from storyforge.domain.generation_v2 import GenerationResultV2
 from storyforge.orchestration.engine import StoryEngine
 
 
@@ -19,8 +21,8 @@ async def _disconnected(request: Request) -> None:
 
 
 async def execute_request(
-    request: Request, payload: StoryRequest, engine: StoryEngine, request_id: str,
-) -> GenerationResult:
+    request: Request, payload: StoryRequest | StoryRequestV2, engine: StoryEngine, request_id: str,
+) -> GenerationResult | GenerationResultV2:
     generation = asyncio.create_task(engine.generate(payload, request_id=request_id))
     disconnect = asyncio.create_task(_disconnected(request))
     try:

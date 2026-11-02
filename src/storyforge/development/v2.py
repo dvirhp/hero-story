@@ -69,6 +69,12 @@ class DevelopmentSnapshotV2(Contract):
     max_months: PositiveInt | None
     requirements: LanguageDevelopment
 
+    @model_validator(mode="after")
+    def valid_interval(self) -> "DevelopmentSnapshotV2":
+        if self.max_months is not None and self.max_months <= self.min_months:
+            raise ValueError("Invalid snapshot month interval")
+        return self
+
 
 def load_profiles_v2() -> DevelopmentProfilesV2:
     return DevelopmentProfilesV2.model_validate_json(

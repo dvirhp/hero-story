@@ -7,15 +7,16 @@ from pydantic import Field, model_validator
 from storyforge.domain.base import Contract, Label, Money, NonNegativeInt, Seconds
 from storyforge.domain.generation import AttemptRecord, GenerationError, QualityReport, Stage, UsageSummary
 from storyforge.domain.story import NormalizedBrief, Story, StoryPlan, StoryRequest
+from storyforge.domain.story_v2 import NormalizedBriefV2, StoryPlanV2, StoryRequestV2, StoryV2
 
 
 class RunState(Contract):
     request_id: Label
     raw_input: object = Field(repr=False)
-    request: StoryRequest | None = Field(default=None, repr=False)
-    brief: NormalizedBrief | None = Field(default=None, repr=False)
-    plan: StoryPlan | None = Field(default=None, repr=False)
-    draft: Story | None = Field(default=None, repr=False)
+    request: StoryRequestV2 | StoryRequest | None = Field(default=None, repr=False)
+    brief: NormalizedBriefV2 | NormalizedBrief | None = Field(default=None, repr=False)
+    plan: StoryPlanV2 | StoryPlan | None = Field(default=None, repr=False)
+    draft: StoryV2 | Story | None = Field(default=None, repr=False)
     quality: QualityReport | None = None
     error: GenerationError | None = None
     stage: Stage = "validation"

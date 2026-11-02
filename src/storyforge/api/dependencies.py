@@ -9,6 +9,8 @@ from fastapi import Depends, Request
 
 from storyforge.config import AppSettings
 from storyforge.development.models import DevelopmentConfig
+from storyforge.development.v2 import DevelopmentProfilesV2
+from storyforge.validation.page_policy import PagePolicy
 from storyforge.llm.fixtures import LocalFixtureProvider
 from storyforge.llm.protocol import LLMProvider
 from storyforge.llm.configuration import ModelCapabilities
@@ -28,6 +30,8 @@ class Resources:
     writer_capabilities: ModelCapabilities | None = None
     provider: LLMProvider | None = None
     rules: QualityRules = DEFAULT_RULES
+    page_policy: PagePolicy = PagePolicy()
+    profiles_v2: DevelopmentProfilesV2 | None = None
     clock: Callable[[], float] = time.monotonic
 
 
@@ -52,3 +56,14 @@ async def get_engine(
                        pricing=resources.pricing, rules=resources.rules, clock=resources.clock,
                        capabilities=resources.capabilities, writer_pricing=resources.writer_pricing,
                        writer_capabilities=resources.writer_capabilities)
+
+
+async def get_engine_v2(
+    resources: Annotated[Resources, Depends(get_resources)],
+    provider: Annotated[LLMProvider, Depends(get_provider)],
+) -> StoryEngine:
+    return StoryEngine(provider, resources.profiles, settings=resources.settings, limits=resources.limits,
+                       pricing=resources.pricing, rules=resources.rules, clock=resources.clock,
+                       capabilities=resources.capabilities, writer_pricing=resources.writer_pricing,
+                       writer_capabilities=resources.writer_capabilities, contract_version="2",
+                       profiles_v2=resources.profiles_v2, page_policy=resources.page_policy)

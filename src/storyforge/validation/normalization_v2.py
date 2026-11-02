@@ -30,6 +30,9 @@ def normalize_v2(request: StoryRequestV2, profiles: DevelopmentProfilesV2, *,
         words = next(item.words_per_page for item in profile.requirements.densities
                      if item.density == checked.text_density)
         structure = checked.structure
+        if (structure and structure.sentence_units_per_page
+                and structure.sentence_units_per_page.minimum > words.maximum):
+            raise ValueError("At least one word per sentence unit must fit the page density")
         allocation = page_policy.allocate(checked.page_count, words.maximum, checked.language, settings)
         constraints = BookConstraints(
             page_count=checked.page_count, words_per_page=words,

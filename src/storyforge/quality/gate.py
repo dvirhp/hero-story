@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from storyforge.domain.generation import QualityIssue, QualityReport
 from storyforge.domain.story import NormalizedBrief, Story
+from storyforge.domain.story_v2 import NormalizedBriefV2, StoryV2
 from storyforge.quality.rules import DEFAULT_RULES, QualityRules
 from storyforge.quality.text import (
     contains_prohibited_directive, forbidden_controls, letter_counts, lexical_tokens,
@@ -56,8 +57,12 @@ def inspect_output_safety(candidate: object, rules: QualityRules = DEFAULT_RULES
     return tuple(issues)
 
 
+def quality_check_version(rules: QualityRules, contract_version: str) -> str:
+    return f"{rules.version}+book-v2-1" if contract_version == "2" else rules.version
+
+
 def assess_story(
-    candidate: Story | str | Mapping[str, object], brief: NormalizedBrief,
+    candidate: Story | str | Mapping[str, object], brief: NormalizedBrief | NormalizedBriefV2,
     rules: QualityRules = DEFAULT_RULES,
 ) -> QualityReport:
     """Accept a Story, raw JSON or JSON-compatible mapping; never return draft text.
@@ -65,21 +70,24 @@ def assess_story(
     Input schema errors are report issues, not leaked Pydantic exceptions. A
     passing report means only that these configured deterministic checks passed.
     """
+    if isinstance(brief, NormalizedBriefV2):
+        rules = QualityRules.model_validate({**rules.model_dump(), "version": quality_check_version(rules, "2")})
     issues: list[QualityIssue] = []
     if brief.language_rubric_version != rules.rubric_version:
         return _report([_issue("RUBRIC_VERSION_MISMATCH", "terminal",
                                "Assess using the language rubric captured during normalization.")], rules)
     raw: object = candidate
+    schema = StoryV2 if isinstance(brief, NormalizedBriefV2) else Story
     try:
         if isinstance(candidate, Story):
             raw = candidate.model_dump(warnings=False)
-            story = Story.model_validate(raw)
+            story = schema.model_validate(raw)
         elif isinstance(candidate, str):
             raw = json.loads(candidate)
-            story = Story.model_validate_json(candidate)
+            story = schema.model_validate_json(candidate)
         elif isinstance(candidate, Mapping):
             raw = dict(candidate)
-            story = Story.model_validate_json(json.dumps(raw, ensure_ascii=True, allow_nan=False))
+            story = schema.model_validate_json(json.dumps(raw, ensure_ascii=True, allow_nan=False))
         else:
             raise ValueError("unsupported story representation")
     except (ValidationError, ValueError, TypeError, RecursionError):
@@ -100,7 +108,7 @@ def assess_story(
             issues.extend(_text_issues(value, rules, page.page_number))
 
     profile = brief.profile
-    hard = profile.requirements.hard
+    hard = brief.constraints if isinstance(brief, NormalizedBriefV2) else profile.requirements.hard
     if story.language != brief.request.language:
         issues.append(_issue("LANGUAGE_METADATA_MISMATCH", "repairable",
                              "Use the language and direction requested in the brief."))
@@ -109,7 +117,7 @@ def assess_story(
                              "Use the profile ID and version captured in the brief."))
     if len(story.pages) != hard.page_count:
         issues.append(_issue("PAGE_COUNT_MISMATCH", "repairable",
-                             "Return exactly the page count specified by the resolved profile."))
+                             "Return exactly the resolved book page count."))
     counts = tuple(len(page.text.split()) for page in story.pages)
     for page, count in zip(story.pages, counts):
         if not hard.words_per_page.minimum <= count <= hard.words_per_page.maximum:
@@ -118,6 +126,28 @@ def assess_story(
     if not hard.total_words.minimum <= sum(counts) <= hard.total_words.maximum:
         issues.append(_issue("TOTAL_WORD_COUNT", "repairable",
                              "Adjust total page-text words to the profile's hard range; exclude the title."))
+    if isinstance(brief, NormalizedBriefV2):
+        if story.page_count != brief.request.page_count:
+            issues.append(_issue("PAGE_COUNT_MISMATCH", "repairable", "Preserve the exact requested page count."))
+        expected = hard.target_ids or (None,) * hard.page_count
+        if tuple(page.target_id for page in story.pages) != expected:
+            issues.append(_issue("TARGET_SEQUENCE_MISMATCH", "repairable", "Preserve one assigned target per page in requested order."))
+        if brief.request.requested_title and story.title != brief.request.requested_title:
+            issues.append(_issue("TITLE_MISMATCH", "repairable", "Use the exact requested title."))
+        targets = {target.target_id: target for target in brief.request.structure.targets} if brief.request.structure else {}
+        for page in story.pages:
+            if hard.sentence_units_per_page and not hard.sentence_units_per_page.minimum <= len(page.sentence_units) <= hard.sentence_units_per_page.maximum:
+                issues.append(_issue("SENTENCE_UNIT_COUNT", "repairable", "Return the requested count of sentence units.", page.page_number))
+            target = targets.get(page.target_id)
+            if target and not name_spans(page.text, target.label):
+                issues.append(_issue("TARGET_LABEL_MISSING", "repairable", "Include the exact assigned learning label as a separate label or phrase.", page.page_number))
+            if target and target.example_word and not name_spans(page.text, target.example_word):
+                issues.append(_issue("TARGET_EXAMPLE_MISSING", "repairable", "Include the exact supplied example word.", page.page_number))
+            if target and target.base_form and not name_spans(page.text, target.base_form):
+                issues.append(_issue("TARGET_BASE_FORM_MISSING", "repairable", "Include the supplied base form in the explanation.", page.page_number))
+        if len(story.pages) > 1 and len({page.text for page in story.pages}) * 2 <= len(story.pages):
+            issues.append(_issue("FORMULAIC_PAGE_REPETITION", "advisory", "Review repeated whole pages against age-appropriate refrain and narrative-variety guidance."))
+        issues.append(_issue("NARRATIVE_COVERAGE_REVIEW", "advisory", "Review active agency, meaningful progression, sentence grammar and educational accuracy; target metadata alone cannot prove them."))
     if not any(name_spans(text, brief.request.display_name)
                for text in (story.title, *(page.text for page in story.pages))):
         issues.append(_issue("PERSONALIZATION_MISSING", "repairable",

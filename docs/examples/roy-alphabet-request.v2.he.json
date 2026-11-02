@@ -1,0 +1,178 @@
+{
+  "language": "he",
+  "display_name": "רועי",
+  "age_months": 36,
+  "theme": "רועי גיבור־על מציל את האותיות החסרות בממלכת אותיות קסומה",
+  "interests": [
+    "אותיות",
+    "הרפתקאות",
+    "גיבורי־על"
+  ],
+  "narrative_pronouns": {
+    "language": "he",
+    "subject": "הוא",
+    "object": "אותו",
+    "possessive": "שלו",
+    "grammatical_agreement": "masculine_singular"
+  },
+  "guidance": "שם הסיפור: רועי וגיבורי ממלכת האותיות. בדיוק 27 עמודים לפי הסדר: א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת ך ם ן ף ץ. בכל עמוד אות מטרה אחת ו-2–3 משפטים עבריים קצרים ופשוטים. רועי מציל בעצמו אות חסרה בכל עמוד ומקדם עלילה רציפה. שלבו מילה זכירה וחזרה משחקית. בעמודי ך ם ן ף ץ הסבירו בטבעיות שאלה צורות סופיות של כ מ נ פ צ, והראו כל צורה בסוף מילה. סיום חם ומשמח, ללא אנגלית.",
+  "schema_version": "2",
+  "page_count": 27,
+  "story_type": "alphabet",
+  "text_density": "light",
+  "requested_title": "רועי וגיבורי ממלכת האותיות",
+  "structure": {
+    "kind": "ordered_targets",
+    "targets": [
+      {
+        "target_id": "letter-01",
+        "label": "א",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-02",
+        "label": "ב",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-03",
+        "label": "ג",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-04",
+        "label": "ד",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-05",
+        "label": "ה",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-06",
+        "label": "ו",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-07",
+        "label": "ז",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-08",
+        "label": "ח",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-09",
+        "label": "ט",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-10",
+        "label": "י",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-11",
+        "label": "כ",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-12",
+        "label": "ל",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-13",
+        "label": "מ",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-14",
+        "label": "נ",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-15",
+        "label": "ס",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-16",
+        "label": "ע",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-17",
+        "label": "פ",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-18",
+        "label": "צ",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-19",
+        "label": "ק",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-20",
+        "label": "ר",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-21",
+        "label": "ש",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-22",
+        "label": "ת",
+        "kind": "letter"
+      },
+      {
+        "target_id": "letter-23",
+        "label": "ך",
+        "kind": "letter",
+        "base_form": "כ",
+        "example_word": "מלך"
+      },
+      {
+        "target_id": "letter-24",
+        "label": "ם",
+        "kind": "letter",
+        "base_form": "מ",
+        "example_word": "ים"
+      },
+      {
+        "target_id": "letter-25",
+        "label": "ן",
+        "kind": "letter",
+        "base_form": "נ",
+        "example_word": "גן"
+      },
+      {
+        "target_id": "letter-26",
+        "label": "ף",
+        "kind": "letter",
+        "base_form": "פ",
+        "example_word": "אף"
+      },
+      {
+        "target_id": "letter-27",
+        "label": "ץ",
+        "kind": "letter",
+        "base_form": "צ",
+        "example_word": "עץ"
+      }
+    ],
+    "sentence_units_per_page": {
+      "minimum": 2,
+      "maximum": 3
+    }
+  }
+}

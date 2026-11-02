@@ -37,7 +37,7 @@ _ERRORS = {status: {"model": GenerationFailure, "description": description}
 
 
 @router.post("/v1/stories/generate", response_model=GenerationSuccess, responses=_ERRORS,
-             tags=["Stories"], summary="Generate using the bounded engine (local fake provider by default)")
+             deprecated=True, tags=["Stories"], summary="Generate using the bounded engine (local fake provider by default)")
 async def generate_story(
     payload: Annotated[HTTPStoryRequest, Body()], request: Request,
     engine: Annotated[StoryEngine, Depends(get_engine)],

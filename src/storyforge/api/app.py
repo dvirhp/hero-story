@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException
 from storyforge.api.dependencies import Resources
 from storyforge.api.errors import SafeRoute, http_error_handler, validation_error_handler
 from storyforge.api.routes import router as story_router
+from storyforge.api.routes_v2 import router as story_router_v2
 from storyforge.development.defaults import load_default_profiles
 from storyforge.domain.base import Contract
 
@@ -38,4 +39,5 @@ def create_app(*, resources: Resources | None = None) -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(story_router)
+    app.include_router(story_router_v2)
     return app

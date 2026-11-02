@@ -20,7 +20,7 @@ class PagePolicy(Contract):
     minimum_pages: PositiveInt = 1
     maximum_pages: PositiveInt = 32
     planner_base_tokens: PositiveInt = 200
-    planner_tokens_per_page: PositiveInt = 64
+    planner_tokens_per_page: PositiveInt = 96
     writer_base_tokens: PositiveInt = 200
     writer_json_tokens_per_page: PositiveInt = 40
     thinking_allowance_tokens: Annotated[int, Field(ge=0)] = 256

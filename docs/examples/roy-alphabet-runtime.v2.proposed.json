@@ -1,0 +1,66 @@
+{
+  "settings": {
+    "provider": "gemini",
+    "planner_model": "gemini-3.5-flash-lite",
+    "writer_model": "gemini-3.5-flash-lite",
+    "planner_output_tokens": 3000,
+    "writer_output_tokens": 6000,
+    "max_input_tokens": 32000,
+    "max_attempts": 3,
+    "max_quality_rewrites": 1,
+    "attempt_timeout_seconds": 45.0,
+    "request_timeout_seconds": 135.0
+  },
+  "limits": {
+    "version": "alphabet-27-proposal-v1",
+    "max_total_tokens": 111000,
+    "max_cost_usd": 0.075
+  },
+  "planner": {
+    "capabilities": {
+      "model": "gemini-3.5-flash-lite",
+      "version": "google-model-docs-2026-11-02",
+      "context_tokens": 1048576,
+      "max_output_tokens": 65536,
+      "input_overhead_tokens": 1024,
+      "structured_outputs": true,
+      "token_bound_version": "gemini-utf8-upper-v1"
+    },
+    "pricing": {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "version": "google-standard-text-2026-11-02",
+      "reservation_input_usd_per_million": 0.3,
+      "reservation_output_usd_per_million": 2.5,
+      "input_usd_per_million": 0.3,
+      "output_usd_per_million": 2.5,
+      "cached_input_usd_per_million": 0.03
+    }
+  },
+  "writer": {
+    "capabilities": {
+      "model": "gemini-3.5-flash-lite",
+      "version": "google-model-docs-2026-11-02",
+      "context_tokens": 1048576,
+      "max_output_tokens": 65536,
+      "input_overhead_tokens": 1024,
+      "structured_outputs": true,
+      "token_bound_version": "gemini-utf8-upper-v1"
+    },
+    "pricing": {
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "version": "google-standard-text-2026-11-02",
+      "reservation_input_usd_per_million": 0.3,
+      "reservation_output_usd_per_million": 2.5,
+      "input_usd_per_million": 0.3,
+      "output_usd_per_million": 2.5,
+      "cached_input_usd_per_million": 0.03
+    }
+  },
+  "page_policy": {
+    "version": "page-policy-v2-1",
+    "minimum_pages": 1,
+    "maximum_pages": 32
+  }
+}

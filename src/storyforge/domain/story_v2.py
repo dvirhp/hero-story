@@ -7,7 +7,7 @@ from pydantic import Field, StringConstraints, model_validator
 from storyforge.development.models import WordRange
 from storyforge.development.v2 import Density, DevelopmentSnapshotV2
 from storyforge.domain.base import Contract, Label, PositiveInt
-from storyforge.domain.story import Name, Story, StoryPage, StoryPlan, StoryRequest, PageIntent
+from storyforge.domain.story import Name, Story, StoryPlan, StoryRequest, PageIntent
 
 ShortText = Annotated[str, StringConstraints(min_length=1, max_length=400, pattern=r"\S")]
 
@@ -114,6 +114,9 @@ class NormalizedBriefV2(Contract):
                 or (profile.max_months is not None and request.age_months >= profile.max_months)
                 or request.page_count != constraints.page_count):
             raise ValueError("Resolved book must match request and developmental profile")
+        density = next(item for item in profile.requirements.densities if item.density == request.text_density)
+        if constraints.words_per_page != density.words_per_page:
+            raise ValueError("Resolved density must match the selected developmental recommendation")
         expected_ids = tuple(target.target_id for target in request.structure.targets) if request.structure else ()
         if constraints.target_ids != expected_ids:
             raise ValueError("Target snapshot must match requested ordered targets")
@@ -150,15 +153,16 @@ class StoryPlanV2(StoryPlan):
         return self
 
 
-class StoryPageV2(StoryPage):
+class StoryPageV2(Contract):
+    page_id: Label
+    page_number: PositiveInt
     target_id: Label | None = None
     sentence_units: Annotated[tuple[ShortText, ...], Field(min_length=1)]
 
-    @model_validator(mode="after")
-    def single_text_representation(self) -> "StoryPageV2":
-        if self.text != " ".join(self.sentence_units):
-            raise ValueError("Page text must exactly equal joined sentence units")
-        return self
+    @property
+    def text(self) -> str:
+        """Derived text, never a second model-generated copy on the wire."""
+        return " ".join(self.sentence_units)
 
 
 class StoryV2(Story):

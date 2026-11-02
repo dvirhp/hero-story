@@ -19,17 +19,20 @@ from storyforge.development.models import DevelopmentConfig
 from storyforge.domain.base import Contract
 from storyforge.domain.generation import (
     AttemptRecord, GenerationError, GenerationFailure, GenerationResult,
-    GenerationSuccess, QualityReport, TokenUsage,
+    QualityReport, TokenUsage,
 )
-from storyforge.domain.story import Story, StoryPlan, StoryRequest
+from storyforge.domain.story_v2 import NormalizedBriefV2
+from storyforge.domain.generation_v2 import GenerationResultV2
+from storyforge.development.v2 import DevelopmentProfilesV2
 from storyforge.llm.protocol import LLMProvider, LLMRequest, ProviderFailure
 from storyforge.llm.configuration import ModelCapabilities
 from storyforge.orchestration.budget import BudgetLimits, FakePricing, ModelPricing, reservation_policy
 from storyforge.orchestration.state import GraphState, RunState
-from storyforge.prompts.builders import PLANNER_VERSION, WRITER_VERSION, build_request
-from storyforge.quality.gate import assess_story, inspect_output_safety
+from storyforge.orchestration.contracts import execution_contracts
+from storyforge.validation.page_policy import PagePolicy
+from storyforge.quality.gate import assess_story, inspect_output_safety, quality_check_version
 from storyforge.quality.rules import DEFAULT_RULES, QualityRules
-from storyforge.validation.normalization import NormalizationError, normalize_request
+from storyforge.validation.normalization import NormalizationError
 
 
 @dataclass
@@ -64,10 +67,15 @@ class StoryEngine:
         writer_capabilities: ModelCapabilities | None = None,
         writer_pricing: ModelPricing | None = None,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        contract_version: Literal["1", "2"] = "1",
+        profiles_v2: DevelopmentProfilesV2 | None = None,
+        page_policy: PagePolicy = PagePolicy(),
     ) -> None:
+        self.contract_version = contract_version
         self.provider, self.profiles = provider, profiles
         self.settings, self.limits, self.pricing, self.rules, self.clock = settings, limits, pricing, rules, clock
         self.capabilities, self.sleep = capabilities, sleep
+        self.contracts = execution_contracts(contract_version, profiles, settings, rules, page_policy, profiles_v2)
         self.input_bound = reservation_policy(settings.provider)
         if getattr(provider, "provider_name", settings.provider) != settings.provider:
             raise ValueError("Provider identity must match explicit application settings")
@@ -104,6 +112,12 @@ class StoryEngine:
     def _stage_pricing(self, stage: str) -> FakePricing | ModelPricing:
         return self.writer_pricing if stage == "writer" else self.pricing
 
+    def _output_limit(self, run: RunState, stage: str) -> int:
+        if isinstance(run.brief, NormalizedBriefV2):
+            return (run.brief.execution.planner_output_tokens if stage == "planner"
+                    else run.brief.execution.writer_output_tokens)
+        return self.settings.planner_output_tokens if stage == "planner" else self.settings.writer_output_tokens
+
     def _refresh(self, run: RunState) -> RunState:
         return run.updated(
             remaining_seconds=max(0.0, run.deadline - self.clock() - run.simulated_seconds),
@@ -125,16 +139,24 @@ class StoryEngine:
             return self._publish(self._fail(run, "DEADLINE_EXCEEDED"), runtime.context)
         try:
             raw = run.raw_input
-            if isinstance(raw, StoryRequest):
+            if isinstance(raw, self.contracts.request_schema):
                 request = raw
             elif isinstance(raw, str):
-                request = StoryRequest.model_validate_json(raw)
+                request = self.contracts.request_schema.model_validate_json(raw)
             elif isinstance(raw, dict):
-                request = StoryRequest.model_validate_json(json.dumps(raw, ensure_ascii=True, allow_nan=False))
+                request = self.contracts.request_schema.model_validate_json(json.dumps(raw, ensure_ascii=True, allow_nan=False))
             else:
                 raise ValueError("unsupported input representation")
-            brief = normalize_request(request, self.profiles, self.rules)
+            brief = self.contracts.normalize(request)
             run = run.updated(raw_input=None, request=brief.request, brief=brief)
+            if isinstance(brief, NormalizedBriefV2):
+                allocation = brief.execution
+                minimum_tokens = (2 * self.settings.max_input_tokens + allocation.planner_output_tokens
+                                  + allocation.writer_output_tokens)
+                minimum_cost = (self.pricing.reservation_cost(self.settings.max_input_tokens, allocation.planner_output_tokens)
+                                + self.writer_pricing.reservation_cost(self.settings.max_input_tokens, allocation.writer_output_tokens))
+                if minimum_tokens > self.limits.max_total_tokens or minimum_cost > self.limits.max_cost_usd:
+                    run = self._fail(run, "BUDGET_EXCEEDED")
         except NormalizationError as exc:
             run = run.updated(raw_input=None, status="failure", error=exc.error)
         except (ValueError, TypeError, RecursionError):
@@ -157,9 +179,10 @@ class StoryEngine:
         tokens_in = self.input_bound(request, schema, overhead)
         reserve_tokens = tokens_in + request.max_output_tokens
         reserve_cost = self._stage_pricing(request.stage).reservation_cost(tokens_in, request.max_output_tokens)
-        future_tokens = (self.settings.max_input_tokens + self.settings.writer_output_tokens
+        writer_output = self._output_limit(run, "writer")
+        future_tokens = (self.settings.max_input_tokens + writer_output
                          if request.stage == "planner" else 0)
-        future_cost = (self.writer_pricing.reservation_cost(self.settings.max_input_tokens, self.settings.writer_output_tokens)
+        future_cost = (self.writer_pricing.reservation_cost(self.settings.max_input_tokens, writer_output)
                        if request.stage == "planner" else 0.0)
         required_slots = 2 if request.stage == "planner" else 1
         if (tokens_in > self.settings.max_input_tokens
@@ -274,23 +297,23 @@ class StoryEngine:
 
     async def _planner(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
         run = self._refresh(state["run"].updated(stage="planner"))
-        request = build_request("planner", run.brief, self.settings.model_for("planner"), self.settings.planner_output_tokens,
+        request = self.contracts.build_prompt("planner", run.brief, self.settings.model_for("planner"), self._output_limit(run, "planner"),
                                 max(0.000001, run.remaining_seconds), schema_recovery=run.error is not None)
-        run, plan = await self._attempt(run, request, StoryPlan, runtime.context)
+        run, plan = await self._attempt(run, request, self.contracts.plan_schema, runtime.context)
         run = run.updated(plan=plan, error=None) if plan is not None else self._settle_failure(run)
         return self._publish(run, runtime.context)
 
     async def _writer(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
         run = self._refresh(state["run"].updated(stage="writer"))
         try:
-            request = build_request("writer", run.brief, self.settings.model_for("writer"), self.settings.writer_output_tokens,
+            request = self.contracts.build_prompt("writer", run.brief, self.settings.model_for("writer"), self._output_limit(run, "writer"),
                                     max(0.000001, run.remaining_seconds), plan=run.plan,
                                     draft=run.draft if run.rewrite_count else None,
                                     quality=run.quality if run.rewrite_count else None,
                                     schema_recovery=run.error is not None)
         except ValidationError:
             return self._publish(self._fail(run, "BUDGET_EXCEEDED"), runtime.context)
-        run, draft = await self._attempt(run, request, Story, runtime.context)
+        run, draft = await self._attempt(run, request, self.contracts.story_schema, runtime.context)
         run = run.updated(draft=draft, error=None) if draft is not None else self._settle_failure(run)
         return self._publish(run, runtime.context)
 
@@ -328,14 +351,14 @@ class StoryEngine:
     def _after_quality(state: GraphState) -> Literal["rewrite", "end"]:
         return "rewrite" if state["run"].status == "running" else "end"
 
-    async def generate(self, request: object, *, request_id: str | None = None) -> GenerationResult:
+    async def generate(self, request: object, *, request_id: str | None = None) -> GenerationResult | GenerationResultV2:
         started = self.clock()
         run = RunState(
             request_id=request_id or str(uuid4()), raw_input=request, started_at=started,
             deadline=started + self.settings.request_timeout_seconds,
             remaining_seconds=self.settings.request_timeout_seconds,
             remaining_tokens=self.limits.max_total_tokens, remaining_cost_usd=self.limits.max_cost_usd,
-            versions=(("profiles", self.profiles.version), ("quality", self.rules.version),
+            versions=(("profiles", self.contracts.profile_version), ("quality", quality_check_version(self.rules, self.contract_version)),
                       ("rubric", self.rules.rubric_version), ("pricing", self.pricing.version),
                       ("budget", self.limits.version),
                       ("writer_pricing", self.writer_pricing.version),
@@ -343,7 +366,8 @@ class StoryEngine:
                       ("token_bound", self.capabilities.token_bound_version if self.capabilities else self.limits.token_bound_version),
                       ("model_capabilities", self.capabilities.version if self.capabilities else "fake-v1"),
                       ("settings_schema", "settings-v1"),
-                      ("planner_prompt", PLANNER_VERSION), ("writer_prompt", WRITER_VERSION)),
+                      ("planner_prompt", self.contracts.planner_prompt_version),
+                      ("writer_prompt", self.contracts.writer_prompt_version)),
         )
         session = Session(run)
         try:
@@ -365,6 +389,7 @@ class StoryEngine:
         total = max(0.0, self.clock() - run.started_at + run.simulated_seconds)
         common = dict(request_id=run.request_id, usage=run.usage(), total_latency_seconds=total)
         if run.status == "success":
-            return GenerationSuccess(**common, story=run.draft, quality=run.quality)
+            extra = {"resolved_constraints": run.brief.constraints} if isinstance(run.brief, NormalizedBriefV2) else {}
+            return self.contracts.success_schema(**common, story=run.draft, quality=run.quality, **extra)
         return GenerationFailure(**common, error=run.error or _error("CONFIGURATION_ERROR", run.stage),
                                  quality=run.quality)

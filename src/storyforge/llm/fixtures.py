@@ -50,6 +50,13 @@ class LocalFixtureProvider:
         self, request: LLMRequest, output_schema: type[OutputT],
     ) -> ProviderSuccess[OutputT] | ProviderFailure:
         data = json.loads(request.input_json)
+        if data["brief"]["request"].get("schema_version") == "2":
+            from storyforge.domain.story_v2 import NormalizedBriefV2
+            from storyforge.llm.fixtures_v2 import fixture_steps_v2
+            brief = NormalizedBriefV2.model_validate_json(json.dumps(data["brief"], ensure_ascii=True))
+            steps = fixture_steps_v2(brief)
+            step = steps[0 if request.stage == "planner" else 1]
+            return await FakeProvider((step,), rules=self._rules).generate(request, output_schema)
         brief = NormalizedBrief.model_validate_json(json.dumps(data["brief"], ensure_ascii=True))
         steps = fixture_steps(brief)
         step = steps[0 if request.stage == "planner" else 1]
