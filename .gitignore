@@ -1,4 +1,6 @@
 .venv/
+.venv*/
+venv/
 .tools/
 __pycache__/
 .pytest_cache/
@@ -11,6 +13,8 @@ dist/
 !.env.template
 .mypy_cache/
 .ruff_cache/
+.cache/
+.hypothesis/
 .coverage
 htmlcov/
 *.pyc

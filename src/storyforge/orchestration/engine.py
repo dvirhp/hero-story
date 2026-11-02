@@ -131,7 +131,7 @@ class StoryEngine:
         if (tokens_in > self.settings.max_input_tokens
                 or run.attempts_used + required_slots > self.settings.max_attempts
                 or reserve_tokens + future_tokens > run.remaining_tokens
-                or reserve_cost + future_cost > run.remaining_cost_usd + 1e-12):
+                or reserve_cost + future_cost > run.remaining_cost_usd):
             return self._fail(run, "BUDGET_EXCEEDED"), None
         duration_limit = min(self.settings.attempt_timeout_seconds, run.remaining_seconds)
         request = LLMRequest.model_validate({**request.model_dump(), "remaining_seconds": duration_limit})
@@ -173,6 +173,12 @@ class StoryEngine:
                     payload = None
                 else:
                     payload.validate_for(run.brief)
+                    if (request.stage == "writer" and run.rewrite_count and run.draft is not None
+                            and tuple(page.page_id for page in payload.pages)
+                            != tuple(page.page_id for page in run.draft.pages)):
+                        raise ValueError("rewrite must preserve request-local page IDs")
+            if latency > duration_limit and error is None:
+                error, payload = _error("DEADLINE_EXCEEDED", request.stage, True), None
             if (usage.source != "unknown" and (usage.input_tokens > tokens_in
                     or usage.output_tokens > request.max_output_tokens)):
                 error, payload = _error("BUDGET_EXCEEDED", request.stage), None
@@ -295,6 +301,7 @@ class StoryEngine:
             versions=(("profiles", self.profiles.version), ("quality", self.rules.version),
                       ("rubric", self.rules.rubric_version), ("pricing", self.pricing.version),
                       ("budget", self.limits.version), ("token_bound", self.limits.token_bound_version),
+                      ("settings_schema", "settings-v1"),
                       ("planner_prompt", PLANNER_VERSION), ("writer_prompt", WRITER_VERSION)),
         )
         session = Session(run)

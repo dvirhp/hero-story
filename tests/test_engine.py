@@ -273,3 +273,163 @@ def test_environment_tracing_is_disabled(profiles, scenario, run_async, monkeypa
     result = run_async(StoryEngine(scripted(plan, story), profiles).generate(request))
     assert result.status == "success"
     assert not caplog.records
+
+
+@pytest.mark.parametrize("language,age", [("en", 0), ("he", 180)])
+def test_local_demo_is_offline_and_prints_no_story(run_async, language, age):
+    from storyforge.demo import run_demo
+    result = run_async(run_demo(language, age))
+    assert result["status"] == "success"
+    assert result["attempts"] == 2
+    assert "story" not in result
+
+
+def test_two_slot_setting_does_not_retry_planner(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    provider = FakeProvider(tuple(FakeStep(response_json=p) for p in ("{}", plan, story)))
+    settings = AppSettings(max_attempts=2, max_quality_rewrites=0)
+    result = run_async(StoryEngine(provider, profiles, settings=settings).generate(request))
+    assert result.error.code == "BUDGET_EXCEEDED"
+    assert len(provider.calls) == 1
+
+
+def test_retry_then_quality_failure_cannot_get_a_fourth_call(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    provider = FakeProvider(tuple(FakeStep(response_json=p) for p in ("{}", plan, story.replace('Or', 'Someone'), story)))
+    result = run_async(StoryEngine(provider, profiles).generate(request))
+    assert result.error.code == "QUALITY_REJECTED"
+    assert len(provider.calls) == 3
+
+
+def test_rewrite_preserves_page_ids(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    changed_ids = json.loads(story)
+    changed_ids["pages"][0]["page_id"] = "changed"
+    provider = FakeProvider(tuple(FakeStep(response_json=p) for p in (
+        plan, story.replace('Or', 'Someone'), json.dumps(changed_ids))))
+    result = run_async(StoryEngine(provider, profiles).generate(request))
+    assert result.status == "failure"
+    assert len(provider.calls) == 3
+    assert result.usage.attempts[-1].error.code == "PROVIDER_OUTPUT_INVALID"
+
+
+def test_profile_snapshot_survives_configuration_change_mid_run(profiles, scenario, run_async):
+    from storyforge.development.models import DevelopmentConfig
+    request, plan, story = scenario()
+    data = profiles.model_dump(mode="json")
+    data["version"] = "future-v2"
+    newer = DevelopmentConfig.model_validate_json(json.dumps(data))
+    class ChangingProvider(FakeProvider):
+        async def generate(self, request, output_schema):
+            engine.profiles = newer
+            return await super().generate(request, output_schema)
+    engine = StoryEngine(ChangingProvider((FakeStep(response_json=plan), FakeStep(response_json=story))), profiles)
+    result = run_async(engine.generate(request))
+    assert result.status == "success"
+    assert result.story.profile_version == profiles.version
+
+
+def test_sequential_calls_have_isolated_ledgers(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    provider = FakeProvider(tuple(FakeStep(response_json=p) for p in (plan, story, plan, story)))
+    engine = StoryEngine(provider, profiles)
+    first = run_async(engine.generate(request, request_id="first"))
+    second = run_async(engine.generate(request, request_id="second"))
+    assert first.status == second.status == "success"
+    assert [a.attempt_number for a in first.usage.attempts] == [1, 2]
+    assert [a.attempt_number for a in second.usage.attempts] == [1, 2]
+
+
+def test_per_attempt_timeout_recovers_when_overall_time_remains(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    provider = FakeProvider((FakeStep(response_json=plan, latency_seconds=31.0),
+                             FakeStep(response_json=plan), FakeStep(response_json=story)))
+    result = run_async(StoryEngine(provider, profiles, clock=lambda: 0.0).generate(request))
+    assert result.status == "success"
+    assert len(provider.calls) == 3
+    assert result.total_latency_seconds == 30.0
+    assert result.usage.attempts[0].error.code == "DEADLINE_EXCEEDED"
+
+
+def test_deadline_before_first_node_has_zero_calls(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    times = iter((0.0, 100.0))
+    def clock():
+        return next(times, 100.0)
+    provider = scripted(plan, story)
+    result = run_async(StoryEngine(provider, profiles, clock=clock).generate(request))
+    assert result.error.code == "DEADLINE_EXCEEDED"
+    assert not provider.calls
+
+
+def test_unexpected_provider_exception_is_terminal_and_sanitized(profiles, scenario, run_async):
+    request, _, _ = scenario()
+    class BrokenProvider:
+        async def generate(self, request, output_schema):
+            raise RuntimeError("private API diagnostic")
+    result = run_async(StoryEngine(BrokenProvider(), profiles).generate(request))
+    assert result.error.code == "CONFIGURATION_ERROR"
+    assert len(result.usage.attempts) == 1
+    assert "private API diagnostic" not in result.model_dump_json()
+
+
+def test_input_policy_rejection_zero_provider_calls(profiles, scenario, run_async):
+    request, plan, story = scenario()
+    raw = request.model_dump(mode="json")
+    raw["guidance"] = "Drink bleach now!"
+    provider = scripted(plan, story)
+    result = run_async(StoryEngine(provider, profiles).generate(raw))
+    assert result.error.code == "POLICY_REJECTED"
+    assert not provider.calls
+
+
+@pytest.mark.parametrize("stage", ["planner", "writer"])
+def test_profile_context_mismatch_recovery(profiles, scenario, run_async, stage):
+    request, plan, story = scenario()
+    bad = json.loads(plan if stage == "planner" else story)
+    if stage == "planner":
+        bad["protagonist"] = "Different"
+    else:
+        bad["profile_version"] = "Different"
+    script = (json.dumps(bad), plan, story) if stage == "planner" else (plan, json.dumps(bad), story)
+    provider = FakeProvider(tuple(FakeStep(response_json=p) for p in script))
+    result = run_async(StoryEngine(provider, profiles).generate(request))
+    assert result.status == "success"
+    assert len(provider.calls) == 3
+
+
+def test_custom_safety_rules_survive_adapter_schema_rejection(profiles, scenario, run_async):
+    from storyforge.quality.rules import QualityRules
+    rules = QualityRules(version="custom-v1", rubric_version="custom-language-v1",
+                         prohibited_directives=("Custom banned sentence",))
+    request, plan, story = scenario()
+    bad = json.loads(story)
+    bad.pop("title")
+    bad["pages"][0]["text"] = "Custom banned sentence."
+    provider = FakeProvider((FakeStep(response_json=plan), FakeStep(response_json=json.dumps(bad))), rules=rules)
+    result = run_async(StoryEngine(provider, profiles, rules=rules).generate(request))
+    assert result.error.code == "POLICY_REJECTED"
+    assert result.quality.check_version == rules.version
+    assert len(provider.calls) == 2
+
+
+def test_concurrent_runs_have_no_shared_state(profiles, scenario, run_async):
+    en, en_plan, en_story = scenario("en", 0)
+    he, he_plan, he_story = scenario("he", 180)
+    class RoutingFake:
+        calls = 0
+        async def generate(self, request, output_schema):
+            self.calls += 1
+            await asyncio.sleep(0)
+            lang = json.loads(request.input_json)["brief"]["request"]["language"]
+            raw = {("en", "planner"): en_plan, ("en", "writer"): en_story,
+                   ("he", "planner"): he_plan, ("he", "writer"): he_story}[(lang, request.stage)]
+            return await FakeProvider((FakeStep(response_json=raw),)).generate(request, output_schema)
+    provider = RoutingFake()
+    engine = StoryEngine(provider, profiles)
+    async def both():
+        return await asyncio.gather(engine.generate(en, request_id="en"), engine.generate(he, request_id="he"))
+    results = run_async(both())
+    assert provider.calls == 4
+    assert [result.story.language for result in results] == ["en", "he"]
+    assert all(len(result.usage.attempts) == 2 for result in results)

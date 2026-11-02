@@ -4,7 +4,7 @@ from typing import Literal, TypedDict
 
 from pydantic import Field, model_validator
 
-from storyforge.domain.base import Contract, Label, NonNegativeInt, Seconds
+from storyforge.domain.base import Contract, Label, Money, NonNegativeInt, Seconds
 from storyforge.domain.generation import AttemptRecord, GenerationError, QualityReport, Stage, UsageSummary
 from storyforge.domain.story import NormalizedBrief, Story, StoryPlan, StoryRequest
 
@@ -29,13 +29,19 @@ class RunState(Contract):
     simulated_seconds: Seconds = 0.0
     remaining_seconds: Seconds
     remaining_tokens: NonNegativeInt
-    remaining_cost_usd: Seconds
+    remaining_cost_usd: Money
     versions: tuple[tuple[str, str], ...]
 
     @model_validator(mode="after")
     def invariants(self) -> "RunState":
         if self.attempts_used != len(self.attempts) or len(self.token_reservations) != self.attempts_used:
             raise ValueError("attempt reservations and ledger must agree")
+        if tuple(a.attempt_number for a in self.attempts) != tuple(range(1, self.attempts_used + 1)):
+            raise ValueError("attempt records must be contiguous from one")
+        if self.plan is not None and self.brief is None:
+            raise ValueError("a plan requires a normalized brief")
+        if self.draft is not None and self.plan is None:
+            raise ValueError("a draft requires a validated plan")
         if self.attempts_used > 3 or self.rewrite_count > 1 or any(n < 0 for n in self.token_reservations):
             raise ValueError("execution bounds exceeded")
         if self.status == "success" and (self.draft is None or self.quality is None
