@@ -224,10 +224,13 @@ def test_actual_async_timeout_is_bounded(profiles, scenario, run_async):
     class WaitingProvider:
         async def generate(self, request, output_schema):
             await asyncio.Future()
-    settings = AppSettings(attempt_timeout_seconds=0.01, request_timeout_seconds=0.01)
+    # Allow graph startup separately from the deliberately short attempt timer.
+    settings = AppSettings(attempt_timeout_seconds=0.01, request_timeout_seconds=5.0,
+                           max_attempts=2, max_quality_rewrites=0)
     result = run_async(StoryEngine(WaitingProvider(), profiles, settings=settings).generate(request))
-    assert result.error.code == "DEADLINE_EXCEEDED"
+    assert result.error.code == "BUDGET_EXCEEDED"
     assert len(result.usage.attempts) == 1
+    assert result.usage.attempts[0].error.code == "DEADLINE_EXCEEDED"
 
 
 def test_transport_exception_retry_is_sanitized(profiles, scenario, run_async):
