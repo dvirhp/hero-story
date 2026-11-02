@@ -7,7 +7,7 @@ name = "storyforge-ai"
 version = "0.1.0"
 description = "Offline contracts and developmental profiles for a bilingual story engine"
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.12,<3"]
+dependencies = ["pydantic>=2.12,<3", "langgraph>=1,<2"]
 
 [dependency-groups]
 dev = ["pytest>=8.4,<10", "pytest-socket>=0.7,<1"]
