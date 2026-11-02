@@ -40,6 +40,22 @@ def _text_issues(text: str, rules: QualityRules, page: int | None = None) -> lis
     return issues
 
 
+def inspect_output_safety(candidate: object, rules: QualityRules = DEFAULT_RULES) -> tuple[QualityIssue, ...]:
+    """Sanitized pre-schema inspection for adapters; reuse the same narrow checks."""
+    raw = candidate
+    if isinstance(candidate, str):
+        try:
+            raw = json.loads(candidate)
+        except (ValueError, RecursionError):
+            pass
+    issues: list[QualityIssue] = []
+    for value in string_values(raw):
+        for issue in _text_issues(value, rules):
+            if issue not in issues:
+                issues.append(issue)
+    return tuple(issues)
+
+
 def assess_story(
     candidate: Story | str | Mapping[str, object], brief: NormalizedBrief,
     rules: QualityRules = DEFAULT_RULES,

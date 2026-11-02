@@ -7,7 +7,7 @@ import json
 from pydantic import BaseModel, Field, field_validator
 
 from storyforge.domain.base import Contract, Label, PositiveInt, Seconds, Text
-from storyforge.domain.generation import GenerationError, TokenUsage
+from storyforge.domain.generation import GenerationError, QualityReport, TokenUsage
 
 OutputT = TypeVar("OutputT", bound=BaseModel)
 
@@ -48,6 +48,7 @@ class ProviderFailure(Contract):
     error: GenerationError
     usage: TokenUsage
     latency_seconds: Seconds
+    quality: QualityReport | None = None
 
 
 class LLMProvider(Protocol):

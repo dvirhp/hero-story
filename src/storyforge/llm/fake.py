@@ -6,8 +6,10 @@ from typing import Annotated
 from pydantic import Field, ValidationError, model_validator
 
 from storyforge.domain.base import Contract, Seconds
-from storyforge.domain.generation import GenerationError, TokenUsage
+from storyforge.domain.generation import GenerationError, QualityReport, TokenUsage
 from storyforge.llm.protocol import LLMRequest, OutputT, ProviderFailure, ProviderSuccess
+from storyforge.quality.gate import inspect_output_safety
+from storyforge.quality.rules import DEFAULT_RULES, QualityRules
 
 
 class FakeStep(Contract):
@@ -26,9 +28,10 @@ class FakeStep(Contract):
 
 
 class FakeProvider:
-    def __init__(self, steps: tuple[FakeStep, ...]) -> None:
+    def __init__(self, steps: tuple[FakeStep, ...], *, rules: QualityRules = DEFAULT_RULES) -> None:
         self._steps = deque(steps)
         self._calls: list[LLMRequest] = []
+        self._rules = rules
 
     @property
     def calls(self) -> tuple[LLMRequest, ...]:
@@ -52,6 +55,13 @@ class FakeProvider:
             if step.error.stage != request.stage:
                 raise ValueError("scripted error stage must match requested stage")
             return ProviderFailure(**common, error=step.error)
+        issues = inspect_output_safety(step.response_json, self._rules)
+        if issues:
+            return ProviderFailure(**common, error=GenerationError(
+                code="POLICY_REJECTED", stage=request.stage, retryable=False,
+                message="Provider output contains prohibited content or controls"),
+                quality=QualityReport(passed=False, issues=issues,
+                                      check_version=self._rules.version, rubric_version=self._rules.rubric_version))
         try:
             payload = output_schema.model_validate_json(step.response_json, strict=True)
         except ValidationError:
