@@ -2,9 +2,10 @@
 
 ## Scope and authority
 
-- Milestones 1 and 2 are approved. Stop after Milestone 2; Milestone 3 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
+- Milestones 1–3 are approved. Stop after Milestone 3; Milestone 4 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
 - Read `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/AI_DESIGN.md`, and `docs/ROADMAP.md` before implementation. Mark new assumptions and open decisions; do not silently resolve product policy through code.
 - For implemented normalization and quality behavior, read `docs/VALIDATION_AND_QUALITY.md`. Insufficient script evidence is explicitly advisory; do not restore the superseded rejection policy or claim a language pass from missing evidence. Any terminal issue prevents automatic repair.
+- Read `docs/ORCHESTRATION.md` before changing execution. Use `StoryEngine.generate` for bounded public execution; do not bypass the ledger with direct graph/provider calls. Keep tracing and persistence disabled for child data.
 - Keep scope on the AI story engine. No frontend, database, RAG, microservices, dynamic supervisor, or extra agents without a justified requirement and approval.
 
 ## Coding conventions once approved
@@ -29,6 +30,8 @@
 - Paid calls require an explicitly opted-in run and configured cost limits; ordinary development and tests use a fake provider.
 
 ## Testing and completion
+
+- Inspect Git status before changes, preserve unrelated work and use a dedicated feature branch. Commit small independently working units after relevant tests pass; review staged content for secrets/generated files. Never invent an author identity, change credentials, create/push remotes or deploy without authorization. Use meaningful conventional commit messages; no empty commits.
 
 - Default command after setup: `python -m pytest`. Tests must work without API keys or network access; fake provider dependency injection is mandatory.
 - Test meaningful contract boundaries and graph paths, including Hebrew and English, budget exhaustion, retries, refusal, malformed output, deadlines, and sanitized failures.

@@ -1,6 +1,6 @@
 # StoryForge AI product specification
 
-Status: Milestones 1 and 2 approved; later milestones require separate approval. The five developmental profiles and hard page/word constraints are approved as provisional configuration, not validated developmental standards.
+Status: Milestones 1–3 approved; later milestones require separate approval. The five developmental profiles and hard page/word constraints are approved as provisional configuration, not validated developmental standards.
 
 ## Goal
 
@@ -71,7 +71,7 @@ Templates, freeform editing, illustrations, accounts, persistence, payments, pri
 
 ## Open decisions
 
-Milestone 2 implements pure normalization and deterministic quality assessment; see [implemented rules and limitations](VALIDATION_AND_QUALITY.md). Insufficient script evidence is an explicit non-blocking observation, including zero eligible letters. Overall deterministic acceptance is permitted if hard checks pass, without claiming language verification or safety. Story generation and HTTP behavior remain future work.
+Milestone 2 implements pure normalization and deterministic quality assessment; see [implemented rules and limitations](VALIDATION_AND_QUALITY.md). Insufficient script evidence is an explicit non-blocking observation, including zero eligible letters. Overall deterministic acceptance is permitted if hard checks pass, without claiming language verification or safety. Milestone 3 executes the bounded graph with scripted fake outputs only; real-model story generation and HTTP behavior remain future work.
 
 - Evaluate and refine the approved provisional band boundaries, page/word and sentence targets, repetition strategies, and language-specific overrides through Hebrew/English review and read-aloud evaluation.
 - Decide whether/where to split the open-ended older-child profile and whether to introduce an explicit upper audience age; no upper limit is assumed meanwhile.

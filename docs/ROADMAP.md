@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-Milestones 1 and 2 are approved and implemented. Milestone 3 and later await separate approval. Each should be a small reviewable change; no frontend or infrastructure work.
+Milestones 1–3 are approved and implemented. Milestone 4 and later await separate approval. Each should be a small reviewable change; no frontend or infrastructure work.
 
 | Milestone | Deliverables | Required validation |
 | --- | --- | --- |
@@ -17,9 +17,15 @@ Milestone 1 establishes typed contracts, separate declarative developmental conf
 
 ## Milestone 2 scope and stop boundary
 
-Pure request normalization, deterministic hard checks, non-blocking profile-aware observations and sanitized reports are implemented. All Milestone 1 tests remain unchanged. See [implemented policies](VALIDATION_AND_QUALITY.md), including advisory inconclusive script evidence rather than the superseded rejection proposal. No graph nodes/execution, prompts, HTTP endpoints, recovery execution or new dependencies were added. Model-specific capacity checks remain in the real adapter milestone. Stop here until Milestone 3 is approved.
+Pure request normalization, deterministic hard checks, non-blocking profile-aware observations and sanitized reports were implemented without changing Milestone 1 tests. See [implemented policies](VALIDATION_AND_QUALITY.md), including advisory inconclusive script evidence rather than the superseded rejection proposal. That milestone introduced no graph, prompts, HTTP endpoints or dependencies. Model-specific capacity checks remain in the real adapter milestone.
 
 Verification: 270 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3, including the original 115 tests. The two new test modules contain 155 normalization/quality cases; all run offline.
+
+## Milestone 3 scope and stop boundary
+
+Implemented: one compiled four-node LangGraph, typed immutable state and request-local journal, language-aware versioned prompts, shared three-attempt limit, one quality rewrite, conditional schema/transport recovery, time/token/cost reservations, unknown usage accounting and cancellation. Existing 270 tests are preserved. An optional sanitized quality report on provider failures closes the malformed-output safety gap without returning raw responses. See [execution and Git workflow](ORCHESTRATION.md). No real provider, HTTP endpoint, remote Git repository, push or deployment is included. Stop until Milestone 4 is approved.
+
+Verification: 330 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3; wheel and source distribution builds passed. The original 270 tests are unchanged; 60 new cases cover execution/foundation behavior.
 
 ## Proposed offline test matrix
 

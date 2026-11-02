@@ -28,7 +28,7 @@ Milestone 2 supersedes the proposed insufficient-evidence rejection: below the c
 
 Classify issues as repairable (length, obvious language mismatch, missing personalization) or terminal (unsafe content). Unsafe input/output and provider safety refusals terminate without repair. Never accept a draft with outstanding hard failures. Quality rules and thresholds are versioned and exercised on both accepted and rejected fixtures.
 
-The pure Milestone 2 implementation and exact limitations are documented in [Validation and Quality](VALIDATION_AND_QUALITY.md). It uses narrow whole-sentence directive matches instead of broad keyword bans, has no moderation service or LLM judge, preserves text and reports soft observations without inferring semantic or developmental correctness. Graph routing, provider refusals and automated rewrites in this design remain unimplemented until their milestones.
+The pure Milestone 2 implementation and exact limitations are documented in [Validation and Quality](VALIDATION_AND_QUALITY.md). It uses narrow whole-sentence directive matches instead of broad keyword bans, has no moderation service or LLM judge, preserves text and reports soft observations without inferring semantic or developmental correctness. Milestone 3 implements graph routing, scripted provider refusals and bounded rewrites; see [Orchestration](ORCHESTRATION.md).
 
 ## Cost, attempts, and time
 
@@ -49,6 +49,8 @@ Before each invocation, reserve a conservative input/output cost bound and a cal
 Output caps are technical starting ceilings, not word targets. Optional smaller per-profile caps must remain sufficient for structured output in both languages. Validate profile lengths against model/context and cost capacity at startup; profile configuration cannot increase the three-attempt maximum or bypass budget checks.
 
 Record provider-reported input/output tokens when present, including cached/reasoning tokens if applicable, and price using a versioned configured rate table. Do not double-count token categories. Record monotonic call duration and total end-to-end latency, including retries and local work. Distinguish reported usage from estimates. Failed attempts with unavailable usage remain unknown, never zero: retain their conservative reservation and expose known cost plus an upper estimate. Pricing estimates are not billing guarantees.
+
+Milestone 3 uses only fake pricing (`fake-zero-v1` by default; optional explicitly synthetic test rates) and a versioned UTF-8-byte input reservation policy, including schema overhead. Aggregate default capacity is 33,000 reservation units. Known usage/cap overruns fail; unknown usage retains the entire conservative reservation. This is not a real tokenizer or billing guarantee. A planner reservation must leave worst-case writer capacity in attempts/tokens/cost. Synthetic latency advances the effective deadline without sleeping; wall-clock timeouts still guard cooperative waits. Real tokenizer, cached/reasoning token categories, Retry-After metadata, pricing validation and spend approval remain Milestone 5. See [implemented limits](ORCHESTRATION.md).
 
 ## Failure handling
 

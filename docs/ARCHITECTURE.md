@@ -1,10 +1,10 @@
 # Architecture
 
-Status: proposed. A single Python 3.12+ service with FastAPI and one compiled LangGraph `StateGraph`. No dynamic supervisor.
+Status: Milestones 1–3 implemented; the FastAPI service remains Milestone 4. One compiled LangGraph `StateGraph`, no dynamic supervisor. See [actual orchestration behavior](ORCHESTRATION.md).
 
 ## Boundaries
 
-Target package layout (Milestones 1–2 implement domain, development, settings, offline LLM, normalization and quality modules; API, orchestration and prompts remain future work):
+Target package layout (Milestones 1–3 implement all boundaries below except API and real-provider adapters):
 
 | Location | Responsibility |
 | --- | --- |
@@ -56,6 +56,8 @@ flowchart TD
 ```
 
 Each node has one routing function with explicit destination literals. Retry and rewrite edges share the same budget; no independent nested retry loops. Quality Gate is deterministic in MVP and makes no LLM calls. A graph recursion limit is a secondary safeguard, not the business call counter.
+
+The implemented graph uses immutable Pydantic `RunState` under a typed `GraphState` and request-local `Session` journaling of pre-await reservations. Only planner/writer call the asynchronous provider. Explicit LangGraph retry policies permit one node attempt; retries occur solely on conditional graph edges. No checkpointer is configured. The public wrapper handles cancellation, deadlines and safe result conversion without exposing internal drafts. Full state, budget, prompt and failure details are in [ORCHESTRATION.md](ORCHESTRATION.md).
 
 ## Typed contracts
 

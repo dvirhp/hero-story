@@ -2,7 +2,7 @@
 
 A personalized children's story engine supporting Hebrew and English from birth. Age uses strict nonnegative integer `age_months`, including newborns at zero; no upper age cutoff is imposed.
 
-**Milestones 1 and 2 are implemented: offline foundation, normalization and deterministic quality rules.** There is no runnable server, graph, story-generation pipeline or real provider integration. Milestone 3 and later require approval.
+**Milestones 1–3 are implemented: offline contracts, validation/quality rules and bounded LangGraph execution.** There is no HTTP server or real provider integration. Milestone 4 and later require approval.
 
 ## Implemented foundation
 
@@ -14,8 +14,9 @@ A personalized children's story engine supporting Hebrew and English from birth.
 - Offline pytest tests with network sockets blocked during tests. Windows asyncio's internal loop socket pair is created before per-test guards; provider execution remains guarded.
 - Pure `normalize_request` resolves an immutable brief from a validated request and rejects prohibited controls/directives without rewriting names, Unicode or pronouns.
 - Pure `assess_story` checks schema, metadata, personalization, profile lengths, controls, coarse script evidence and narrow dangerous directives. Existing `QualityReport` distinguishes repairable/terminal failures from advisory observations.
+- One compiled four-node LangGraph with typed immutable state, versioned language-aware prompts, shared attempt/token/cost reservations, conditional recovery, cancellation and timeout handling. Only planner/writer invoke the fake provider.
 
-Domain models and adapters do not depend on provider SDKs, FastAPI or LangGraph. Framework integrations arrive in their approved milestones. `Story.validate_for(brief)` checks structural/length constraints only; it is not a quality or safety gate. Fake scripts are fixtures, not generated stories. The fake records synthetic latency and supplied usage; it does not tokenize, sleep, retry or enforce the future orchestrator's aggregate budget.
+Domain models and adapters do not depend on provider SDKs, FastAPI or LangGraph. The orchestration package owns the LangGraph dependency. `Story.validate_for(brief)` checks structural/length constraints only; it is not a quality or safety gate. Fake scripts are fixtures, not generated literature. The fake supplies scripted usage/latency and does not retry; the engine enforces the shared budgets. An optional sanitized quality report on provider failures preserves terminal safety findings from schema-invalid outputs without retaining raw responses.
 
 `assess_story` accepts a `Story`, raw JSON or JSON-compatible mapping and returns sanitized issues without draft text. A passing report means only that the configured deterministic hard checks passed. Fewer than 20 eligible body letters (configurable), including zero, produces an explicit non-blocking `LANGUAGE_EVIDENCE_INCONCLUSIVE`; it does not establish the story's language. With enough evidence, the default target-script minimum is 80%. Short baby refrains and intentional repetition are allowed. Soft sentence/vocabulary measurements do not prove developmental fit; narrow directive matching does not prove safety. See [implemented behavior, issue codes and limitations](docs/VALIDATION_AND_QUALITY.md).
 
@@ -48,6 +49,25 @@ Milestone 1 verification: **115 passed, 0 failed** on Windows with Python 3.12.1
 
 Milestone 2 verification: **270 passed, 0 failed**, including the unchanged 115 Milestone 1 tests, on Windows with Python 3.12.16 and 3.13.3. No dependencies were added; pure validation/assessment tests make no provider calls, require no credentials and run with network sockets blocked.
 
+Milestone 3 adds LangGraph and 60 execution/foundation cases, preserving all 270 earlier tests. **330 passed, 0 failed** on Windows/Python 3.12.16 and 3.13.3. Wheel/source builds passed. The complete suite remains offline; no real LLM provider SDK or credentials are used.
+
+## Local fake generation
+
+```powershell
+.\.venv\Scripts\python.exe -m storyforge.demo --language he --age-months 0
+.\.venv\Scripts\python.exe -m storyforge.demo --language en --age-months 180
+```
+
+The demo creates synthetic fixtures, runs the graph and prints metadata only. Normal success uses two provider attempts; all retries and the single allowed quality rewrite share a maximum of three. A planner retry must leave a writer slot. Terminal safety findings never trigger a rewrite. Failed/unapproved drafts are never returned.
+
+Default time limits: 30 seconds per attempt and 90 overall. Token caps are 8,000 input / 1,200 planner output / 3,000 writer output. Fake budget defaults use 33,000 aggregate reservation units, a documented UTF-8-byte input bound and a zero synthetic tariff; they do not establish real token counts or pricing. Unknown usage remains unknown with conservative reservations held. Real pricing, model capacity and tokenizer validation remain Milestone 5. Full state, recovery and cancellation policies are in [ORCHESTRATION.md](docs/ORCHESTRATION.md).
+
+For Python 3.12 verification without changing `.venv`:
+
+```powershell
+.\.tools\Scripts\uv.exe run --python 3.12 --isolated --locked python -m pytest -q
+```
+
 Build an installable wheel and source distribution:
 
 ```powershell
@@ -66,13 +86,19 @@ Deliberate dependency updates use `uv.exe lock --upgrade` followed by lockfile r
 | `src/storyforge/llm/` | Async typed protocol, success/failure contracts and scripted fake |
 | `src/storyforge/validation/` | Pure normalization, input policy checks and sanitized errors |
 | `src/storyforge/quality/` | Versioned configurable rules, Unicode/text helpers and deterministic quality assessment |
-| `tests/` | Existing 115 foundation cases plus normalization, bilingual hard/soft checks, controls, directives and inconclusive evidence |
+| `src/storyforge/orchestration/` | Compiled graph, typed state, request-local attempt journal and synthetic budget accounting |
+| `src/storyforge/prompts/` | Versioned planner/writer instructions and serialized untrusted data |
+| `src/storyforge/demo.py` | Offline fixture-generation command; prints metadata only |
+| `tests/` | Original 270 tests plus bounded execution, deadlines, cancellation, budgets and recovery |
 
 - [Product scope and acceptance criteria](docs/PRODUCT_SPEC.md)
 - [Architecture and contracts](docs/ARCHITECTURE.md)
 - [AI strategy and budgets](docs/AI_DESIGN.md)
 - [Roadmap and offline test matrix](docs/ROADMAP.md)
 - [Implemented validation and quality policies](docs/VALIDATION_AND_QUALITY.md)
+- [Implemented orchestration and Git workflow](docs/ORCHESTRATION.md)
 - [Coding agent rules](AGENTS.md)
 
-Future flow: Input Validation -> Story Planner -> Story Writer -> Quality Gate. No supervisor, database, frontend, RAG, Docker or real provider is included. Next is Milestone 3's bounded LangGraph engine, only after approval. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, pricing ceiling and human evaluation/release criteria remain open.
+Implemented flow: Input Validation -> Story Planner -> Story Writer -> Quality Gate, with bounded conditional recovery. No supervisor, database, frontend, RAG, Docker or real provider is included. Next is Milestone 4's FastAPI boundary, only after approval. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, real pricing ceiling and human evaluation/release criteria remain open.
+
+Git work is local on `feature/milestone-3-langgraph`. Use small tested commits; inspect `git status` and staged diffs before committing. Existing author/credential settings are preserved. No remote, push or deployment is configured or authorized. Generated ZIPs under `new/`, environments, secrets, caches and builds are ignored.

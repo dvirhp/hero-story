@@ -1,6 +1,6 @@
 # Implemented validation and quality rules (Milestone 2)
 
-Milestone 2 is implemented with no new dependencies, provider calls, graph nodes or HTTP endpoints. The Milestone 1 contracts and five developmental profiles remain unchanged. All values below are configurable product heuristics, not validated developmental standards.
+Milestone 2 introduced pure validation and quality functions with no provider calls or graph dependencies. Milestone 3 composes them in a bounded graph without changing these quality policies; see [Orchestration](ORCHESTRATION.md). The five developmental profiles remain unchanged. All values below are configurable product heuristics, not validated developmental standards.
 
 ## Interfaces
 
@@ -71,4 +71,4 @@ No plot, rhyme, grammar, word-complexity or semantic-coherence requirement is in
 
 The default offline suite retains all 115 Milestone 1 tests. New tests cover normalization, all five profiles and exact boundaries in both languages, niqqud, metadata, page/word boundaries, safe reporting, script thresholds, inconclusive evidence, forbidden controls, narrow directive matching and soft/hard classifications. Network sockets remain blocked during test execution; neither module imports a provider.
 
-Open: bilingual threshold calibration and human release policy, reviewed expansion of safety patterns, heuristic sentence segmentation, pronoun presets/grammatical evaluation, older-child profile refinement, and human evaluation criteria. No Milestone 3 graph or recovery execution is included.
+Open: bilingual threshold calibration and human release policy, reviewed expansion of safety patterns, heuristic sentence segmentation, pronoun presets/grammatical evaluation, older-child profile refinement, and human evaluation criteria. Graph/recovery execution is isolated in Milestone 3's orchestration layer; these functions remain provider-independent. `inspect_output_safety` reuses the same narrow pre-schema checks to produce sanitized terminal issues for adapters without retaining raw malformed responses.
