@@ -1,5 +1,7 @@
 # Proposed second Gemini test: רועי וגיבורי ממלכת האותיות
 
+> Superseded implementation approach: use [explicit-length v2](../../PAGE_COUNT_V2.md) and its v2 request/runtime. The age-profile override and v1 request here remain historical planning artifacts; do not use them for the new test. No new live request is approved.
+
 **Status: preparation only; not ready to execute through the default configured API.** No second live request, credential read, billing change, application-code change or Milestone 7 work was performed. The first newborn smoke test's configuration and packaged profiles remain unchanged.
 
 ## Prepared files

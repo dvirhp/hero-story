@@ -5,6 +5,7 @@
 - Milestones 1 through 6 are approved. Stop after Milestone 6; Milestone 7 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
 - Read `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/AI_DESIGN.md`, and `docs/ROADMAP.md` before implementation. Mark new assumptions and open decisions; do not silently resolve product policy through code.
 - For implemented normalization and quality behavior, read `docs/VALIDATION_AND_QUALITY.md`. Insufficient script evidence is explicitly advisory; do not restore the superseded rejection policy or claim a language pass from missing evidence. Any terminal issue prevents automatic repair.
+- Read `docs/PAGE_COUNT_V2.md` for the approved explicit-length follow-up and v1 migration boundary. V2 must not derive book length from age; do not silently clamp requests or implement automatic length selection.
 - Read `docs/ORCHESTRATION.md` before changing execution. Use `StoryEngine.generate` for bounded public execution; do not bypass the ledger with direct graph/provider calls. Keep tracing and persistence disabled for child data.
 - Read `docs/API.md` before changing HTTP behavior. Preserve `/v1/stories/generate`, strict JSON-mode domain validation, sanitized failure envelopes and request-local cancellation cleanup. Do not duplicate engine rules, expose validation inputs or enable access logging of private URLs by default.
 - Keep scope on the AI story engine. No frontend, database, RAG, microservices, dynamic supervisor, or extra agents without a justified requirement and approval.
@@ -19,7 +20,7 @@
 - Keep prompt/rubric/schema/pricing versions visible in generation metadata. Preserve Unicode and Hebrew logical order; do not infer gender or translate user names.
 - Represent age exclusively as strict nonnegative integer `age_months`, including newborns at zero. Do not introduce an upper age limit without an explicit product decision.
 - Keep versioned developmental bands and language-specific strategies/targets in separate declarative configuration with a pure resolver, outside LLM orchestration. Validate continuous coverage from zero to an open-ended final band; snapshot the selected profile for each request.
-- Derive plan structure, page counts, word constraints, repetition and vocabulary guidance from that profile. Never impose a universal six-beat plot or 30–60 words/page. Baby profiles prioritize adult read-aloud; age alone does not establish independent-reading ability.
+- Preserve age-owned page counts only in the deprecated v1 path. V2 requires explicit user page_count, configurable service limits and ordered educational targets; age profiles own language, narrative strategy and density, never book length. Derive word constraints, repetition and vocabulary guidance from the selected profile. Never impose a universal six-beat plot or 30–60 words/page. Baby profiles prioritize adult read-aloud; age alone does not establish independent-reading ability.
 - Treat developmental and length targets as initial product hypotheses, not scientifically validated standards. Distinguish configurable hard output checks from soft sentence/vocabulary evaluation guidance.
 
 ## LLM and privacy rules
@@ -37,6 +38,7 @@
 - Default command after setup: `python -m pytest`. Tests must work without API keys or network access; fake provider dependency injection is mandatory.
 - Test meaningful contract boundaries and graph paths, including Hebrew and English, budget exhaustion, retries, refusal, malformed output, deadlines, and sanitized failures.
 - Cover newborns, infants, toddlers, preschool and older children in both languages, strict age validation, exact month boundaries, open-ended coverage, plot-free baby stories, profile-specific lengths and configuration changes without graph edits. Use the offline matrix in `docs/ROADMAP.md`.
+- For v2, cross ages and languages with user-selected page counts, ordered educational targets, density choices, malformed/incomplete books and admission failures. Roy's 27-page Hebrew alphabet request is a general contract acceptance fixture; do not hardcode it in graph logic or claim synthetic fixture text proves educational quality.
 - Mock provider transports for adapter tests. Mark live evaluation separately, exclude it from the default run, and document its budget and prerequisites.
 - Run relevant checks for each change; explain what changed, what passed, and remaining limitations. Keep docs aligned with behavior and public contracts.
 - Do not add speculative infrastructure or tests that merely duplicate implementation details. Do not claim deterministic checks prove literary quality, fluency, or complete safety.

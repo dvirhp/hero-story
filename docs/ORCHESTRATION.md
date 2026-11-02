@@ -1,6 +1,7 @@
 # Bounded LangGraph execution (Milestone 3)
 
-> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 
 Milestone 3 is implemented with one compiled `StateGraph`, four named nodes and explicit conditional edges. The supported engine entry point is `await StoryEngine(...).generate(request)`. Milestone 4 adds a thin [HTTP application](API.md) around this entry point without changing execution policy. No persistence, checkpoint store, real LLM SDK or remote runtime exists. Framework dependencies include LangGraph's transitive client/checkpoint packages; they are not used to contact or store anything.
 

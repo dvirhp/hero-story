@@ -1,5 +1,7 @@
 # Provider and worldwide-language architecture review
 
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 Decision: no major graph or domain redesign is needed. Keep the four nodes, typed outputs and shared request budget. Milestone 5 implements OpenAI; Milestone 6 adds Gemini and preserves all preceding work. The long-term product requirement now covers worldwide languages and comparison of OpenAI, Gemini, Claude and potentially others. That requirement is not a claim of current support.
 
 ## Provider extension

@@ -1,5 +1,7 @@
 # Gemini integration and proposed first live smoke test
 
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 Milestone 6 implements Gemini only. Fake remains the default; OpenAI is preserved. No live API request was made. Neither Claude nor additional languages is implemented. The long-term worldwide-language requirement remains in [EXTENSIBILITY.md](EXTENSIBILITY.md).
 
 ## Adapter and composition

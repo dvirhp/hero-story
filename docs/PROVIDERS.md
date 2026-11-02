@@ -1,5 +1,7 @@
 # Providers and explicit configuration
 
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 
 Milestone 6 adds Gemini through the same configured factory, preserving OpenAI behavior. Runtime JSON `settings.provider` selects the backend; both stages use that provider with independent model IDs. See [Gemini configuration and live-test proposal](GEMINI.md). The OpenAI-specific schema/error examples below retain their original meaning.
 

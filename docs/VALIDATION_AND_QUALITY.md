@@ -1,5 +1,7 @@
 # Implemented validation and quality rules (Milestone 2)
 
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 Milestone 2 introduced pure validation and quality functions with no provider calls or graph dependencies. Milestone 3 composes them in a bounded graph without changing these quality policies; see [Orchestration](ORCHESTRATION.md). The five developmental profiles remain unchanged. All values below are configurable product heuristics, not validated developmental standards.
 
 ## Interfaces

@@ -1,6 +1,7 @@
 # Local FastAPI application (Milestone 4)
 
-> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
+
 
 Milestone 4 wraps the existing bounded engine. Default output is **synthetic fixture text**, not creative AI-generated literature. The default factory needs no API key. Milestone 5 adds a separate explicitly configured OpenAI factory; database, hosting and authentication remain out of scope.
 

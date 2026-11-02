@@ -1,5 +1,7 @@
 ﻿# StoryForge AI
 
+The approved page-count follow-up is implemented: `/v2/stories/generate` requires user-selected `page_count`; age determines content guidance and density. `/v1` remains deprecated with unchanged behavior. See [v2 contracts, migration, Roy acceptance and live prerequisites](docs/PAGE_COUNT_V2.md). No further live request is approved or executed; stop before Milestone 7.
+
 A personalized children's story engine supporting Hebrew and English from birth. Age uses strict nonnegative integer `age_months`, including newborns at zero; no upper age cutoff is imposed.
 
 **Milestones 1 through 6 are implemented**, including offline-tested OpenAI and Gemini adapters. Default HTTP generation uses synthetic fixture text. Stop before Milestone 7. Worldwide languages and provider comparison are long-term requirements; only Hebrew and English are executable today.
@@ -7,13 +9,13 @@ A personalized children's story engine supporting Hebrew and English from birth.
 ## Implemented foundation
 
 - Python 3.12+ package with strict, immutable Pydantic v2 contracts for requests, briefs, plans, stories, results, quality reports and usage records.
-- Five provisional bands in [profiles.v1.json](src/storyforge/development/profiles.v1.json), validated for continuous coverage from zero through an open-ended older-child band. Hebrew/English requirements can be configured independently.
+- Five provisional bands in [profiles.v2.json](src/storyforge/development/profiles.v2.json), with [v1 data](src/storyforge/development/profiles.v1.json) retained for legacy requests, validated for continuous coverage from zero through an open-ended older-child band. Hebrew/English requirements can be configured independently.
 - Pure age/language resolver and immutable profile snapshots. Page/word limits are hard structural checks; sentence length, vocabulary, repetition and developmental guidance are soft product hypotheses, not scientific standards.
 - Language-tagged explicit pronoun forms and agreement. Absence never infers gender from a name. Curated presets and broader Hebrew agreement support remain open.
 - Validated offline settings, asynchronous provider protocol and deterministic scripted fake supporting success, malformed output, refusals, transient errors, unknown usage and simulated timeouts.
 - Offline pytest tests with network sockets blocked during tests. Windows asyncio's internal loop socket pair is created before per-test guards; provider execution remains guarded.
 - Pure `normalize_request` resolves an immutable brief from a validated request and rejects prohibited controls/directives without rewriting names, Unicode or pronouns.
-- Pure `assess_story` checks schema, metadata, personalization, profile lengths, controls, coarse script evidence and narrow dangerous directives. Existing `QualityReport` distinguishes repairable/terminal failures from advisory observations.
+- Pure `assess_story` checks schema, metadata, personalization, requested length and selected density (legacy: profile lengths), controls, coarse script evidence and narrow dangerous directives. Existing `QualityReport` distinguishes repairable/terminal failures from advisory observations.
 - One compiled four-node LangGraph with typed immutable state, versioned language-aware prompts, shared attempt/token/cost reservations, conditional recovery, cancellation and timeout handling. Only planner/writer invoke the configured provider.
 - A FastAPI factory with lifespan configuration, async dependency injection, health and generation endpoints, sanitized errors and request-scoped cancellation cleanup. No provider calls occur at import/startup.
 
@@ -68,6 +70,10 @@ In a second PowerShell window at the repository root:
 Start-Process 'http://127.0.0.1:8000/docs'
 Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health'
 
+$v2Body = @{ schema_version = '2'; language = 'en'; display_name = 'Or'; age_months = 0; theme = 'Gentle moonlight'; page_count = 4; story_type = 'bedtime'; text_density = 'light' } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/v2/stories/generate' -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($v2Body))
+
+# Deprecated v1 compatibility examples:
 $heBody = Get-Content -Raw -Encoding UTF8 .\docs\examples\story-request.he.json
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/v1/stories/generate' -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($heBody))
 
@@ -153,3 +159,14 @@ See [Gemini setup, error/accounting policies and the proposed live smoke test](d
 Milestone 6 verification: **541 passed, 0 failed** on Python 3.12.16 and 3.13.3, preserving all 450 existing tests. Source/wheel builds and the full installed-wheel suite passed. See the [completion report](docs/MILESTONE_6.md) for modules, exact commands, Git commits, live proposal and remaining decisions.
 
 For a locally stored Gemini key, the configured server supports explicit `--env-file .env` loading; default startup still does not discover `.env`. See [offline preflight results and the approval-gated live commands](docs/GEMINI_PREFLIGHT.md). `python-dotenv` is included in the locked setup. Do not run the live POST before approval.
+
+## V2 offline verification
+
+Current verification: **750 passed, 0 failed** on Python 3.13.3 and Python 3.12.16 (installed wheel), preserving all 544 preceding tests. Wheel/source builds passed. See [changed files and completion report](docs/PAGE_COUNT_V2_COMPLETION.md).
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_v2_contracts.py tests/test_v2_execution.py tests/test_v2_providers.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_v2_providers.py::test_roy_configuration_and_worst_case_recovery_budget -q
+```
+
+Both commands are offline. The Roy request and proposed runtime are linked in [PAGE_COUNT_V2.md](docs/PAGE_COUNT_V2.md). The ordinary fake server retains small default capacities; it may reject long books instead of raising its limits. Roy uses an explicit isolated configuration in tests. Live use requires fresh approval and current metadata verification; the $0.075 proposal does not modify the original newborn $0.015 configuration. The v1 HTTP examples and demo above retain their legacy behavior.

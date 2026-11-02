@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
+> Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
 
 Milestones 1 through 6 are approved and implemented. Milestone 7 and subsequent proposals require separate approval. No frontend or infrastructure work.
 
@@ -35,7 +35,7 @@ Implemented: a FastAPI application factory, lifespan configuration, async depend
 
 Verification: 393 passed, 0 failed on Windows/Python 3.12.16 and 3.13.3, with 63 new cases and the original 330 unchanged; wheel/source builds and an isolated installed-wheel API smoke check passed.
 
-## Proposed offline test matrix
+## Legacy v1 offline test matrix (historical)
 
 Run story/profile fixtures for both `he` and `en`; pure normalization/quality fixtures need no provider. A scripted fake is reserved for provider/graph paths in their milestones. No credentials or network are needed. Use the Product Spec's proposed configuration as a replaceable test fixture, not scientific ground truth.
 
@@ -78,3 +78,12 @@ OpenAI Responses adapter, strict schema projection, explicit opt-in configuratio
 ## Milestone 6 scope and stop boundary
 
 The official async Gemini SDK adapter, strict schema projection, normalized usage/errors, separate stage models/pricing and safe configured factory are implemented. SDK HTTP retries, automatic continuation and automatic tools are disabled. All original 450 tests are unchanged; 541 pass on Python 3.12.16 and 3.13.3 and against the installed wheel. Source/wheel builds pass. A synthetic newborn live smoke proposal with exact commands and cost estimates is prepared but not executed. See [completion report](MILESTONE_6.md) and [Gemini reference](GEMINI.md). No live call, additional language or Claude is implemented by implication. Stop before Milestone 7.
+
+## Approved Milestone 6 follow-up: explicit-length v2
+
+1. Versioned contracts and pure normalization: explicit pages, separate developmental density snapshots, configurable service bounds and typed ordered targets. Tests cover strict input, both languages, all age boundaries, open-ended coverage, invalid configuration, densities and admission without clamping.
+2. Shared graph and prompts: select v2 contracts at composition, plan/write exactly N pages, preserve target order and page IDs, add age-aware repetition/variety. Test 1/6/27/32 pages across all five bands and both languages, schema recovery, quality repair, terminal refusal/safety, cancellation, deadline and budget failure.
+3. HTTP migration: add explicit-length `/v2/stories/generate`; keep deprecated v1 and all existing tests unchanged. Test missing count, JSON arrays, accepted response shape, response correlation and compatibility.
+4. Acceptance and documentation: Roy's 27-target Hebrew fixture/request, generic English learning concepts, both real adapters over mocked transports, pure proposed-runtime preflight and migration/live requirements. Run complete offline suites on Python 3.12/3.13 and build distributions.
+
+These slices are the authorized page-count follow-up, not Milestone 7. Density/sizing values are provisional hypotheses. Fake acceptance establishes contracts only; a paid Roy test requires separate approval of request, explicit pronouns, current model metadata and isolated budget. Automatic page selection, Claude, additional languages and evaluation rollout remain unimplemented. See [current design and limitations](PAGE_COUNT_V2.md).
