@@ -436,3 +436,32 @@ def test_concurrent_runs_have_no_shared_state(profiles, scenario, run_async):
     assert provider.calls == 4
     assert [result.story.language for result in results] == ["en", "he"]
     assert all(len(result.usage.attempts) == 2 for result in results)
+
+
+def test_terminal_quality_issue_overrides_repairable_issue(profiles, scenario, run_async, monkeypatch):
+    import storyforge.orchestration.engine as engine_module
+    from storyforge.domain.generation import QualityIssue, QualityReport
+    request, plan, story = scenario()
+    provider = scripted(plan, story)
+    report = QualityReport(passed=False, check_version="quality-v1", rubric_version="language-v1", issues=(
+        QualityIssue(code="PAGE_WORD_COUNT", severity="repairable", guidance="Adjust length"),
+        QualityIssue(code="PROHIBITED_CONTENT", severity="terminal", guidance="Reject this draft"),
+    ))
+    monkeypatch.setattr(engine_module, "assess_story", lambda *args: report)
+    result = run_async(StoryEngine(provider, profiles).generate(request))
+    assert result.error.code == "QUALITY_REJECTED"
+    assert result.quality == report
+    assert len(provider.calls) == 2
+    assert "story" not in result.model_dump()
+
+
+def test_overall_wall_deadline_guards_stalled_graph(profiles, scenario, run_async, monkeypatch):
+    request, _, _ = scenario()
+    engine = StoryEngine(FakeProvider(()), profiles,
+                         settings=AppSettings(attempt_timeout_seconds=0.01, request_timeout_seconds=0.01))
+    async def stalled(*args, **kwargs):
+        await asyncio.Future()
+    monkeypatch.setattr(engine.graph, "ainvoke", stalled)
+    result = run_async(engine.generate(request))
+    assert result.error.code == "DEADLINE_EXCEEDED"
+    assert result.usage.attempts == ()
