@@ -49,6 +49,7 @@ class ProviderFailure(Contract):
     usage: TokenUsage
     latency_seconds: Seconds
     quality: QualityReport | None = None
+    retry_after_seconds: Seconds | None = None
 
 
 class LLMProvider(Protocol):

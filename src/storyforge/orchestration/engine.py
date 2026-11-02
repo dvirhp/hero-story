@@ -3,7 +3,7 @@
 import asyncio
 import json
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Literal
 from uuid import uuid4
@@ -23,7 +23,8 @@ from storyforge.domain.generation import (
 )
 from storyforge.domain.story import Story, StoryPlan, StoryRequest
 from storyforge.llm.protocol import LLMProvider, LLMRequest, ProviderFailure
-from storyforge.orchestration.budget import BudgetLimits, FakePricing, input_token_bound
+from storyforge.llm.configuration import ModelCapabilities
+from storyforge.orchestration.budget import BudgetLimits, FakePricing, ModelPricing, input_token_bound, openai_input_bound
 from storyforge.orchestration.state import GraphState, RunState
 from storyforge.prompts.builders import PLANNER_VERSION, WRITER_VERSION, build_request
 from storyforge.quality.gate import assess_story, inspect_output_safety
@@ -57,11 +58,23 @@ class StoryEngine:
     def __init__(
         self, provider: LLMProvider, profiles: DevelopmentConfig, *,
         settings: AppSettings = AppSettings(), limits: BudgetLimits = BudgetLimits(),
-        pricing: FakePricing = FakePricing(), rules: QualityRules = DEFAULT_RULES,
+        pricing: FakePricing | ModelPricing = FakePricing(), rules: QualityRules = DEFAULT_RULES,
         clock: Callable[[], float] = time.monotonic,
+        capabilities: ModelCapabilities | None = None,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
         self.provider, self.profiles = provider, profiles
         self.settings, self.limits, self.pricing, self.rules, self.clock = settings, limits, pricing, rules, clock
+        self.capabilities, self.sleep = capabilities, sleep
+        if getattr(provider, "provider_name", settings.provider) != settings.provider:
+            raise ValueError("Provider identity must match explicit application settings")
+        if settings.provider == "openai":
+            if (capabilities is None or capabilities.model != settings.model or not isinstance(pricing, ModelPricing)
+                    or pricing.model != settings.model or limits.max_cost_usd <= 0):
+                raise ValueError("OpenAI execution requires matching model capabilities, pricing reservations and a positive cost ceiling")
+            if (settings.max_input_tokens + max(settings.planner_output_tokens, settings.writer_output_tokens) > capabilities.context_tokens
+                    or max(settings.planner_output_tokens, settings.writer_output_tokens) > capabilities.max_output_tokens):
+                raise ValueError("Configured token limits exceed declared model capacity")
         graph = StateGraph(GraphState, context_schema=Session)
         for name, node in (("input_validation", self._validate), ("story_planner", self._planner),
                            ("story_writer", self._writer), ("quality_gate", self._quality)):
@@ -118,14 +131,21 @@ class StoryEngine:
         self, run: RunState, request: LLMRequest, schema: type[Contract], session: Session,
     ) -> tuple[RunState, Contract | None]:
         run = self._refresh(run)
+        if run.retry_after_seconds:
+            if run.retry_after_seconds >= run.remaining_seconds:
+                return self._fail(run, "DEADLINE_EXCEEDED"), None
+            await self.sleep(run.retry_after_seconds)
+            run = self._refresh(run.updated(retry_after_seconds=0.0))
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED"), None
-        tokens_in = input_token_bound(request, schema, self.limits.schema_overhead_tokens)
+        tokens_in = (openai_input_bound(request, schema, self.capabilities.input_overhead_tokens)
+                     if self.settings.provider == "openai"
+                     else input_token_bound(request, schema, self.limits.schema_overhead_tokens))
         reserve_tokens = tokens_in + request.max_output_tokens
-        reserve_cost = self.pricing.cost(tokens_in, request.max_output_tokens)
+        reserve_cost = self.pricing.reservation_cost(tokens_in, request.max_output_tokens)
         future_tokens = (self.settings.max_input_tokens + self.settings.writer_output_tokens
                          if request.stage == "planner" else 0)
-        future_cost = (self.pricing.cost(self.settings.max_input_tokens, self.settings.writer_output_tokens)
+        future_cost = (self.pricing.reservation_cost(self.settings.max_input_tokens, self.settings.writer_output_tokens)
                        if request.stage == "planner" else 0.0)
         required_slots = 2 if request.stage == "planner" else 1
         if (tokens_in > self.settings.max_input_tokens
@@ -136,7 +156,7 @@ class StoryEngine:
         duration_limit = min(self.settings.attempt_timeout_seconds, run.remaining_seconds)
         request = LLMRequest.model_validate({**request.model_dump(), "remaining_seconds": duration_limit})
         reserved = AttemptRecord(
-            stage=request.stage, attempt_number=run.attempts_used + 1, provider="fake", model=request.model,
+            stage=request.stage, attempt_number=run.attempts_used + 1, provider=self.settings.provider, model=request.model,
             prompt_version=request.prompt_version, latency_seconds=0.0, usage=TokenUsage(source="unknown"),
             reserved_cost_usd=reserve_cost, pricing_version=self.pricing.version, outcome="failure",
             error=_error("CANCELLED", request.stage),
@@ -150,6 +170,7 @@ class StoryEngine:
         payload = None
         error = None
         quality = run.quality
+        retry_after = 0.0
         try:
             async with asyncio.timeout(duration_limit):
                 response = await self.provider.generate(request, schema)
@@ -159,6 +180,7 @@ class StoryEngine:
                 recoverable = (code in ("PROVIDER_UNAVAILABLE", "PROVIDER_OUTPUT_INVALID", "DEADLINE_EXCEEDED")
                                and response.error.retryable)
                 error = _error(code, request.stage, recoverable)
+                retry_after = response.retry_after_seconds or 0.0
                 if response.quality and any(i.severity == "terminal" for i in response.quality.issues):
                     quality = response.quality
                     error = _error("POLICY_REJECTED", request.stage)
@@ -197,6 +219,7 @@ class StoryEngine:
             error = _error("CONFIGURATION_ERROR", request.stage)
         latency = max(latency, self.clock() - started)
         run = self._complete_attempt(run, reserved, usage, latency, error, quality, started)
+        run = run.updated(retry_after_seconds=retry_after)
         if run.remaining_seconds <= 0:
             run = self._fail(run, "DEADLINE_EXCEEDED")
             payload = None
@@ -300,7 +323,9 @@ class StoryEngine:
             remaining_tokens=self.limits.max_total_tokens, remaining_cost_usd=self.limits.max_cost_usd,
             versions=(("profiles", self.profiles.version), ("quality", self.rules.version),
                       ("rubric", self.rules.rubric_version), ("pricing", self.pricing.version),
-                      ("budget", self.limits.version), ("token_bound", self.limits.token_bound_version),
+                      ("budget", self.limits.version),
+                      ("token_bound", self.capabilities.token_bound_version if self.capabilities else self.limits.token_bound_version),
+                      ("model_capabilities", self.capabilities.version if self.capabilities else "fake-v1"),
                       ("settings_schema", "settings-v1"),
                       ("planner_prompt", PLANNER_VERSION), ("writer_prompt", WRITER_VERSION)),
         )

@@ -27,6 +27,7 @@ class RunState(Contract):
     started_at: Seconds
     deadline: Seconds
     simulated_seconds: Seconds = 0.0
+    retry_after_seconds: Seconds = 0.0
     remaining_seconds: Seconds
     remaining_tokens: NonNegativeInt
     remaining_cost_usd: Money

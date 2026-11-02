@@ -27,6 +27,8 @@ class TokenUsage(Contract):
     source: Literal["reported", "estimated", "unknown"]
     input_tokens: NonNegativeInt | None = None
     output_tokens: NonNegativeInt | None = None
+    cached_input_tokens: NonNegativeInt | None = None
+    reasoning_output_tokens: NonNegativeInt | None = None
 
     @model_validator(mode="after")
     def known_or_unknown(self) -> "TokenUsage":
@@ -36,6 +38,10 @@ class TokenUsage(Contract):
                 raise ValueError("unknown usage must not invent token counts")
         elif not known:
             raise ValueError("known usage requires both token counts")
+        if self.cached_input_tokens is not None and (self.input_tokens is None or self.cached_input_tokens > self.input_tokens):
+            raise ValueError("cached tokens must be a subset of input tokens")
+        if self.reasoning_output_tokens is not None and (self.output_tokens is None or self.reasoning_output_tokens > self.output_tokens):
+            raise ValueError("reasoning tokens must be a subset of output tokens")
         return self
 
 
@@ -89,6 +95,7 @@ class UsageSummary(Contract):
     known_estimated_cost_usd: Money = 0.0
     upper_estimated_cost_usd: Money = 0.0
     has_unknown_usage: bool = False
+    has_unknown_cost: bool = False
 
     @model_validator(mode="after")
     def consistent_totals(self) -> "UsageSummary":
@@ -97,9 +104,14 @@ class UsageSummary(Contract):
         known = sum(a.estimated_cost_usd or 0.0 for a in self.attempts)
         upper = sum(a.reserved_cost_usd for a in self.attempts)
         unknown = any(a.usage.source == "unknown" for a in self.attempts)
+        unknown_cost = any(a.estimated_cost_usd is None for a in self.attempts)
+        if "has_unknown_cost" not in self.model_fields_set:
+            # Derive a backwards-compatible output field only after normal
+            # validation, preserving strict JSON-mode tuple round trips.
+            object.__setattr__(self, "has_unknown_cost", unknown_cost)
         if (not math.isclose(self.known_estimated_cost_usd, known, abs_tol=1e-12)
                 or not math.isclose(self.upper_estimated_cost_usd, upper, abs_tol=1e-12)
-                or self.has_unknown_usage != unknown or known > upper):
+                or self.has_unknown_usage != unknown or self.has_unknown_cost != unknown_cost or known > upper):
             raise ValueError("usage summary must reflect attempt records and reservations")
         return self
 
