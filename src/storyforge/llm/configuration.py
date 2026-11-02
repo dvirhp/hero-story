@@ -1,4 +1,4 @@
-"""Explicit OpenAI credentials/capabilities; no environment reads or live probes."""
+"""Explicit provider credentials/capabilities; no environment reads or live probes."""
 
 from typing import Annotated, Literal
 

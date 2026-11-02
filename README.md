@@ -2,7 +2,7 @@
 
 A personalized children's story engine supporting Hebrew and English from birth. Age uses strict nonnegative integer `age_months`, including newborns at zero; no upper age cutoff is imposed.
 
-**Milestones 1 through 5 are implemented**, including an offline-tested OpenAI adapter. Default HTTP generation uses synthetic fixture text. Stop before Milestone 6. Worldwide languages and provider comparison are long-term requirements; only Hebrew and English are executable today.
+**Milestones 1 through 6 are implemented**, including offline-tested OpenAI and Gemini adapters. Default HTTP generation uses synthetic fixture text. Stop before Milestone 7. Worldwide languages and provider comparison are long-term requirements; only Hebrew and English are executable today.
 
 ## Implemented foundation
 
@@ -17,7 +17,7 @@ A personalized children's story engine supporting Hebrew and English from birth.
 - One compiled four-node LangGraph with typed immutable state, versioned language-aware prompts, shared attempt/token/cost reservations, conditional recovery, cancellation and timeout handling. Only planner/writer invoke the configured provider.
 - A FastAPI factory with lifespan configuration, async dependency injection, health and generation endpoints, sanitized errors and request-scoped cancellation cleanup. No provider calls occur at import/startup.
 
-Domain models and the provider protocol do not depend on provider SDKs, FastAPI or LangGraph. The OpenAI adapter owns its SDK dependency. The orchestration package owns the LangGraph dependency. `Story.validate_for(brief)` checks structural/length constraints only; it is not a quality or safety gate. Fake scripts are fixtures, not generated literature. The fake supplies scripted usage/latency and does not retry; the engine enforces the shared budgets. An optional sanitized quality report on provider failures preserves terminal safety findings from schema-invalid outputs without retaining raw responses.
+Domain models and the provider protocol do not depend on provider SDKs, FastAPI or LangGraph. Each real adapter owns its SDK dependency. The orchestration package owns the LangGraph dependency. `Story.validate_for(brief)` checks structural/length constraints only; it is not a quality or safety gate. Fake scripts are fixtures, not generated literature. The fake supplies scripted usage/latency and does not retry; the engine enforces the shared budgets. An optional sanitized quality report on provider failures preserves terminal safety findings from schema-invalid outputs without retaining raw responses.
 
 `assess_story` accepts a `Story`, raw JSON or JSON-compatible mapping and returns sanitized issues without draft text. A passing report means only that the configured deterministic hard checks passed. Fewer than 20 eligible body letters (configurable), including zero, produces an explicit non-blocking `LANGUAGE_EVIDENCE_INCONCLUSIVE`; it does not establish the story's language. With enough evidence, the default target-script minimum is 80%. Short baby refrains and intentional repetition are allowed. Soft sentence/vocabulary measurements do not prove developmental fit; narrow directive matching does not prove safety. See [implemented behavior, issue codes and limitations](docs/VALIDATION_AND_QUALITY.md).
 
@@ -113,7 +113,7 @@ Deliberate dependency updates use `uv.exe lock --upgrade` followed by lockfile r
 | `src/storyforge/domain/` | Strict provider-independent contracts and context-dependent plan/story validation |
 | `src/storyforge/development/` | Versioned JSON profiles, configuration validation, explicit loader and pure resolver |
 | `src/storyforge/config.py` | Validated provider selection, stage models and execution limits |
-| `src/storyforge/llm/` | Async typed protocol, scripted fake and OpenAI Responses adapter |
+| `src/storyforge/llm/` | Async typed protocol, scripted fake and OpenAI/Gemini adapters |
 | `src/storyforge/validation/` | Pure normalization, input policy checks and sanitized errors |
 | `src/storyforge/quality/` | Versioned configurable rules, Unicode/text helpers and deterministic quality assessment |
 | `src/storyforge/orchestration/` | Compiled graph, typed state, request-local attempt journal and stage-specific budget accounting |
@@ -132,14 +132,22 @@ Deliberate dependency updates use `uv.exe lock --upgrade` followed by lockfile r
 - [Implemented HTTP API and PowerShell examples](docs/API.md)
 - [Coding agent rules](AGENTS.md)
 
-Implemented flow: HTTP/Pydantic validation -> engine -> Input Validation -> Story Planner -> Story Writer -> Quality Gate, with bounded conditional recovery. OpenAI is the only real adapter. No supervisor, database, frontend, RAG or Docker is included. Stop before Milestone 6. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, real pricing ceiling and human evaluation/release criteria remain open.
+Implemented flow: HTTP/Pydantic validation -> engine -> Input Validation -> Story Planner -> Story Writer -> Quality Gate, with bounded conditional recovery. OpenAI and Gemini are the implemented real adapters. No supervisor, database, frontend, RAG or Docker is included. Stop before Milestone 7. Profile refinement, older-child subdivisions, pronoun presets, script-threshold calibration, reviewed safety-rule expansion, provider/model, real pricing ceiling and human evaluation/release criteria remain open.
 
-Git work is local on `feature/milestone-5-real-llm`, branched from completed Milestone 4. Use small tested commits; inspect `git status` and staged diffs before committing. Existing author/credential settings are preserved. No remote, push, merge or deployment is configured or authorized. Generated ZIPs under `new/`, environments, secrets, caches and builds are ignored.
+Git work is local on `feature/milestone-6-gemini`, branched from completed Milestone 5. Use small tested commits; inspect `git status` and staged diffs before committing. Existing author/credential settings are preserved. No remote, push, merge or deployment is configured or authorized. Generated ZIPs under `new/`, environments, secrets, caches and builds are ignored.
 
 ## OpenAI integration and extension plan
 
 The default server/demo/test commands above stay offline. The separately opted-in `storyforge.api.configured:create_configured_app` factory supports OpenAI, explicit stage models, capacity and pricing metadata, and pool cleanup without startup probes. See [provider setup, exact optional PowerShell commands and accounting limits](docs/PROVIDERS.md). Do not execute live commands without separate approval: they can incur charges and send child/story data externally. No live command was executed for Milestone 5.
 
-[Provider and worldwide-language extension review](docs/EXTENSIBILITY.md) records subsequent proposals and unresolved decisions. No Gemini/Claude adapter, extra language, automatic model router or evaluation milestone was implemented.
+[Provider and worldwide-language extension review](docs/EXTENSIBILITY.md) records subsequent proposals and unresolved decisions. Gemini is implemented in Milestone 6. No Claude adapter, extra language, automatic model router or paid evaluation was implemented.
 
 Milestone 5 verification: **450 passed, 0 failed** on Python 3.12.16 and 3.13.3, including all unchanged 393 prior tests. Source/wheel builds and the full isolated installed-wheel test suite passed. See the [completion report](docs/MILESTONE_5.md) for changed modules, commands, commits and remaining decisions.
+
+## Gemini (Milestone 6)
+
+Use `AppSettings(provider="gemini", ...)` through explicit runtime JSON and the configured application factory. Planner/Writer models remain independent. Fake stays the safe default; imports, startup and health never call a provider. `GEMINI_API_KEY` is read only by the explicit configuration layer for Gemini; no dotenv discovery or key printing is added.
+
+See [Gemini setup, error/accounting policies and the proposed live smoke test](docs/GEMINI.md). The proposed live run needs separate approval and uses a synthetic newborn request. The model and prices are documented config data, never orchestration defaults. Tests and development require no real key. Stop after Milestone 6.
+
+Milestone 6 verification: **541 passed, 0 failed** on Python 3.12.16 and 3.13.3, preserving all 450 existing tests. Source/wheel builds and the full installed-wheel suite passed. See the [completion report](docs/MILESTONE_6.md) for modules, exact commands, Git commits, live proposal and remaining decisions.

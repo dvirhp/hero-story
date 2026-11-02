@@ -1,12 +1,12 @@
 # Architecture
 
-> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
 
-Status: Milestones 1 through 5 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 6 requires separate approval.
+Status: Milestones 1 through 6 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 7 requires separate approval.
 
 ## Boundaries
 
-Package layout (Milestones 1 through 5 implement these boundaries, with OpenAI as the only real adapter):
+Package layout (Milestones 1 through 6 implement these boundaries; OpenAI and Gemini are the real adapters):
 
 | Location | Responsibility |
 | --- | --- |
@@ -104,3 +104,7 @@ Stable page IDs and versioned story contracts provide future inputs for illustra
 ## References
 
 The graph design uses explicit [LangGraph conditional edges](https://reference.langchain.com/python/langgraph/graph/state/StateGraph/add_conditional_edges). Validate boundary data using [Pydantic models](https://docs.pydantic.dev/latest/concepts/models/). Verify exact dependency APIs when implementation versions are selected.
+
+## Gemini composition (Milestone 6)
+
+The configured factory selects Fake/OpenAI/Gemini through explicit server configuration, never story input. SDK-specific classes stay inside adapters/composition. Both real providers share existing capability validation and per-stage pricing; a pure composition-time reservation policy selects the appropriate projected schema outside graph nodes. Planner/Writer, conditional routing, Quality Gate and API routes do not gain vendor responsibilities. Gemini credentials, retries/continuation, usage normalization and pool ownership are documented in [GEMINI.md](GEMINI.md).

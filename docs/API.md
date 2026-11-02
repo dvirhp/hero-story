@@ -1,6 +1,6 @@
 # Local FastAPI application (Milestone 4)
 
-> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
 
 Milestone 4 wraps the existing bounded engine. Default output is **synthetic fixture text**, not creative AI-generated literature. The default factory needs no API key. Milestone 5 adds a separate explicitly configured OpenAI factory; database, hosting and authentication remain out of scope.
 
@@ -139,4 +139,4 @@ HTTP tests use HTTPX `ASGITransport`, explicit lifespan contexts and the existin
 
 Branch: `feature/milestone-4-fastapi`, created from the clean completed Milestone 3 branch. Preserve history and make small tested commits after checking staged changes. Do not commit secrets, caches or generated builds; existing ignores remain in effect. No remote, merge, push or deployment was performed or authorized.
 
-Open: verified model/tokenization/pricing metadata, separately approved paid evaluation, multilingual/provider expansion, human quality thresholds, production authentication/abuse controls and privacy/release decisions. The OpenAI integration is implemented and tested offline. This local unauthenticated application is not a public deployment plan. Stop after Milestone 5.
+Open: verified model/tokenization/pricing metadata, separately approved paid evaluation, multilingual/provider expansion, human quality thresholds, production authentication/abuse controls and privacy/release decisions. OpenAI and Gemini integrations are implemented and tested offline. This local unauthenticated application is not a public deployment plan. Stop after Milestone 6.

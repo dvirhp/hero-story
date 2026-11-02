@@ -1,8 +1,8 @@
 # StoryForge AI product specification
 
-> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
 
-Status: Milestones 1 through 5 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 6 requires separate approval.
+Status: Milestones 1 through 6 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 7 requires separate approval.
 
 ## Goal
 
@@ -81,3 +81,7 @@ Milestone 2 implements pure normalization and deterministic quality assessment; 
 - Compare candidate providers and select explicit stage models; approve token prices and per-request cost ceiling after a small bilingual evaluation.
 - Decide the release threshold for human evaluation and the intended adult-facing safety wording.
 - Public deployment, authentication, abuse controls, retention, and applicable privacy obligations need a separate release decision. MVP assumes local or controlled evaluation access.
+
+## Milestone 6 implementation boundary
+
+Gemini joins OpenAI and Fake through the same engine/API contracts; separate Planner/Writer models and costs are configurable. Only Hebrew/English are enabled today. The prepared first Gemini run uses a synthetic newborn brief; it requires separate approval and does not establish literary quality, developmental suitability, safety or production readiness. No live call or additional-language rollout is included.

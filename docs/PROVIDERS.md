@@ -1,10 +1,13 @@
-# Providers and explicit OpenAI configuration
+# Providers and explicit configuration
+
+
+Milestone 6 adds Gemini through the same configured factory, preserving OpenAI behavior. Runtime JSON `settings.provider` selects the backend; both stages use that provider with independent model IDs. See [Gemini configuration and live-test proposal](GEMINI.md). The OpenAI-specific schema/error examples below retain their original meaning.
 
 Milestone 5 adds the official async OpenAI SDK adapter. Default `create_app`, demo and tests remain fake, independent of environment credentials. Importing modules makes no calls. No live call was made during implementation. Domain schemas and provider protocol remain SDK-independent; [future provider/language work](EXTENSIBILITY.md) requires separate approval.
 
 ## Composition and settings
 
-`AppSettings.provider` accepts `fake` or `openai`. `model` is the common fallback; optional `planner_model` and `writer_model` override it. Each real stage must resolve to an explicit model ID. Fake stages retain `scripted-v1`. HTTP requests cannot select providers or models.
+`AppSettings.provider` accepts `fake`, `openai` or `gemini`. `model` is the common fallback; optional `planner_model` and `writer_model` override it. Each real stage must resolve to an explicit model ID. Fake stages retain `scripted-v1`. HTTP requests cannot select providers or models.
 
 `ModelCapabilities` declares model/version, context capacity, output capacity, positive framing/schema overhead and structured-output support. `ModelPricing` declares provider/model/version, positive input/output reservation rates and optional actual input/output/cached rates. No real model ID, price or capacity default is supplied. `RuntimeConfiguration` binds settings, aggregate limits and each stage's declarations. Direct dependency injection through `Resources` is also supported. `OpenAIConfig` requires an explicit secret and timeout; the secret is excluded from repr/serialization and never enters graph state.
 
@@ -16,9 +19,10 @@ The optional `storyforge.api.configured:create_configured_app` factory reads the
 | --- | --- |
 | `STORYFORGE_ALLOW_PAID_CALLS` | Exactly `true`; checked before credential access |
 | `STORYFORGE_CONFIG` | Explicit path to validated runtime JSON |
-| `OPENAI_API_KEY` | Explicit nonempty secret; never needed for fake/tests |
+| `OPENAI_API_KEY` | Explicit nonempty secret when selected provider is OpenAI; never needed for fake/tests |
+| `GEMINI_API_KEY` | Explicit nonempty secret when selected provider is Gemini; never needed for fake/tests |
 
-There is no `.env` auto-loading or key discovery. [.env.example](../.env.example) is documentation only. The normal fake factory ignores all three variables. The configured factory validates capacities at startup, constructs one async client pool without probes, and closes it on shutdown. Startup health never calls OpenAI. The adapter fixes the official API base URL, disables proxy environment discovery/default redirects and sets SDK retries to zero. Custom transport injection is available for offline tests; arbitrary production endpoints are not exposed by this milestone.
+There is no `.env` auto-loading or key discovery. [.env.example](../.env.example) is documentation only. The normal fake factory ignores all four variables. The configured factory validates capacities at startup, constructs one async client pool without probes, and closes it on shutdown. Startup health never calls OpenAI. The adapter fixes the official API base URL, disables proxy environment discovery/default redirects and sets SDK retries to zero. Custom transport injection is available for offline tests; arbitrary production endpoints are not exposed by this milestone.
 
 ## Structured responses and failures
 

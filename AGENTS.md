@@ -2,7 +2,7 @@
 
 ## Scope and authority
 
-- Milestones 1 through 5 are approved. Stop after Milestone 5; Milestone 6 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
+- Milestones 1 through 6 are approved. Stop after Milestone 6; Milestone 7 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
 - Read `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/AI_DESIGN.md`, and `docs/ROADMAP.md` before implementation. Mark new assumptions and open decisions; do not silently resolve product policy through code.
 - For implemented normalization and quality behavior, read `docs/VALIDATION_AND_QUALITY.md`. Insufficient script evidence is explicitly advisory; do not restore the superseded rejection policy or claim a language pass from missing evidence. Any terminal issue prevents automatic repair.
 - Read `docs/ORCHESTRATION.md` before changing execution. Use `StoryEngine.generate` for bounded public execution; do not bypass the ledger with direct graph/provider calls. Keep tracing and persistence disabled for child data.
@@ -43,5 +43,7 @@
 
 ## Provider and language extension boundary
 
-- Read `docs/PROVIDERS.md` and `docs/EXTENSIBILITY.md` before extending adapters or languages. Keep the protocol and domain SDK-independent; select models, capabilities and tariffs per stage. Only fake/OpenAI are implemented.
+- Read `docs/PROVIDERS.md`, `docs/GEMINI.md` and `docs/EXTENSIBILITY.md` before extending adapters or languages. Keep the protocol and domain SDK-independent; select models, capabilities and tariffs per stage. Only fake/OpenAI/Gemini are implemented.
 - Worldwide language support is the long-term requirement. Current executable contracts remain `he`/`en`; additional languages need reviewed language data, tokenization, pronouns and tests, not only a wider enum. Never infer pronouns from a name.
+
+- Milestone 6 live Gemini calls require a separate explicit approval. Preparing a config or having a local `GEMINI_API_KEY` does not authorize any API request. Default tests use dummy keys and mocked transports. Disable Gemini HTTP retries, automatic continuation and automatic function calling; close both SDK pools.

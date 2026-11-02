@@ -1,6 +1,6 @@
 # AI design
 
-> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+> Current Milestone 6 update: fake, OpenAI and Gemini are implemented and tested offline. Fake remains the default; both stages have independent models/capabilities/pricing. No real Gemini call is approved or executed. See [Gemini integration and proposed live smoke test](GEMINI.md). Only Hebrew/English execute today; worldwide languages remain planned. Stop before Milestone 7. Historical milestone sections retain their original scope.
 
 ## Model strategy
 
@@ -73,3 +73,7 @@ No retries in HTTP handlers or hidden adapter layers. Bound retry backoff by the
 ## Evaluation and open decisions
 
 Prepare a small reviewed fixture set across both languages, every proposed age band (including `age_months: 0`), gendered/ungendered narration, difficult names, injection attempts, unsafe requests, and profile-specific length boundaries. See the offline matrix in the Roadmap. Offline tests establish contracts and routing, not real-model developmental quality. Paid evaluation is explicitly opt-in, separately budgeted, and reviewed by fluent speakers and adult readers; never part of default pytest. Provider choice, pricing ceiling, age-band boundaries/strategies/targets, older-child subdivisions, language thresholds for short text, and human release criteria remain open. No developmental efficacy claims are made.
+
+## Gemini-specific execution (Milestone 6)
+
+The official async adapter reuses existing prompts, schemas and quality policies. Native JSON schema uses a pure provider projection with full strict local validation. HTTP retries, automatic continuation and automatic tools are disabled. Gemini candidate tokens exclude thinking; normalized output adds reported thoughts exactly once and reconciles totals. Input caches remain a subset. Missing/inconsistent usage and missing prices remain independently unknown. Model IDs, capacities and tariffs are explicit per-stage configuration, never age/language branches in the graph. See [Gemini design, caveats and proposed live test](GEMINI.md). No paid evaluation or new language is included.

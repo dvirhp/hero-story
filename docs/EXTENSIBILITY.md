@@ -1,14 +1,14 @@
 # Provider and worldwide-language architecture review
 
-Decision: no major graph or domain redesign is needed. Keep the four nodes, typed outputs and shared request budget. Milestone 5 implements OpenAI only and preserves all preceding work. The long-term product requirement now covers worldwide languages and comparison of OpenAI, Gemini, Claude and potentially others. That requirement is not a claim of current support.
+Decision: no major graph or domain redesign is needed. Keep the four nodes, typed outputs and shared request budget. Milestone 5 implements OpenAI; Milestone 6 adds Gemini and preserves all preceding work. The long-term product requirement now covers worldwide languages and comparison of OpenAI, Gemini, Claude and potentially others. That requirement is not a claim of current support.
 
 ## Provider extension
 
 The async `LLMProvider.generate(request, output_schema)` protocol has no SDK types. Prompts, domain objects and quality assessment remain provider-independent. The OpenAI adapter owns Responses schema projection, SDK calls, response parsing and error normalization. No supervisor, tools or dynamic model routing is needed.
 
-Implemented now: explicit Planner/Writer model overrides, per-stage capability/pricing declarations and ledger entries. Writer reservations use the writer tariff even before the planner is called. One OpenAI client can serve both models. Configuration rejects mismatched metadata and unsupported runtime providers. Pricing identifiers are provider-neutral; accepting a metadata label does not implement its adapter.
+Implemented now: explicit Planner/Writer model overrides, per-stage capability/pricing declarations and ledger entries. Writer reservations use the writer tariff even before the planner is called. One configured provider client can serve both models. Configuration rejects mismatched metadata and unsupported runtime providers. Pricing identifiers are provider-neutral; accepting a metadata label does not implement its adapter.
 
-Proposed later: provider-specific composition factories behind the existing protocol; per-stage provider bindings with provider/model keys (model IDs alone are not globally unique). Select schema translation, token reservation policy and optional output capabilities by adapter. Preserve nullable unknown usage/cost, one shared attempt ledger, sanitized errors and zero hidden SDK retries. Refactor the current explicit OpenAI capacity branch into an injected reservation policy when a second adapter actually requires it. Avoid speculative general-purpose registries now.
+Proposed later: provider-specific composition factories behind the existing protocol; per-stage provider bindings with provider/model keys (model IDs alone are not globally unique). Select schema translation, token reservation policy and optional output capabilities by adapter. Preserve nullable unknown usage/cost, one shared attempt ledger, sanitized errors and zero hidden SDK retries. Milestone 6 moves reservation selection to a composition-time policy outside graph nodes and validates capacities for either real provider. Avoid speculative general-purpose registries now.
 
 Evaluate models offline first using shared fixtures, then separately approved paid trials. Compare quality by language and developmental profile, personalization, read-aloud rhythm, grammar, safety defects, acceptance rate, latency and total generation cost including failures/retries. A cheaper call can produce a more expensive accepted story. Do not automatically fail over providers without approved privacy, budget and quality policy.
 
@@ -29,4 +29,8 @@ Proposed later changes, separate from orchestration:
 
 Initial additional languages/locales and rollout order; canonicalization/fallback behavior; script/segmentation libraries and counting units; agreement contract evolution and API compatibility; reviewed hard page/word targets; older-child subdivisions; provider/model shortlist per language; verified capabilities and reservation overhead; current tariffs/spend ceilings; evaluation data, reviewer thresholds, privacy/retention and live-run approval. None is silently settled by this milestone. Developmental rules and length targets remain provisional product hypotheses, not scientific standards.
 
-The proposed delivery slices and tests are in [ROADMAP.md](ROADMAP.md). No Gemini, Claude, multilingual registry, live evaluation or Milestone 6 implementation is included.
+The proposed delivery slices and tests are in [ROADMAP.md](ROADMAP.md). Gemini is now implemented; Claude, multilingual registry and live evaluation remain unimplemented. No Milestone 7 work is authorized.
+
+## Gemini-specific multilingual readiness
+
+Gemini preserves Unicode and consumes existing language/profile snapshots. Its own language coverage is not an application-support guarantee. Stage token caps include thinking; UTF-8 reservations and observed token rates vary by script. Revisit per-language caps, segmentation, pronouns and native-review evidence when adding a language. No new language restriction or translation fallback is introduced. See [Gemini limitations](GEMINI.md).

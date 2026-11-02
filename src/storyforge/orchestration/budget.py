@@ -1,6 +1,7 @@
 """Conservative reservations and versioned pricing; estimates are not invoices."""
 
 import json
+from collections.abc import Callable
 from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
@@ -97,6 +98,6 @@ def gemini_input_bound(request: LLMRequest, schema: type[Contract], overhead: in
     return sum(len(part.encode("utf-8")) for part in parts) + overhead
 
 
-def reservation_policy(provider: str):
+def reservation_policy(provider: str) -> Callable[[LLMRequest, type[Contract], int], int]:
     """Composition-time policy selection, outside graph nodes; no SDK imports."""
     return {"fake": input_token_bound, "openai": openai_input_bound, "gemini": gemini_input_bound}[provider]
