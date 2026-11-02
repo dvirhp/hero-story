@@ -1,6 +1,8 @@
 # Local FastAPI application (Milestone 4)
 
-Milestone 4 wraps the existing bounded engine. Default output is **synthetic fixture text**, not creative AI-generated literature. No real LLM adapter, API key, account, database, hosting or authentication is included. Milestone 5 needs separate approval.
+> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+
+Milestone 4 wraps the existing bounded engine. Default output is **synthetic fixture text**, not creative AI-generated literature. The default factory needs no API key. Milestone 5 adds a separate explicitly configured OpenAI factory; database, hosting and authentication remain out of scope.
 
 ## Application and contracts
 
@@ -51,7 +53,8 @@ Sanitized validation-error example (IDs vary):
     "attempts": [],
     "known_estimated_cost_usd": 0.0,
     "upper_estimated_cost_usd": 0.0,
-    "has_unknown_usage": false
+    "has_unknown_usage": false,
+    "has_unknown_cost": false
   },
   "total_latency_seconds": 0.0,
   "status": "failure",
@@ -136,4 +139,4 @@ HTTP tests use HTTPX `ASGITransport`, explicit lifespan contexts and the existin
 
 Branch: `feature/milestone-4-fastapi`, created from the clean completed Milestone 3 branch. Preserve history and make small tested commits after checking staged changes. Do not commit secrets, caches or generated builds; existing ignores remain in effect. No remote, merge, push or deployment was performed or authorized.
 
-Open: real-provider/model/tokenizer/pricing validation and paid-run approval (Milestone 5), bilingual semantic/human evaluation, production authentication/abuse controls and privacy/release decisions. This local unauthenticated application is not a public deployment plan. Stop after Milestone 4.
+Open: verified model/tokenization/pricing metadata, separately approved paid evaluation, multilingual/provider expansion, human quality thresholds, production authentication/abuse controls and privacy/release decisions. The OpenAI integration is implemented and tested offline. This local unauthenticated application is not a public deployment plan. Stop after Milestone 5.

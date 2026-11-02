@@ -1,6 +1,8 @@
 # Implementation roadmap
 
-Milestones 1–4 are approved and implemented. Milestone 5 and later await separate approval. Each should be a small reviewable change; no frontend or infrastructure work.
+> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+
+Milestones 1 through 5 are approved and implemented. Milestone 6 and subsequent proposals require separate approval. No frontend or infrastructure work.
 
 | Milestone | Deliverables | Required validation |
 | --- | --- | --- |
@@ -8,7 +10,7 @@ Milestones 1–4 are approved and implemented. Milestone 5 and later await separ
 | 2. Validation and quality rules | Normalization with immutable profile snapshot, language rubrics, profile-aware deterministic quality reports, safe error types | Fixtures for both scripts, niqqud, names/pronouns, bidi controls, per-profile length boundaries, intentional repetition, plot-free baby stories, unsafe/repairable classification; document semantic limits |
 | 3. Bounded LangGraph engine | Four nodes, explicit conditional routes, prompt versions, attempt ledger, deadlines and conservative budget reservations | Fake-provider paths: success, zero-call rejection, planner/writer schema repair, transient failure, rewrite success/failure, safety stop, cancellation, unknown usage; never over three attempts; use fake clock for deadline tests |
 | 4. FastAPI boundary | Generate endpoint, health endpoint, dependency injection, response/error envelopes and OpenAPI examples | HTTPX ASGITransport with explicit lifespan and fake providers: accepted stories in both languages, error/status mapping, request IDs, validation envelope, no failed drafts or sensitive diagnostics |
-| 5. First real adapter | One selected provider, capability validation, structured outputs, pricing config, normalized usage, explicit no-retry SDK setup | Mock transport adapter-contract tests for usage, malformed JSON, refusal, timeout, rate limit, unknown usage and retry counts; default suite remains offline |
+| 5. First real adapter | OpenAI adapter, separate Planner/Writer models and versioned capacities/pricing, structured outputs, normalized usage/cost uncertainty, explicit no-retry SDK setup | Mock transport adapter-contract tests for usage, malformed JSON, refusal, timeout, rate limit, unknown usage and retry counts; default suite remains offline |
 | 6. Bilingual evaluation and tuning | Reviewed evaluation set spanning all profiles, adult read-aloud trials, opt-in runner and cost report, tuned prompts/rubrics/profile targets, documented limitations and release checklist | Approved small paid trial plus fluent human review; assess baby read-aloud flow and profile-appropriate coherence; report acceptance, quality defects, token/cost and latency distributions; verify budgets and no unaccepted stories escape; no scientific validation claim |
 
 ## Milestone 1 scope and stop boundary
@@ -60,3 +62,15 @@ Offline assertions establish configured behavior. Fluent adult reviewers separat
 - Before final profile approval: evaluate month boundaries, narrative strategies, language-specific word/sentence targets, hard versus soft checks, and older-child subdivisions. An upper audience limit requires an explicit product decision.
 - Before any wider release: agree bilingual quality thresholds, adult-facing product wording, privacy/retention approach, authentication, abuse and aggregate-spend controls.
 - Later product phases: illustrations, user editing, templates, persistence, and print layout. Plan them separately when required; preserve versioned contracts rather than implement speculative hooks.
+
+## Proposed follow-up milestones (not authorized)
+
+1. Review an evaluation plan before Milestone 6: compare candidate OpenAI/Gemini/Claude models by language, profile, story quality, read-aloud experience, latency and cost. Choose reviewer rubrics, consent/data policy, spend ceilings and explicit paid-run approval. Deliver offline evaluation contracts/fixtures first; no paid trial by implication.
+2. Provider expansion: one approved adapter at a time, capability and schema translation, usage/error normalization and per-stage provider bindings. Run shared adapter contracts, transport mocks, bounded retry/accounting tests and existing regression suite. Do not add a supervisor or automatic fallback by default.
+3. Language foundation: versioned language registry and pure resolver, canonical language/locale identifiers, language-specific pronouns, directions, segmentation and quality policies. Deliver two approved additional-language packs with native-review plans; offline tests cover registry failures, unsupported locales, all five age profiles, mixed scripts, no-space text and round trips. Roll out languages individually after evaluation.
+
+Ordering, initial additional languages/providers, model choices and release thresholds remain open. These proposals do not authorize implementation.
+
+## Milestone 5 scope and stop boundary
+
+OpenAI Responses adapter, strict schema projection, explicit opt-in configuration, per-stage model/capability/pricing metadata, normalized usage with independent unknown-cost reporting, conservative reservations and lifecycle cleanup are implemented. Original 393 tests are unchanged; 450 pass on Python 3.12.16 and 3.13.3 and against the installed wheel. Source/wheel builds pass. No real key or paid call was used. See [completion report](MILESTONE_5.md). Stop before Milestone 6 and all proposed expansion work.

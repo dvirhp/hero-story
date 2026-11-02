@@ -2,7 +2,7 @@
 
 ## Scope and authority
 
-- Milestones 1–4 are approved. Stop after Milestone 4; Milestone 5 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
+- Milestones 1 through 5 are approved. Stop after Milestone 5; Milestone 6 and later require separate approval. Approval of one milestone does not authorize unrelated product features.
 - Read `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/AI_DESIGN.md`, and `docs/ROADMAP.md` before implementation. Mark new assumptions and open decisions; do not silently resolve product policy through code.
 - For implemented normalization and quality behavior, read `docs/VALIDATION_AND_QUALITY.md`. Insufficient script evidence is explicitly advisory; do not restore the superseded rejection policy or claim a language pass from missing evidence. Any terminal issue prevents automatic repair.
 - Read `docs/ORCHESTRATION.md` before changing execution. Use `StoryEngine.generate` for bounded public execution; do not bypass the ledger with direct graph/provider calls. Keep tracing and persistence disabled for child data.
@@ -40,3 +40,8 @@
 - Mock provider transports for adapter tests. Mark live evaluation separately, exclude it from the default run, and document its budget and prerequisites.
 - Run relevant checks for each change; explain what changed, what passed, and remaining limitations. Keep docs aligned with behavior and public contracts.
 - Do not add speculative infrastructure or tests that merely duplicate implementation details. Do not claim deterministic checks prove literary quality, fluency, or complete safety.
+
+## Provider and language extension boundary
+
+- Read `docs/PROVIDERS.md` and `docs/EXTENSIBILITY.md` before extending adapters or languages. Keep the protocol and domain SDK-independent; select models, capabilities and tariffs per stage. Only fake/OpenAI are implemented.
+- Worldwide language support is the long-term requirement. Current executable contracts remain `he`/`en`; additional languages need reviewed language data, tokenization, pronouns and tests, not only a wider enum. Never infer pronouns from a name.

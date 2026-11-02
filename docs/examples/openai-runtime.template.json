@@ -1,0 +1,52 @@
+{
+  "settings": {
+    "provider": "openai",
+    "planner_model": "REPLACE_WITH_MODEL_ID",
+    "writer_model": "REPLACE_WITH_MODEL_ID"
+  },
+  "limits": {
+    "max_cost_usd": null
+  },
+  "planner": {
+    "capabilities": {
+      "model": "REPLACE_WITH_MODEL_ID",
+      "version": "REPLACE_WITH_VERIFIED_CAPABILITY_VERSION",
+      "context_tokens": null,
+      "max_output_tokens": null,
+      "input_overhead_tokens": null,
+      "structured_outputs": true,
+      "token_bound_version": "openai-utf8-upper-v1"
+    },
+    "pricing": {
+      "provider": "openai",
+      "model": "REPLACE_WITH_MODEL_ID",
+      "version": "REPLACE_WITH_PRICING_VERSION",
+      "reservation_input_usd_per_million": null,
+      "reservation_output_usd_per_million": null,
+      "input_usd_per_million": null,
+      "output_usd_per_million": null,
+      "cached_input_usd_per_million": null
+    }
+  },
+  "writer": {
+    "capabilities": {
+      "model": "REPLACE_WITH_MODEL_ID",
+      "version": "REPLACE_WITH_VERIFIED_CAPABILITY_VERSION",
+      "context_tokens": null,
+      "max_output_tokens": null,
+      "input_overhead_tokens": null,
+      "structured_outputs": true,
+      "token_bound_version": "openai-utf8-upper-v1"
+    },
+    "pricing": {
+      "provider": "openai",
+      "model": "REPLACE_WITH_MODEL_ID",
+      "version": "REPLACE_WITH_PRICING_VERSION",
+      "reservation_input_usd_per_million": null,
+      "reservation_output_usd_per_million": null,
+      "input_usd_per_million": null,
+      "output_usd_per_million": null,
+      "cached_input_usd_per_million": null
+    }
+  }
+}

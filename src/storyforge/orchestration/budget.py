@@ -1,4 +1,4 @@
-"""Conservative fake-only reservations, with no claims about real tokenizers."""
+"""Conservative reservations and versioned pricing; estimates are not invoices."""
 
 import json
 from typing import Annotated, Literal

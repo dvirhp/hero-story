@@ -1,10 +1,12 @@
 # Architecture
 
-Status: Milestones 1–4 implemented. One compiled LangGraph `StateGraph`, no dynamic supervisor. See [actual orchestration behavior](ORCHESTRATION.md) and [HTTP application](API.md). Real-provider adapters remain Milestone 5.
+> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+
+Status: Milestones 1 through 5 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 6 requires separate approval.
 
 ## Boundaries
 
-Package layout (Milestones 1–4 implement all boundaries below except real-provider adapters):
+Package layout (Milestones 1 through 5 implement these boundaries, with OpenAI as the only real adapter):
 
 | Location | Responsibility |
 | --- | --- |

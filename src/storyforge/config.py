@@ -1,4 +1,4 @@
-"""Explicit, validated offline settings; no environment or credential reads."""
+"""Explicit, validated execution settings; no environment or credential reads."""
 
 from typing import Annotated, Literal
 

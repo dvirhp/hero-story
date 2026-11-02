@@ -1,10 +1,12 @@
 # StoryForge AI product specification
 
-Status: Milestones 1–4 approved; later milestones require separate approval. The five developmental profiles and hard page/word constraints are approved as provisional configuration, not validated developmental standards.
+> Current Milestone 5 update: OpenAI adapter implemented and tested offline; fake remains the default. Stage-specific model/capability/pricing configuration is explicit. See [provider reference](PROVIDERS.md). Long-term scope is worldwide languages and multiple providers; only Hebrew/English and fake/OpenAI are executable today. See [extension review and proposed follow-up work](EXTENSIBILITY.md). Historical milestone sections below describe their original boundaries. Stop before Milestone 6.
+
+Status: Milestones 1 through 5 implemented. Fake is the default; OpenAI is available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 6 requires separate approval.
 
 ## Goal
 
-Generate a personalized, age-appropriate children's story from a small, validated brief in Hebrew or English. Return a structured story that can later support editing, illustration, and book production.
+Generate a personalized, age-appropriate children's story from a small, validated brief across worldwide languages over time. Hebrew and English are the currently implemented languages. Return a structured story that can later support editing, illustration, and book production.
 
 ## User flow
 
@@ -18,7 +20,7 @@ Generate a personalized, age-appropriate children's story from a small, validate
 
 - A synchronous JSON API for AI story generation; no frontend.
 - Explicit Input Validation, Story Planner, Story Writer, and Quality Gate graph nodes.
-- Configurable provider and model, with a deterministic fake provider for offline development and tests.
+- Provider-agnostic model evaluation and stage-specific model selection, with a deterministic fake provider for offline development and tests.
 - Structured requests, outlines, stories, quality reports, errors, and usage records.
 - Hebrew and English generation, including explicit narrative pronouns, language checks, and text direction metadata.
 - Bounded calls, token limits, timeouts, and estimated cost accounting.
@@ -71,11 +73,11 @@ Templates, freeform editing, illustrations, accounts, persistence, payments, pri
 
 ## Open decisions
 
-Milestone 2 implements pure normalization and deterministic quality assessment; see [implemented rules and limitations](VALIDATION_AND_QUALITY.md). Insufficient script evidence is an explicit non-blocking observation, including zero eligible letters. Overall deterministic acceptance is permitted if hard checks pass, without claiming language verification or safety. Milestone 3 executes the bounded graph with scripted fake outputs only. Milestone 4 adds the [local HTTP API](API.md); real-model story generation remains future work.
+Milestone 2 implements pure normalization and deterministic quality assessment; see [implemented rules and limitations](VALIDATION_AND_QUALITY.md). Insufficient script evidence is an explicit non-blocking observation, including zero eligible letters. Overall deterministic acceptance is permitted if hard checks pass, without claiming language verification or safety. Milestone 3 executes the bounded graph with scripted fake outputs only. Milestone 4 adds the [local HTTP API](API.md); Milestone 5 adds an offline-tested OpenAI adapter with explicit real-run configuration; no live generation has been evaluated.
 
 - Evaluate and refine the approved provisional band boundaries, page/word and sentence targets, repetition strategies, and language-specific overrides through Hebrew/English review and read-aloud evaluation.
 - Decide whether/where to split the open-ended older-child profile and whether to introduce an explicit upper audience age; no upper limit is assumed meanwhile.
 - Decide future adult-selected reading preferences/ability overrides; MVP uses the age profile and does not assume independent reading. Curated pronoun presets, additional Hebrew agreement forms and linguistic handling of absent pronouns remain to be evaluated; Milestone 1 accepts explicit forms without inferring them or claiming linguistic validation.
-- Select an initial provider/model and approve token prices and per-request cost ceiling after a small bilingual evaluation.
+- Compare candidate providers and select explicit stage models; approve token prices and per-request cost ceiling after a small bilingual evaluation.
 - Decide the release threshold for human evaluation and the intended adult-facing safety wording.
 - Public deployment, authentication, abuse controls, retention, and applicable privacy obligations need a separate release decision. MVP assumes local or controlled evaluation access.
