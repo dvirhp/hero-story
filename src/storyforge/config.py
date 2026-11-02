@@ -4,12 +4,12 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from storyforge.domain.base import Contract, PositiveInt
+from storyforge.domain.base import Contract, Label, PositiveInt
 
 
 class AppSettings(Contract):
-    provider: Literal["fake"] = "fake"
-    model: Literal["scripted-v1"] = "scripted-v1"
+    provider: Literal["fake", "openai"] = "fake"
+    model: Label = "scripted-v1"
     max_attempts: Annotated[int, Field(ge=1, le=3)] = 3
     max_quality_rewrites: Annotated[int, Field(ge=0, le=1)] = 1
     planner_output_tokens: PositiveInt = 1200
@@ -20,6 +20,10 @@ class AppSettings(Contract):
 
     @model_validator(mode="after")
     def valid_limits(self) -> "AppSettings":
+        if self.provider == "fake" and self.model != "scripted-v1":
+            raise ValueError("fake mode requires the scripted model")
+        if self.provider == "openai" and self.model == "scripted-v1":
+            raise ValueError("OpenAI mode requires an explicit model ID")
         if self.max_attempts < 2:
             raise ValueError("planner and writer require at least two attempt slots")
         if self.attempt_timeout_seconds > self.request_timeout_seconds:
