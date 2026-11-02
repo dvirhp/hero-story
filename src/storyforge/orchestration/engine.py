@@ -61,6 +61,8 @@ class StoryEngine:
         pricing: FakePricing | ModelPricing = FakePricing(), rules: QualityRules = DEFAULT_RULES,
         clock: Callable[[], float] = time.monotonic,
         capabilities: ModelCapabilities | None = None,
+        writer_capabilities: ModelCapabilities | None = None,
+        writer_pricing: ModelPricing | None = None,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
         self.provider, self.profiles = provider, profiles
@@ -68,13 +70,18 @@ class StoryEngine:
         self.capabilities, self.sleep = capabilities, sleep
         if getattr(provider, "provider_name", settings.provider) != settings.provider:
             raise ValueError("Provider identity must match explicit application settings")
+        self.writer_capabilities = writer_capabilities or capabilities
+        self.writer_pricing = writer_pricing or pricing
         if settings.provider == "openai":
-            if (capabilities is None or capabilities.model != settings.model or not isinstance(pricing, ModelPricing)
-                    or pricing.model != settings.model or limits.max_cost_usd <= 0):
-                raise ValueError("OpenAI execution requires matching model capabilities, pricing reservations and a positive cost ceiling")
-            if (settings.max_input_tokens + max(settings.planner_output_tokens, settings.writer_output_tokens) > capabilities.context_tokens
-                    or max(settings.planner_output_tokens, settings.writer_output_tokens) > capabilities.max_output_tokens):
-                raise ValueError("Configured token limits exceed declared model capacity")
+            for stage in ("planner", "writer"):
+                cap, tariff = self._stage_capabilities(stage), self._stage_pricing(stage)
+                output = settings.planner_output_tokens if stage == "planner" else settings.writer_output_tokens
+                if (cap is None or cap.model != settings.model_for(stage) or not isinstance(tariff, ModelPricing)
+                        or tariff.model != settings.model_for(stage) or tariff.provider != settings.provider
+                        or limits.max_cost_usd <= 0):
+                    raise ValueError("Real execution requires matching stage capabilities, pricing and positive cost ceiling")
+                if settings.max_input_tokens + output > cap.context_tokens or output > cap.max_output_tokens:
+                    raise ValueError("Configured token limits exceed declared model capacity")
         graph = StateGraph(GraphState, context_schema=Session)
         for name, node in (("input_validation", self._validate), ("story_planner", self._planner),
                            ("story_writer", self._writer), ("quality_gate", self._quality)):
@@ -89,6 +96,12 @@ class StoryEngine:
         graph.add_conditional_edges("quality_gate", self._after_quality,
                                     {"rewrite": "story_writer", "end": END})
         self.graph = graph.compile()  # No persistence, caching, or remote runtime.
+
+    def _stage_capabilities(self, stage: str) -> ModelCapabilities | None:
+        return self.writer_capabilities if stage == "writer" else self.capabilities
+
+    def _stage_pricing(self, stage: str) -> FakePricing | ModelPricing:
+        return self.writer_pricing if stage == "writer" else self.pricing
 
     def _refresh(self, run: RunState) -> RunState:
         return run.updated(
@@ -138,14 +151,14 @@ class StoryEngine:
             run = self._refresh(run.updated(retry_after_seconds=0.0))
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED"), None
-        tokens_in = (openai_input_bound(request, schema, self.capabilities.input_overhead_tokens)
+        tokens_in = (openai_input_bound(request, schema, self._stage_capabilities(request.stage).input_overhead_tokens)
                      if self.settings.provider == "openai"
                      else input_token_bound(request, schema, self.limits.schema_overhead_tokens))
         reserve_tokens = tokens_in + request.max_output_tokens
-        reserve_cost = self.pricing.reservation_cost(tokens_in, request.max_output_tokens)
+        reserve_cost = self._stage_pricing(request.stage).reservation_cost(tokens_in, request.max_output_tokens)
         future_tokens = (self.settings.max_input_tokens + self.settings.writer_output_tokens
                          if request.stage == "planner" else 0)
-        future_cost = (self.pricing.reservation_cost(self.settings.max_input_tokens, self.settings.writer_output_tokens)
+        future_cost = (self.writer_pricing.reservation_cost(self.settings.max_input_tokens, self.settings.writer_output_tokens)
                        if request.stage == "planner" else 0.0)
         required_slots = 2 if request.stage == "planner" else 1
         if (tokens_in > self.settings.max_input_tokens
@@ -158,7 +171,7 @@ class StoryEngine:
         reserved = AttemptRecord(
             stage=request.stage, attempt_number=run.attempts_used + 1, provider=self.settings.provider, model=request.model,
             prompt_version=request.prompt_version, latency_seconds=0.0, usage=TokenUsage(source="unknown"),
-            reserved_cost_usd=reserve_cost, pricing_version=self.pricing.version, outcome="failure",
+            reserved_cost_usd=reserve_cost, pricing_version=self._stage_pricing(request.stage).version, outcome="failure",
             error=_error("CANCELLED", request.stage),
         )
         run = run.updated(attempts=(*run.attempts, reserved), attempts_used=run.attempts_used + 1,
@@ -232,7 +245,7 @@ class StoryEngine:
         self, run: RunState, reserved: AttemptRecord, usage: TokenUsage, latency: float,
         error: GenerationError | None, quality: QualityReport | None, started: float,
     ) -> RunState:
-        cost = self.pricing.usage_cost(usage)
+        cost = self._stage_pricing(reserved.stage).usage_cost(usage)
         reserve_cost = max(reserved.reserved_cost_usd, cost or 0.0)
         actual_tokens = ((usage.input_tokens + usage.output_tokens) if usage.source != "unknown" else 0)
         record = AttemptRecord.model_validate({
@@ -260,7 +273,7 @@ class StoryEngine:
 
     async def _planner(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
         run = self._refresh(state["run"].updated(stage="planner"))
-        request = build_request("planner", run.brief, self.settings.model, self.settings.planner_output_tokens,
+        request = build_request("planner", run.brief, self.settings.model_for("planner"), self.settings.planner_output_tokens,
                                 max(0.000001, run.remaining_seconds), schema_recovery=run.error is not None)
         run, plan = await self._attempt(run, request, StoryPlan, runtime.context)
         run = run.updated(plan=plan, error=None) if plan is not None else self._settle_failure(run)
@@ -269,7 +282,7 @@ class StoryEngine:
     async def _writer(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
         run = self._refresh(state["run"].updated(stage="writer"))
         try:
-            request = build_request("writer", run.brief, self.settings.model, self.settings.writer_output_tokens,
+            request = build_request("writer", run.brief, self.settings.model_for("writer"), self.settings.writer_output_tokens,
                                     max(0.000001, run.remaining_seconds), plan=run.plan,
                                     draft=run.draft if run.rewrite_count else None,
                                     quality=run.quality if run.rewrite_count else None,
@@ -324,6 +337,8 @@ class StoryEngine:
             versions=(("profiles", self.profiles.version), ("quality", self.rules.version),
                       ("rubric", self.rules.rubric_version), ("pricing", self.pricing.version),
                       ("budget", self.limits.version),
+                      ("writer_pricing", self.writer_pricing.version),
+                      ("writer_capabilities", self.writer_capabilities.version if self.writer_capabilities else "fake-v1"),
                       ("token_bound", self.capabilities.token_bound_version if self.capabilities else self.limits.token_bound_version),
                       ("model_capabilities", self.capabilities.version if self.capabilities else "fake-v1"),
                       ("settings_schema", "settings-v1"),

@@ -32,7 +32,7 @@ class FakePricing(Contract):
 
 
 class ModelPricing(Contract):
-    provider: Literal["openai"] = "openai"
+    provider: Label = "openai"
     model: Label
     version: Label
     reservation_input_usd_per_million: Annotated[float, Field(gt=0, allow_inf_nan=False)]

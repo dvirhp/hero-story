@@ -56,13 +56,17 @@ class OpenAIProvider:
     provider_name = "openai"
 
     def __init__(
-        self, client: AsyncOpenAI, config: OpenAIConfig, capabilities: ModelCapabilities, *,
+        self, client: AsyncOpenAI, config: OpenAIConfig, capabilities: ModelCapabilities | tuple[ModelCapabilities, ...], *,
         rules: QualityRules = DEFAULT_RULES, clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if client.max_retries != 0:
             raise ValueError("SDK retries must be disabled before constructing the adapter")
         self._client = client
-        self._config, self._capabilities, self._rules, self._clock = config, capabilities, rules, clock
+        self._config, self._rules, self._clock = config, rules, clock
+        entries = (capabilities,) if isinstance(capabilities, ModelCapabilities) else capabilities
+        self._capabilities = {entry.model: entry for entry in entries}
+        if len(self._capabilities) != len(entries):
+            raise ValueError("Duplicate model capabilities")
 
     async def generate(
         self, request: LLMRequest, output_schema: type[OutputT],
@@ -85,8 +89,8 @@ class OpenAIProvider:
                                    error=GenerationError(code=code, stage=request.stage, retryable=retryable,
                                                          message=messages[code]))
 
-        if (request.model != self._capabilities.model
-                or request.max_output_tokens > self._capabilities.max_output_tokens):
+        capabilities = self._capabilities.get(request.model)
+        if capabilities is None or request.max_output_tokens > capabilities.max_output_tokens:
             return failure("CONFIGURATION_ERROR")
         try:
             response = await self._client.responses.create(

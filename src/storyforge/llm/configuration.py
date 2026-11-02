@@ -26,4 +26,4 @@ class ModelCapabilities(Contract):
     max_output_tokens: PositiveInt
     input_overhead_tokens: PositiveInt
     structured_outputs: Literal[True]
-    token_bound_version: Literal["openai-utf8-upper-v1"] = "openai-utf8-upper-v1"
+    token_bound_version: Label = "openai-utf8-upper-v1"
