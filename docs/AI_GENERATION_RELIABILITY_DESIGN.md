@@ -6,8 +6,9 @@ Owner: Agent 1, AI generation engine. Reviewed against the repository on
 three-attempt limit, public contracts and deployment remain unchanged.
 
 Agent 3 owns backend jobs, authentication, persistence and canonical Book/BookPage
-contracts. No Agent 3 session or backend design is currently available here.
-Section 9 is a concrete handoff for joint review, not an agreed shared contract.
+contracts. Subsequent read-only review located its Phase A working-copy design;
+see the [proposed integration contract](AI_BACKEND_INTEGRATION_CONTRACT.md).
+Section 9 and that contract remain proposals pending joint approval.
 
 ## 1. Assessment and evidence
 
