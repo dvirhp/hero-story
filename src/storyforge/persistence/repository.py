@@ -108,7 +108,11 @@ class SqlAlchemyStoryRepository:
 
     async def get(self, story_id: UUID) -> SavedStory | None:
         async with self.sessions.begin() as session:
-            row = await session.get(StoryRecord, story_id)
+            # PostgreSQL READ COMMITTED takes a new snapshot per statement.
+            # Hold a shared row lock until pages are read so a concurrent completion
+            # cannot combine an old status/header with newly committed pages.
+            row = await session.scalar(select(StoryRecord).where(
+                StoryRecord.id == story_id).with_for_update(read=True))
             if row is None:
                 return None
             pages = (await session.scalars(select(StoryPageRecord).where(

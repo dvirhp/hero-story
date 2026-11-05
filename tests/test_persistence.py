@@ -159,11 +159,42 @@ def test_rejected_or_partial_success_cannot_be_persisted(run_async):
                 issues=(QualityIssue(code="unsafe", severity="terminal", guidance="Rejected"),),
                 check_version="test", rubric_version="test")})
             partial = result.model_copy(update={"story": result.story.model_copy(update={"pages": result.story.pages[:1]})})
-            for invalid in (rejected, partial):
+            failed = GenerationFailure(request_id="failed", usage=UsageSummary(), total_latency_seconds=0.,
+                error=GenerationError(code="QUALITY_REJECTED", stage="quality", retryable=False, message="Rejected"))
+            for invalid in (rejected, partial, failed):
                 with pytest.raises(ValueError):
                     await repo.complete(ident, brief, invalid)
             saved = await repo.get(ident)
             assert saved.status == "processing" and saved.content is None and saved.pages == ()
+        finally:
+            await engine.dispose()
+    run_async(run())
+
+
+def test_database_logging_and_personal_data_minimization(run_async, caplog):
+    async def run():
+        engine, sessions, repo = await setup()
+        try:
+            assert engine.echo is False and engine.sync_engine.hide_parameters is True
+            brief, _ = book()
+            secret = "private-guidance-canary"
+            request = brief.request.model_copy(update={"guidance": secret, "interests": ("private-interest",)})
+            brief = brief.model_copy(update={"request": request})
+            ident = await repo.create(brief)
+            async with sessions() as session:
+                row = await session.get(StoryRecord, ident)
+                assert row.child_name == request.display_name
+                assert set(row.request_metadata) == {"text_density", "structure", "requested_title"}
+                assert secret not in str(row.request_metadata)
+            with pytest.raises(IntegrityError) as caught:
+                async with sessions.begin() as session:
+                    await session.execute(update(StoryRecord).where(StoryRecord.id == ident).values(age_months=-1, theme=secret))
+            assert secret not in str(caught.value)
+            assert secret not in caplog.text and "private-interest" not in caplog.text
+            if engine.url.password:
+                assert engine.url.password not in caplog.text
+            if engine.url.password:
+                assert "***" in str(engine.url)
         finally:
             await engine.dispose()
     run_async(run())

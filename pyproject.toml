@@ -29,4 +29,5 @@ packages = ["src/storyforge"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--disable-socket -ra"
+markers = ["postgresql: opt-in real local PostgreSQL integration (no mocks or SQLite)"]
 
