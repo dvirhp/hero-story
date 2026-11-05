@@ -1,4 +1,5 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { readingDirection } from "../i18n/registry";
+import { useEffect, useRef, useState } from "react";
 import type { Language } from "../api/contracts";
 import type { Book } from "../domain/book";
 import type { Copy } from "../i18n/locales";
@@ -48,7 +49,7 @@ export function StoryReader({
   const [notice, setNotice] = useState("");
   const host = useRef<HTMLElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const rtl = book?.language === "he";
+  const rtl = readingDirection(book?.language ?? "en") === "rtl";
   useEffect(() => {
     setIndex(-1);
     setThumbs(false);

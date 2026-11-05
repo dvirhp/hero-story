@@ -6,8 +6,8 @@ import type { Book } from "./domain/book";
 import { bookFromStory, createBlankBook, editableCopy } from "./domain/book";
 import { useStory } from "./hooks/useStory";
 import { useLibrary } from "./hooks/useLibrary";
-import { locales, messages } from "./i18n/locales";
-import { productCopy } from "./i18n/product";
+import { locales } from "./i18n/locales";
+import { copyFor } from "./i18n/copy";
 import { catalog, sampleBook } from "./data/catalog";
 import { go, useRoute } from "./routing/router";
 import { Home } from "./pages/Home";
@@ -25,7 +25,6 @@ import { Checkout } from "./commerce/Checkout";
 import { Orders } from "./commerce/Orders";
 import { FormatChooser } from "./commerce/FormatChooser";
 import { eligible } from "./commerce/model";
-import { experience } from "./i18n/experience";
 import { readTab, useRemember, useRecovery, isBook } from "./state/tabRecovery";
 import {
   characterFromValues,
@@ -61,9 +60,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
   const recoveryFailed = useRecovery("working", working, remember);
   const briefRecoveryFailed = useRecovery("brief", draft, remember);
   const { generate, cancel } = useStory(service);
-  const c = messages[locale];
-  const p = productCopy[locale];
-  const e = experience[locale];
+  const { core: c, product: p, experience: e } = copyFor(locale);
   const content = useRef<HTMLDivElement>(null);
   const previousRoute = useRef(key);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -384,7 +381,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
           content.current?.focus();
         }}
       >
-        {locale === "he" ? "דילוג לתוכן" : "Skip to content"}
+        {e.skipContent}
       </a>
       <div className="announcement-bar">
         <span>✧ {p.announcement}</span>
@@ -400,10 +397,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
             <small>{c.tagline}</small>
           </span>
         </a>
-        <nav
-          className="desktop-nav"
-          aria-label={locale === "he" ? "ניווט ראשי" : "Main navigation"}
-        >
+        <nav className="desktop-nav" aria-label={e.mainNavigation}>
           <a
             href="#/books"
             aria-current={route.page === "discover" ? "page" : undefined}
@@ -422,10 +416,10 @@ export function App({ service = mockService }: { service?: StoryService }) {
           <a
             className="bag-link"
             href="#/cart"
-            aria-label={`${e.cart} (${commerce.count})`}
+            aria-label={`${e.cart} ${commerce.count}`}
           >
             <span aria-hidden="true">♧</span>
-            <span className="bag-label">{e.cart}</span>
+            <span className="bag-label">{e.cart}</span>{" "}
             <span className="bag-count" aria-live="polite">
               {commerce.count}
             </span>

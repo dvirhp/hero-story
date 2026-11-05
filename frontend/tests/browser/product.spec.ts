@@ -144,7 +144,8 @@ test("AI wizard reviews exact newborn age and count, cancels, reads and saves sa
     .click();
   await expect(page.getByRole("status")).toHaveText("Page 1 of 3");
   await page.getByRole("button", { name: "Next page" }).click();
-  if(info.project.name==='mobile') await page.getByRole("button", { name: "Next page" }).click();
+  if (info.project.name === "mobile")
+    await page.getByRole("button", { name: "Next page" }).click();
   await expect(page.getByRole("button", { name: "Next page" })).toBeDisabled();
   await noOverflow(page);
   await accessible(page);
@@ -180,7 +181,8 @@ test("template schema, companion preview, save and reopen without AI", async ({
     "For your big little dreams.",
   );
   await page.getByRole("button", { name: "Next page" }).click();
-  if(info.project.name==='mobile') await page.getByRole("button", { name: "Next page" }).click();
+  if (info.project.name === "mobile")
+    await page.getByRole("button", { name: "Next page" }).click();
   await expect(page.getByRole("article")).toContainText("rabbit");
   await page.getByRole("link", { name: "Back to my books" }).click();
   await expect(
@@ -263,7 +265,9 @@ test("Hebrew template and manual journeys maintain RTL, keyboard reading and mix
     .click();
   await expect(page.getByRole("article")).toHaveAttribute("dir", "rtl");
   await page.keyboard.press("ArrowLeft");
-  await expect(page.getByRole("status")).toHaveText(info.project.name==='desktop'?"עמוד 2–3 מתוך 6":"עמוד 2 מתוך 6");
+  await expect(page.getByRole("status")).toHaveText(
+    info.project.name === "desktop" ? "עמוד 2–3 מתוך 6" : "עמוד 2 מתוך 6",
+  );
   await noOverflow(page);
   await accessible(page);
   await shot(page, `hebrew-reader-${info.project.name}`);

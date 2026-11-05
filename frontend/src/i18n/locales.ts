@@ -1,12 +1,7 @@
 import type { Language, StoryType } from "../api/contracts";
+import { uiLocales } from "./registry";
 /** Add reviewed UI dictionaries here independently of backend generation capabilities. */
-export const locales: Record<
-  Language,
-  { label: string; direction: "ltr" | "rtl"; locale: string }
-> = {
-  en: { label: "English", direction: "ltr", locale: "en" },
-  he: { label: "עברית", direction: "rtl", locale: "he" },
-};
+export const locales = uiLocales;
 const en = {
   tagline: "Little readers. Boundless worlds.",
   create: "Create a story",

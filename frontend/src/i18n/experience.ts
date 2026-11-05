@@ -1,5 +1,10 @@
 import type { Language } from "../api/contracts";
 const en = {
+  skipContent: "Skip to content",
+  mainNavigation: "Main navigation",
+  storyLanguages: "English · עברית",
+  showcaseSuffix: "’s Moonlight Garden",
+  heroSticker: "A little name.\nA whole world.",
   recoveryError:
     "Tab recovery is unavailable or full. Your current work remains in memory; do not refresh before reviewing it.",
   demoDetails: "Use fictional details for this demonstration.",
@@ -196,6 +201,11 @@ const en = {
 };
 export type ExperienceCopy = { [K in keyof typeof en]: string };
 const he: ExperienceCopy = {
+  skipContent: "דילוג לתוכן",
+  mainNavigation: "ניווט ראשי",
+  storyLanguages: "עברית · English",
+  showcaseSuffix: " וגינת הירח",
+  heroSticker: "שם קטן.\nעולם שלם.",
   recoveryError:
     "השחזור בלשונית אינו זמין או שהאחסון מלא. העבודה הנוכחית נשארת בזיכרון; אין לרענן לפני שבודקים אותה.",
   demoDetails: "יש להשתמש בפרטים בדויים בהדגמה זו.",
@@ -385,10 +395,7 @@ const he: ExperienceCopy = {
     "מגלים עולם מאויר, יוצרים דמות וקוראים את הסיפור לפני שמחליטים. פרטים קטנים ומלאי מחשבה. משהו שהוא רק שלהם.",
 };
 export const experience: Record<Language, ExperienceCopy> = { en, he };
-export function resolveLocale(input: string): Language {
-  const base = input.toLowerCase().split(/[-_]/)[0];
-  return base === "he" ? "he" : "en";
-}
+export { resolveLocale } from "./registry";
 export const money = (cents: number, locale: Language) =>
   new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(
     cents / 100,

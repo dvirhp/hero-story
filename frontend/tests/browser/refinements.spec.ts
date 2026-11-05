@@ -55,6 +55,14 @@ test("manual duplicate, illustration position, dedication and consent-based refr
     "For every little explorer.",
   );
   await page
+    .getByRole("button", { name: /Open the book/ })
+    .first()
+    .click();
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(
+    page.locator('[data-page-number="2"] img[data-positioned]'),
+  ).toHaveCSS("position", "absolute");
+  await page
     .getByRole("button", { name: "Choose format & quantity", exact: true })
     .click();
   await page.getByRole("button", { name: "Add to bag", exact: true }).click();

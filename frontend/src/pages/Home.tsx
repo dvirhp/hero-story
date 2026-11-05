@@ -4,10 +4,10 @@ import type { ProductCopy } from "../i18n/product";
 import { catalog, categories, ages, ageLabels } from "../data/catalog";
 import { BookCard } from "../components/BookCard";
 import { BookCover } from "../components/BookCover";
-import {experience} from '../i18n/experience';
+import { experience } from "../i18n/experience";
 export function Home({ locale, p }: { locale: Language; p: ProductCopy }) {
   const [name, setName] = useState("");
-  const e=experience[locale];
+  const e = experience[locale];
   return (
     <main>
       <section className="store-hero">
@@ -43,11 +43,7 @@ export function Home({ locale, p }: { locale: Language; p: ProductCopy }) {
                 language={locale}
               />
             </div>
-            <span className="hero-sticker">
-              {locale === "he"
-                ? "שם קטן.\nעולם שלם."
-                : "A little name.\nA whole world."}
-            </span>
+            <span className="hero-sticker">{e.heroSticker}</span>
             <span className="spark spark-one" aria-hidden="true">
               ✦
             </span>
@@ -166,7 +162,7 @@ export function Home({ locale, p }: { locale: Language; p: ProductCopy }) {
         <div className="container showcase-grid">
           <div className="showcase-book">
             <BookCover
-              title={`${name || p.showcaseDefault}${locale === "he" ? " וגינת הירח" : "’s Moonlight Garden"}`}
+              title={`${name || p.showcaseDefault}${e.showcaseSuffix}`}
               art="garden"
               color="#b7cfc1"
               language={locale}

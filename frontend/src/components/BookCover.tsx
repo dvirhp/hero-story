@@ -1,3 +1,4 @@
+import { readingDirection } from "../i18n/registry";
 import type { Art } from "../domain/book";
 import type { CSSProperties } from "react";
 import { CharacterPreview } from "../personalization/CharacterPreview";
@@ -7,7 +8,9 @@ const lightInk = "#fff5d8";
 function relativeLuminance(color: string) {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const channel = parseInt(color.slice(i, i + 2), 16) / 255;
-    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    return channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
   });
   return r! * 0.2126 + g! * 0.7152 + b! * 0.0722;
 }
@@ -37,7 +40,7 @@ export function BookCover({
   color?: string;
   language?: string;
   small?: boolean;
-  character?:Character;
+  character?: Character;
 }) {
   const resolvedColor = color || "#b7cfc1";
   return (
@@ -50,10 +53,14 @@ export function BookCover({
         } as CSSProperties
       }
       lang={language}
-      dir={language === "he" ? "rtl" : "ltr"}
+      dir={readingDirection(language)}
     >
       <img src={`/art/${art}.svg`} alt="" loading="lazy" />
-      {character&&<div className="cover-avatar"><CharacterPreview character={character}/></div>}
+      {character && (
+        <div className="cover-avatar">
+          <CharacterPreview character={character} />
+        </div>
+      )}
       <div className="cover-heading">
         <span className="cover-imprint">STORYFORGE ORIGINALS</span>
         <strong>{title}</strong>

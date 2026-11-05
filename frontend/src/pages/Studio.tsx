@@ -1,3 +1,4 @@
+import { readingDirection } from "../i18n/registry";
 import { useState } from "react";
 import type { Language } from "../api/contracts";
 import type {
@@ -297,7 +298,7 @@ export function Studio({
               <textarea
                 id="page-text"
                 value={page.sentenceUnits.join("\n")}
-                dir={book.language === "he" ? "rtl" : "ltr"}
+                dir={readingDirection(book.language)}
                 lang={book.language}
                 rows={5}
                 maxLength={12000}

@@ -197,10 +197,10 @@ const en = {
     "Not in this demo. Create with AI uses local sample text so you can explore the experience without provider requests. The typed v2 API client is prepared for later integration.",
   faq2: "Where are my books saved?",
   answer2:
-    "Only in this tab’s memory. Saved books and drafts disappear on refresh or close. There is no account, cloud saving or shared ownership in this demo.",
+    "Only in this tab’s memory by default. To recover books, drafts and your bag after refresh, enable optional tab recovery in the footer. You can clear it there. Closing the tab removes session storage. There is no account or cloud backup; checkout contact details and orders are never persisted.",
   faq3: "Can I print or buy a book?",
   answer3:
-    "Purchasing, printing, checkout and PDF export are future capabilities. There are no payment or ordering actions here.",
+    "You can explore demo formats, a bag and guest checkout with a payment simulation. No money is collected and nothing is printed or shipped. Real purchasing and PDF export are not connected.",
   faq4: "Does age decide the number of pages?",
   answer4:
     "No. You choose the page count. In live generation, age guides developmental suitability, vocabulary and text density. Discovery age labels are starting points for adult shared reading.",
@@ -414,10 +414,10 @@ const he: ProductCopy = {
     "לא בהדגמה הזו. המסלול בעזרת AI משתמש בטקסט מקומי לדוגמה, בלי לפנות לספק. לקוח API v2 מוכן לחיבור עתידי.",
   faq2: "איפה הספרים שלי נשמרים?",
   answer2:
-    "בזיכרון הלשונית הזו בלבד. ספרים וטיוטות נעלמים ברענון או בסגירה. אין חשבון, שמירה בענן או בעלות משותפת בהדגמה.",
+    "כברירת מחדל, בזיכרון הלשונית בלבד. כדי לשחזר ספרים, טיוטות וסל לאחר רענון, אפשר להפעיל שחזור בהסכמה בתחתית האתר ולמחוק אותו שם. סגירת הלשונית מוחקת את האחסון הזמני. אין חשבון או גיבוי בענן; פרטי קשר בהזמנה והזמנות אינם נשמרים באחסון.",
   faq3: "אפשר להדפיס או לקנות ספר?",
   answer3:
-    "רכישה, הדפסה, תשלום וייצוא PDF הם יכולות עתידיות. אין כאן פעולות הזמנה או תשלום.",
+    "אפשר לנסות פורמטים לדוגמה, סל והזמנת אורח עם הדמיית תשלום. לא נגבה כסף ולא מתבצעים הדפסה או משלוח. רכישה אמיתית וייצוא PDF אינם מחוברים.",
   faq4: "האם הגיל קובע את מספר העמודים?",
   answer4:
     "לא. אתם בוחרים את מספר העמודים. ביצירה אמיתית הגיל מנחה את ההתאמה ההתפתחותית, אוצר המילים וצפיפות הטקסט. תוויות הגיל הן נקודות פתיחה לקריאה משותפת.",
