@@ -19,6 +19,13 @@ import { Studio } from "./pages/Studio";
 import { Info } from "./pages/Info";
 import { StoryForm } from "./components/StoryForm";
 import { StoryReader } from "./components/StoryReader";
+import {useCommerce} from './commerce/useCommerce';
+import {Cart} from './commerce/Cart';
+import {Checkout} from './commerce/Checkout';
+import {Orders} from './commerce/Orders';
+import {FormatChooser} from './commerce/FormatChooser';
+import {eligible} from './commerce/model';
+import {experience} from './i18n/experience';
 const mockService = createMockStoryService(2200);
 export function App({ service = mockService }: { service?: StoryService }) {
   const [locale, setLocale] = useState<Language>("en");
@@ -29,9 +36,11 @@ export function App({ service = mockService }: { service?: StoryService }) {
   const [working, setWorking] = useState<Book>(() => createBlankBook("en"));
   const { route, key } = useRoute();
   const { books, save, remove } = useLibrary();
+  const commerce=useCommerce();
   const { generate, cancel } = useStory(service);
   const c = messages[locale];
   const p = productCopy[locale];
+  const e=experience[locale];
   const content = useRef<HTMLDivElement>(null);
   const previousRoute = useRef(key);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -87,6 +96,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
     if (transient?.id === id) return transient;
     const saved = books.find((book) => book.id === id);
     if (saved) return saved;
+    const cartBook=commerce.lines.find(line=>line.book.id===id)?.book;if(cartBook)return cartBook;
     for (const template of catalog)
       for (const language of ["en", "he"] as const)
         if (id === `sample-${template.id}-${language}`)
@@ -191,9 +201,16 @@ export function App({ service = mockService }: { service?: StoryService }) {
             onCreate={create}
             saved={!!book && books.some((item) => item.id === book.id)}
             onSave={book ? () => save(book) : undefined}
+            onShop={book&&eligible(book)?()=>go(`/format/${book.id}`):undefined}
           />
         );
       }
+      case 'format':{const book=lookup(route.id);return book?<FormatChooser book={book} locale={locale} onAdd={(book,format,quantity)=>{commerce.add(book,format,quantity);go('/cart');}}/>:<Info page="not-found" p={p}/>;}
+      case 'cart':return <Cart lines={commerce.lines} locale={locale} onUpdate={commerce.update} onRemove={commerce.remove}/>;
+      case 'checkout':return <Checkout lines={commerce.lines} locale={locale} onComplete={order=>{commerce.complete(order);go(`/confirmation/${order.id}`);}}/>;
+      case 'orders':return <Orders orders={commerce.orders} locale={locale}/>;
+      case 'order':return <Orders orders={commerce.orders} locale={locale} id={route.id}/>;
+      case 'confirmation':return <Orders orders={commerce.orders} locale={locale} id={route.id} confirmation/>;
       case "loading":
         return generating ? (
           <main className="state-screen container" aria-busy="true">
@@ -297,6 +314,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
           <a href="#/about">{p.about}</a>
         </nav>
         <div className="header-actions">
+          <a className="bag-link" href="#/cart" aria-label={`${e.cart} (${commerce.count})`}><span aria-hidden="true">♧</span><span className="bag-label">{e.cart}</span><span className="bag-count" aria-live="polite">{commerce.count}</span></a>
           <label className="sr-only" htmlFor="ui-language">
             {c.uiLanguage}
           </label>
@@ -345,6 +363,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
             [p.library, "/my-books"],
             [p.about, "/about"],
             [p.help, "/help"],
+            [e.cart,'/cart'],[e.orders,'/orders'],
           ].map(([label, path]) => (
             <a key={path} href={`#${path}`} onClick={() => setMenuOpen(false)}>
               {label} ↗
@@ -376,6 +395,7 @@ export function App({ service = mockService }: { service?: StoryService }) {
             <a href="#/create/ai">{p.ai}</a>
             <a href="#/studio/new">{p.manual}</a>
             <a href="#/my-books">{p.library}</a>
+            <a href="#/cart">{e.cart}</a><a href="#/orders">{e.orders}</a>
           </div>
           <div>
             <h2>{p.footerKnow}</h2>
