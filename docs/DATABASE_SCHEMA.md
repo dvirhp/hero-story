@@ -1,10 +1,41 @@
+## Implemented milestone 1 schema (authoritative over historical proposals below)
+
+Revision `0002` follows `0001` and adds `assets`, `books`, `book_pages`, `book_page_assets`.
+`books.origin_generation_id` references accepted `stories` with RESTRICT and uniqueness;
+manual books have no source. TEMPLATE writes are deliberately gated until catalog FKs exist.
+Pages cascade with their draft Book; asset bindings use a composite page/book FK and RESTRICT
+asset deletion. Assets contain opaque object references/checksums/dimensions, never media bytes,
+public URLs or credentials. JSON uses PostgreSQL JSONB; typed PageDocument v1 forbids unknown fields.
+
+PostgreSQL guards lock parent rows for page/binding edits, require revision increments,
+protect immutable provenance and accepted source rows, and prohibit terminal content edits.
+Deferred aggregate constraints require contiguous positions, exact image-slot bindings,
+valid basic document shape and initial AI source correspondence. Position uniqueness is
+DEFERRABLE, permitting atomic reorder. Typed application validation enforces the richer
+PageDocument and capacity contract; database checks alone do not validate every JSON field.
+Reads hold a shared parent lock while loading ordered child rows. Title updates use FOR UPDATE
+plus expected revision; stale writers fail safely. Only title editing is exposed internally now.
+
+AI limits: 32 story pages configurable, title 120 Unicode code points, 128 units/page,
+400 code points/unit, 256 KiB serialized document, 16 MiB serialized BookDetail. General manual
+PageDocuments support images and broader defensive bounds (256 blocks, 1024 units/block,
+12000 code points/unit); they retain byte bounds and configurable page count. Accepted AI
+projection uses the narrower policy. Covers/dedications and complete editor operations remain future.
+
+`alembic upgrade head` installs both revisions. `alembic downgrade 0001` removes all new Book/asset
+data and guards while retaining original story records; take an appropriate backup before a
+non-disposable rollback. `alembic upgrade head` recreates empty Book tables. SQLite is an offline
+portability check only and does not implement these PostgreSQL trigger/concurrency guarantees.
+
+
 # Proposed product database schema - Phase A
 
-Status: **design for approval, not implemented** (2026-11-05). SQLAlchemy async, asyncpg and Alembic remain the chosen infrastructure. Only revision `0001` and `stories` / `story_pages` exist today. See [ARCHITECTURE.md](ARCHITECTURE.md) for service/module responsibilities and [API_CONTRACTS.md](API_CONTRACTS.md) for DTOs.
+> **Current delivery, 2026-11-05:** Phase B milestone 1 is implemented internally only: canonical Book/PageDocument, SQLAlchemy storage, migration 0002 and transactional services. No v3 routes, ownership, catalog, worker or quota implementation is enabled. Later design sections remain proposals. The latest session design is **7-day idle plus 30-day absolute expiry**, superseding the earlier fixed-30-day-only proposal. See [current handoff](PERSISTENCE_HANDOFF.md) and [expanded backend roadmap](BACKEND_ROADMAP.md).
+Status: **0001/0002 implemented; remaining schema below is future design** (2026-11-05). SQLAlchemy async, asyncpg and Alembic remain the chosen infrastructure. Revisions `0001` and `0002` now exist; the implemented section above is authoritative. See [ARCHITECTURE.md](ARCHITECTURE.md) for service/module responsibilities and [API_CONTRACTS.md](API_CONTRACTS.md) for DTOs.
 
-Revision note: the common Book architecture is accepted in principle, but Phase B remains on hold. Anonymous owner/session and capability-quota tables below are proposed additions, not existing database objects. Registration is optional; ownership enforcement is not.
+Revision note: the common Book architecture is accepted in principle, but milestones 2 onward remain on hold. Anonymous owner/session and capability-quota tables below are proposed additions, not existing database objects. Registration is optional; ownership enforcement is not.
 
-The [Phase B implementation plan](PHASE_B_IMPLEMENTATION_PLAN.md) is the current delivery/migration allocation: proposed 0002 canonical Book/assets, 0003 anonymous ownership, 0004 catalog/templates, 0005 durable operations, 0006 quota admission. This supersedes the older illustrative numbering below; actual 0001 remains unchanged. Plan defaults are UTC/10+10, committed first-dispatch consumption/proven-unsent release, fixed 30-day session and >=48-hour terminal replay. No migration file or setting is implemented here.
+The [Phase B implementation plan](PHASE_B_IMPLEMENTATION_PLAN.md) is the current delivery/migration allocation: proposed 0002 canonical Book/assets, 0003 anonymous ownership, 0004 catalog/templates, 0005 durable operations, 0006 quota admission. This supersedes the older illustrative numbering below; actual 0001 remains unchanged. Plan defaults are UTC/10+10, committed first-dispatch consumption/proven-unsent release, 7-day idle / 30-day absolute session and >=48-hour terminal replay. Migration 0002 is implemented; later migrations/settings remain proposed.
 
 ## Preserve the accepted foundation
 
@@ -97,7 +128,7 @@ Indexes: retain story status index. Add products(status,visibility,created_at,id
 | Proposed table/change | Keys, minimal fields and invariants |
 | --- | --- |
 | `access_principals` | id UUID PK; kind anonymous/account; status active/claimed/revoked; nullable claimed_by_principal_id FK RESTRICT; created_at/expires_at. Only anonymous may point to an active account principal; no chains/cycles/self-link. A claim is one-way and uniquely audit-recorded. No child names, email/passwords or inferred identities. Account principals are allocated only from a future verified identity adapter, not client owner IDs. |
-| `access_sessions` | id UUID PK; principal_id FK; token_digest unique; digest_key_version; csrf_digest; csrf_nonce (non-secret random salt) and csrf_key_version; created_at/last_seen_at/expires_at/revoked_at. expires_at is fixed at issuance +30 days; no shorter idle timeout or last_seen-based extension. Raw bearer/CSRF tokens never stored. Derive the returned CSRF token with a separate server HMAC key over session ID/nonce/credential version so GET session can reproduce it without storing plaintext; verify in constant time. Rotate credentials/CSRF context while keeping principal identity and original expiry. Index token_digest, principal_id and expiry cleanup. Key material stays in secret configuration, not rows. |
+| `access_sessions` | id UUID PK; principal_id FK; token_digest unique; digest_key_version; csrf_digest; csrf_nonce (non-secret random salt) and csrf_key_version; created_at/last_seen_at/expires_at/revoked_at. idle_expires_at is last accepted activity +7 days, capped by absolute_expires_at at issuance +30 days; rotation never extends the absolute deadline. Raw bearer/CSRF tokens never stored. Derive the returned CSRF token with a separate server HMAC key over session ID/nonce/credential version so GET session can reproduce it without storing plaintext; verify in constant time. Rotate credentials/CSRF context while keeping principal identity and original expiry. Index token_digest, principal_id and expiry cleanup. Key material stays in secret configuration, not rows. |
 | `principal_claims` | anonymous_principal_id PK/FK; account_principal_id FK; claimed_at; claim_operation_id unique. Only the verified account plus fresh anonymous proof may authorize; double claim to another account fails. Existing ownership references remain to the claimed namespace, which is now accessible only through that account. Minimal audit contains IDs/outcome, not credentials or child data. Future verified subject-to-account mapping is owned by the auth adapter, not a speculative users table here. |
 | Owner columns | Add owner_principal_id FK RESTRICT to Book, source stories, private assets and creation operations. Book pages/personalization inherit Book ownership. Editorial public assets use NULL owner with scope check; private assets require owner. Old 0001 stories remain NULL-owned/quarantined and inaccessible to new anonymous APIs; never grant to first reader. New public-entry writes require an actual principal. Verify linked Book/source/operation/private-asset authorization using the canonical account-plus-claimed namespace scope. |
 | `creation_operations` | id UUID PK; owner_principal_id FK (issuance namespace); capability story_generation/image_generation; idempotency_key_digest; request_fingerprint HMAC and key version; admitted_schema_version/execution_policy_version; frozen configuration reference/digest; request_id; admission_day date; created_at/updated_at; dispatch_authorized_at nullable; terminal_outcome nullable fixed enum; source_story_id nullable unique FK; idempotency_expires_at. UNIQUE(owner_principal_id,capability,idempotency_key_digest); capability/source shape checks. No raw payload, prompts, provider messages or tokens. Execution/job states, encrypted request-envelope storage and leases await Agent 1's design; do not create competing job ledgers. |
@@ -133,7 +164,7 @@ Earlier catalog-first numbering was never applied and is superseded.
 | Milestone / proposed revision | Additive change and gate |
 | --- | --- |
 | 1 / `0002_canonical_books_assets` | Common Book/Page/asset reference schema and transaction helpers; AI/manual origins internally testable, template branch gated until valid source FKs exist; no public unowned Book routes |
-| 2 / `0003_anonymous_access_ownership` | Principal/session/claim records, mandatory new-write ownership and owner-leading indexes; preserve/quarantine legacy NULL-owned sources; fixed 30-day session |
+| 2 / `0003_anonymous_access_ownership` | Principal/session/claim records, mandatory new-write ownership and owner-leading indexes; preserve/quarantine legacy NULL-owned sources; 7-day idle / 30-day absolute session |
 | 3 / `0004_catalog_template_versions` | Catalog/localizations/sealed templates/page variants/media plus Book personalization/template source FKs; enable valid TEMPLATE_BASED origin after constraints pass |
 | 4 / no revision expected | Manual commands use existing revision/ordering/lifecycle constraints; propose any missing invariant before assigning a new migration, never edit an applied one |
 | 5A / `0005_durable_creation_operations` | One operation, frozen artifacts, lease/fence, versioned replay metadata, attempt journal and approved encrypted temporary stores; only internal fake fixtures until real quota adapter exists |

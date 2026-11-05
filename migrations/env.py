@@ -5,10 +5,14 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 from storyforge.persistence.models import Base
+from storyforge.persistence import book_models  # Register canonical metadata for drift checks.
 
 
 def configure(connection):
-    context.configure(connection=connection, target_metadata=Base.metadata, compare_type=True)
+    def include_object(obj, name, type_, reflected, compare_to):
+        return obj.info.get("dialect", connection.dialect.name) == connection.dialect.name
+    context.configure(connection=connection, target_metadata=Base.metadata, compare_type=True,
+                      include_object=include_object)
     with context.begin_transaction():
         context.run_migrations()
 

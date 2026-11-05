@@ -76,29 +76,34 @@ class SqlAlchemyStoryRepository:
             await self._transition(session, story_id, "pending", status="processing")
 
     async def complete(self, story_id: UUID, brief: NormalizedBriefV2, result: GenerationSuccessV2) -> None:
+        async with self.sessions.begin() as session:
+            await self._complete_in_transaction(session, story_id, brief, result)
+
+    async def _complete_in_transaction(
+        self, session: AsyncSession, story_id: UUID, brief: NormalizedBriefV2, result: GenerationSuccessV2,
+    ) -> None:
         # Revalidate at the persistence boundary, including contextual hard constraints.
         brief = NormalizedBriefV2.model_validate_json(brief.model_dump_json())
         result = GenerationSuccessV2.model_validate_json(result.model_dump_json())
         result.story.validate_for(brief)
         if result.resolved_constraints != brief.constraints:
             raise ValueError("Accepted constraints differ from request")
-        async with self.sessions.begin() as session:
-            row = await session.get(StoryRecord, story_id)
-            if row is None or (row.child_name, row.age_months, row.language, row.page_count,
-                               row.story_type, row.theme, row.policy_version, row.request_metadata) != (
-                brief.request.display_name, brief.request.age_months, brief.request.language,
-                brief.request.page_count, brief.request.story_type, brief.request.theme,
-                brief.constraints.policy_version, brief.request.model_dump(mode="json", include={"text_density", "structure", "requested_title"})):
-                raise InvalidTransition("Stored request does not match completion")
-            content = result.story.model_dump(mode="json", exclude={"pages"})
-            metadata = safe_metadata(result)
-            metadata["quality_check_version"] = result.quality.check_version
-            metadata["rubric_version"] = result.quality.rubric_version
-            await self._transition(session, story_id, "processing", status="completed",
-                                   content=content, generation_metadata=metadata)
-            session.add_all([StoryPageRecord(story_id=story_id, **page.model_dump(mode="json"))
-                             for page in result.story.pages])
-            await session.flush()
+        row = await session.get(StoryRecord, story_id)
+        if row is None or (row.child_name, row.age_months, row.language, row.page_count,
+                           row.story_type, row.theme, row.policy_version, row.request_metadata) != (
+            brief.request.display_name, brief.request.age_months, brief.request.language,
+            brief.request.page_count, brief.request.story_type, brief.request.theme,
+            brief.constraints.policy_version, brief.request.model_dump(mode="json", include={"text_density", "structure", "requested_title"})):
+            raise InvalidTransition("Stored request does not match completion")
+        content = result.story.model_dump(mode="json", exclude={"pages"})
+        metadata = safe_metadata(result)
+        metadata["quality_check_version"] = result.quality.check_version
+        metadata["rubric_version"] = result.quality.rubric_version
+        await self._transition(session, story_id, "processing", status="completed",
+                               content=content, generation_metadata=metadata)
+        session.add_all([StoryPageRecord(story_id=story_id, **page.model_dump(mode="json"))
+                         for page in result.story.pages])
+        await session.flush()
 
     async def fail(self, story_id: UUID, result: GenerationFailure) -> None:
         result = GenerationFailure.model_validate_json(result.model_dump_json())

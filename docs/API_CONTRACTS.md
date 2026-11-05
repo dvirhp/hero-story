@@ -1,10 +1,25 @@
+## Executable boundary after milestone 1
+
+Existing v1/v2 routes are unchanged. `/v3/books`, `/v3/books/manual`, `/v3/books/ai`,
+`/v3/jobs/stories` and private detail paths remain unmounted (404, tested).
+`api/book_dtos.py` exports typed BookDetailResponse, ManualBookCreateRequest and title-update
+contracts for future integration; these are not yet published OpenAPI routes. BookDetail includes
+schema version, UUID, mode/state/revision, title/language/direction, UTC timestamps, flat origin,
+ordered pages and asset bindings. Each PageDocument v1 contains layout and discriminated text/image
+blocks. Text-only AI serialization omits absent frame fields to match Agent 1's projection exactly.
+Future authenticated/anonymous adapters must scope repository access and translate only fixed safe
+errors; never expose SQL exceptions or Pydantic input values. The service is internal, not an
+anonymous-access implementation. Existing v2 output shapes and generation behavior are unchanged.
+
+
 # Product API contracts - Phase A proposal
 
-Status: **Phase A including anonymous/quota design accepted in principle; incremental implementation plan for review; coding unauthorized**. No new endpoints/OpenAPI components implemented. Existing generation API is documented in [API.md](API.md), and remains authoritative. This document proposes new shapes and DTO responsibilities for the later API workstream. See [ARCHITECTURE.md](ARCHITECTURE.md) and [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
+> **Current delivery, 2026-11-05:** Phase B milestone 1 is implemented internally only: canonical Book/PageDocument, SQLAlchemy storage, migration 0002 and transactional services. No v3 routes, ownership, catalog, worker or quota implementation is enabled. Later design sections remain proposals. The latest session design is **7-day idle plus 30-day absolute expiry**, superseding the earlier fixed-30-day-only proposal. See [current handoff](PERSISTENCE_HANDOFF.md) and [expanded backend roadmap](BACKEND_ROADMAP.md).
+Status: **Phase A including anonymous/quota design accepted in principle; milestone 1 implemented; later coding unauthorized**. No new endpoints/OpenAPI components implemented. Existing generation API is documented in [API.md](API.md), and remains authoritative. This document proposes new shapes and DTO responsibilities for the later API workstream. See [ARCHITECTURE.md](ARCHITECTURE.md) and [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
 Current delivery plan: [PHASE_B_IMPLEMENTATION_PLAN.md](PHASE_B_IMPLEMENTATION_PLAN.md).
 User-proposed planning defaults now select UTC/10+10, committed dispatch consumption
-and proven-pre-dispatch release, fixed 30-day anonymous sessions (no seven-day idle
+and proven-pre-dispatch release, 7-day idle / 30-day absolute anonymous sessions (with idle
 cutoff), >=48-hour terminal replay, quota-free guest previews and a separate async
 POST `/v3/jobs/stories` returning 202 for new work. Agent 1 `49410d0` aligns on
 separate routes/replay and cancelled operation state. No endpoint is implemented.
@@ -90,7 +105,7 @@ Agent 2 changes required later: use same-origin credentials (current optional v2
 
 ## Agent 1 reliability / asynchronous-generation dependency
 
-Agent 1's latest read-only inspected integration contract is `49410d0`, following reliability `19d63f7` and earlier integration `e34b588`. It reconciles committed Agent 3 `7e38326`, recognizes anonymous ownership/accepted persistence, and now aligns separate async and sync paths. The Phase B plan additionally applies the user's newer fixed 30-day session default, replacing its seven-day-idle candidate. Other queue/lease/snapshot/finalization-recovery defaults remain approval dependencies. These are aligned planning contracts, not authorization or runtime evidence:
+Agent 1's latest read-only inspected integration contract is `49410d0`, following reliability `19d63f7` and earlier integration `e34b588`. It reconciles committed Agent 3 `7e38326`, recognizes anonymous ownership/accepted persistence, and now aligns separate async and sync paths. The Phase B plan additionally applies the user's newer 7-day idle / 30-day absolute session default, replacing its seven-day-idle candidate. Other queue/lease/snapshot/finalization-recovery defaults remain approval dependencies. These are aligned planning contracts, not authorization or runtime evidence:
 
 - One durable operation ID, reservation and idempotency record shared by HTTP admission, story/image execution and status polling. Do not create competing admission/job ledgers. Durable dispatch/outbox acceptance must be atomic with reservation/source creation; no quota count at each worker delivery.
 - Separate `POST /v3/jobs/stories` -> 202 + Location `/v3/operations/{id}` + polling Retry-After is the primary frontend target; replay of an existing matching key -> 200 current OperationStatus + same Location, no enqueue. Job ID is the operation ID, not another ledger. Public states are queued/processing/completed/failed/cancelled; source cancellation stays failed/CANCELLED. Plan POST `/v3/operations/{id}/cancel` with an atomic cancel/completion winner; exact request/response/error DTOs are milestone-5 contract gates. Polling disconnect does not cancel async work. Existing v1/v2 stay synchronous; no 202 is silently substituted there.

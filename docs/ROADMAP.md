@@ -1,3 +1,9 @@
+> Current separately approved backend work: Phase B milestone 1 is implemented internally;
+> later milestones need approval. See [implementation plan](PHASE_B_IMPLEMENTATION_PLAN.md),
+> [expanded backend roadmap](BACKEND_ROADMAP.md) and [verification handoff](PERSISTENCE_HANDOFF.md).
+> Historical engine milestone numbers below are a different sequence.
+
+
 # Implementation roadmap
 
 > Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.

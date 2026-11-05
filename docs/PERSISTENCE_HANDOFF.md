@@ -1,3 +1,126 @@
+# Current delivery: Phase B milestone 1
+
+2026-11-05. This section supersedes historical status/defaults below. Explicit approval covers
+milestone 1 only. Worktree `C:/Users/dvir3/storyforge-persistence`, branch
+`feature/storyforge-persistence-foundation`, parent commit `b6af124`. Implementation commit is
+recorded by the follow-up delivery record and `git log`; no merge/push/deployment occurred.
+
+## Implemented architecture and interfaces
+
+Strict typed canonical `Book` (alias of BookDetail), BookPage, PageDocument v1 text/image blocks,
+asset bindings/references, creation inputs, provenance and versioned capacity policies. Domain code
+is independent of SQLAlchemy/HTTP/providers. Application ports define the repository and UOW;
+`InternalBookService` offers create_manual, get, update_title and save_accepted_ai_projection.
+`SessionBookRepository` offers transactional add/get/update_title/register_asset. One UOW owns one
+session/transaction, commits on success and rolls back exceptions/cancellation; repository use after
+closure is rejected. Reads lock the parent shared; title writes lock exclusively and compare revision.
+There is no global engine/session or automatic endpoint wiring. Existing database factory remains
+in persistence/database.py and is injected into the UOW at composition time.
+
+Agent 1 owns the pure AI-to-canonical mapper. Its supplied projection is revalidated, checked against
+accepted source and saved atomically with source completion; no second mapper/engine/provider call
+was added. Static synthetic Hebrew fixture captures Agent 1 projector `a9858f8` output (27 pages);
+tests depend on that JSON, not Agent 1's worktree. Later Agent 1 UTC correction `5194484` is compatible.
+Reliability contract reviewed through `66732fc`; no code from other branches was merged.
+
+## Schema, migration and transactions
+
+Migration `0002_canonical_books_and_asset_references.py`, revision 0002 / parent 0001, adds assets,
+books, book_pages and book_page_assets. FK/check/unique constraints and PostgreSQL guards enforce
+source identity, lifecycle/revision rules, accepted-source immutability, ordered contiguous pages,
+asset slots and immutable provenance. Deferred position uniqueness supports transactional reorder.
+Application validation supplies richer JSON/capacity rules. TEMPLATE is reserved in DTOs but rejected
+by writes until catalog/version FKs exist. Only internal manual creation/title update and accepted
+AI save are currently supported; full editing/finalization APIs remain future.
+
+AI default maximum 32 pages is configurable; title 120 code points, 128 units/page, 400 points/unit,
+256 KiB document and 16 MiB full BookDetail. General manual documents have image-capable bounds
+rather than applying AI text density to all content. See DATABASE_SCHEMA.md for exact distinctions.
+Rejected/partial/failure results cannot complete a source or Book. Failed save rolls back source
+completion and all inserted Book rows. Existing pending/processing/failed source workflow is retained;
+this milestone adds no job or automatic failure handler.
+
+## Files added/modified
+
+Added domain/documents.py, books.py, book_capacity.py, book_errors.py; application/__init__.py,
+ports.py, books.py; api/book_dtos.py; persistence/book_models.py, book_repository.py, unit_of_work.py
+(all under src/storyforge); migration 0002; tests/canonical_helpers.py,
+tests/fixtures/canonical_ai_he_27.json, test_book_contracts.py, test_book_api_boundary.py and
+test_book_postgresql.py. Modified migrations/env.py (metadata/autogeneration filtering) and
+persistence/repository.py (existing completion delegated to transaction-scoped helper).
+Updated ARCHITECTURE.md, DATABASE_SCHEMA.md, API_CONTRACTS.md, PHASE_B_IMPLEMENTATION_PLAN.md,
+ROADMAP.md and this handoff; added BACKEND_ROADMAP.md. Dependency manifests/lockfiles, frontend,
+existing routes, LangGraph and provider adapters are unchanged.
+
+## Runtime verification (real PostgreSQL distinguished)
+
+Docker engine 28.5.1 and isolated PostgreSQL 17.11 were available on loopback port 5433.
+Full regression: **835 passed in 88.68 seconds**, with opt-in local PostgreSQL configured.
+This includes **35 real PostgreSQL cases** (21 canonical +14 foundation); the remaining 800 are
+offline/mock/SQLite/contract tests and do not establish PostgreSQL semantics. No live AI calls.
+
+PG coverage: manual create/read/update, empty draft, multilingual/Unicode, Agent 1 27-page Hebrew
+ordering, snapshots, accepted-source protection, rejected/failed/partial/mismatched output,
+late constraint rollback, asset references, configurable capacity, concurrent revision conflict,
+shared-lock read consistency, duplicate/invalid page constraints, deferred reorder, terminal
+immutability, cancellation rollback, UOW closure, safe errors/no private-input logging,
+downgrade 0001/re-upgrade and Alembic schema drift. Each case uses a disposable unique test database;
+no production credentials/database needed. Packaging: wheel and sdist built successfully with uv build.
+
+PowerShell from worktree (activate/sync local .venv first):
+
+```powershell
+docker compose -f compose.persistence.yaml up -d
+# Set STORYFORGE_TEST_POSTGRES_URL to the disposable local asyncpg URL from compose.
+.venv/Scripts/python.exe -m pytest -q --tb=short
+# Real PG subset only; same local test URL must be set:
+.venv/Scripts/python.exe -m pytest -q -m postgresql
+# Set STORYFORGE_DATABASE_URL to the desired disposable development database:
+.venv/Scripts/python.exe -m alembic upgrade head
+.venv/Scripts/python.exe -m alembic current
+.venv/Scripts/python.exe -m alembic check
+.venv/Scripts/python.exe -m alembic downgrade 0001
+.venv/Scripts/python.exe -m alembic upgrade head
+```
+
+Verify actual environment variable names in migrations/env.py/database.py before invocation;
+see existing local setup below for URL values. Downgrade deletes canonical Book/asset data but
+retains source stories. Never run destructive migration checks against non-disposable data.
+PostgreSQL tests run migrations themselves; no claim is made that production databases were migrated.
+
+## Security, privacy and limitations
+
+Internal-only service is not an access-control boundary. All proposed private v3 routes still 404;
+no ownerless public book endpoint exists. M2 must introduce principals, secure anonymous sessions,
+CSRF, authorization and owner-scoped queries before mounting routes. Latest design defaults are
+7-day idle/30-day absolute sessions, UTC independent 10 story/10 image quotas, durable first-dispatch
+consumption/proven-pre-dispatch release, >=48h terminal replay and quota-free template previews.
+None of those security/quota/job controls is implemented in M1.
+
+No keys, raw provider exceptions, prompts or extra child profile fields were added. Canonical
+content necessarily contains private child/story text and source retains existing minimal request
+metadata. Do not log DTOs, SQL parameters, raw exceptions or private URLs. Safe domain errors omit
+input values; tests include private canaries. The persistence layer does not log credentials.
+Encryption/key management, deletion/backup retention and operational least-privilege roles remain
+production gates; current database content is not application-encrypted. Assets are references only:
+no upload/download authorization, malware/media moderation or external object service implemented.
+Database triggers are PostgreSQL-specific; SQLite is not concurrency/security evidence.
+
+## Integration and next steps
+
+M2 authorization is required before private HTTP exposure. Agent 2 can consume shared DTOs after
+contract review; earliest genuine deterministic frontend/API/PG slice is M3 seeded catalog,
+preview, explicit private save and reopen. Agent 1 supplies accepted canonical projection and later
+job/dispatch journal; adapt it through typed contracts without copying projection or changing v2.
+Agent 4 should independently verify migration/HTTP isolation and concurrency on the agreed base.
+Full editor, ownership, templates, jobs, quotas, accounts, carts, checkout, fake payment and fulfillment
+remain separate approved-later milestones in BACKEND_ROADMAP.md. No milestone 2+ implementation,
+real payment, shipping call, billing change, deployment or live AI call was made.
+
+---
+
+## Historical foundation and planning records
+
 # Persistence foundation handoff
 
 > **Latest task: incremental Phase B implementation plan (2026-11-05).** Phase A is accepted in principle, but **coding is not authorized**. See [PHASE_B_IMPLEMENTATION_PLAN.md](PHASE_B_IMPLEMENTATION_PLAN.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) and [API_CONTRACTS.md](API_CONTRACTS.md). The plan uses the user's proposed defaults and Agent 1's latest `49410d0` contract. No new implementation/migration exists. Earlier defaults/transport choices below are historical where superseded, including seven-day idle expiry, negotiated async and v2 save=true.

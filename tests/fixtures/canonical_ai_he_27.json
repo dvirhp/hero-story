@@ -1,0 +1,1383 @@
+{
+  "provenance": "Synthetic source/quality fixtures and Agent 1 pure projector at a9858f8; no engine/provider calls. Owner UUIDs are test context, not authentication.",
+  "brief": {
+    "request": {
+      "language": "he",
+      "display_name": "רועי",
+      "age_months": 36,
+      "theme": "רועי גיבור־על מציל את האותיות החסרות בממלכת אותיות קסומה",
+      "interests": [
+        "אותיות",
+        "הרפתקאות",
+        "גיבורי־על"
+      ],
+      "narrative_pronouns": {
+        "language": "he",
+        "subject": "הוא",
+        "object": "אותו",
+        "possessive": "שלו",
+        "grammatical_agreement": "masculine_singular"
+      },
+      "guidance": "שם הסיפור: רועי וגיבורי ממלכת האותיות. בדיוק 27 עמודים לפי הסדר: א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת ך ם ן ף ץ. בכל עמוד אות מטרה אחת ו-2–3 משפטים עבריים קצרים ופשוטים. רועי מציל בעצמו אות חסרה בכל עמוד ומקדם עלילה רציפה. שלבו מילה זכירה וחזרה משחקית. בעמודי ך ם ן ף ץ הסבירו בטבעיות שאלה צורות סופיות של כ מ נ פ צ, והראו כל צורה בסוף מילה. סיום חם ומשמח, ללא אנגלית.",
+      "schema_version": "2",
+      "page_count": 27,
+      "story_type": "alphabet",
+      "text_density": "light",
+      "structure": {
+        "kind": "ordered_targets",
+        "targets": [
+          {
+            "target_id": "letter-01",
+            "label": "א",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-02",
+            "label": "ב",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-03",
+            "label": "ג",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-04",
+            "label": "ד",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-05",
+            "label": "ה",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-06",
+            "label": "ו",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-07",
+            "label": "ז",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-08",
+            "label": "ח",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-09",
+            "label": "ט",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-10",
+            "label": "י",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-11",
+            "label": "כ",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-12",
+            "label": "ל",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-13",
+            "label": "מ",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-14",
+            "label": "נ",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-15",
+            "label": "ס",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-16",
+            "label": "ע",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-17",
+            "label": "פ",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-18",
+            "label": "צ",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-19",
+            "label": "ק",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-20",
+            "label": "ר",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-21",
+            "label": "ש",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-22",
+            "label": "ת",
+            "kind": "letter",
+            "base_form": null,
+            "example_word": null
+          },
+          {
+            "target_id": "letter-23",
+            "label": "ך",
+            "kind": "letter",
+            "base_form": "כ",
+            "example_word": "מלך"
+          },
+          {
+            "target_id": "letter-24",
+            "label": "ם",
+            "kind": "letter",
+            "base_form": "מ",
+            "example_word": "ים"
+          },
+          {
+            "target_id": "letter-25",
+            "label": "ן",
+            "kind": "letter",
+            "base_form": "נ",
+            "example_word": "גן"
+          },
+          {
+            "target_id": "letter-26",
+            "label": "ף",
+            "kind": "letter",
+            "base_form": "פ",
+            "example_word": "אף"
+          },
+          {
+            "target_id": "letter-27",
+            "label": "ץ",
+            "kind": "letter",
+            "base_form": "צ",
+            "example_word": "עץ"
+          }
+        ],
+        "sentence_units_per_page": {
+          "minimum": 2,
+          "maximum": 3
+        }
+      },
+      "requested_title": "רועי וגיבורי ממלכת האותיות"
+    },
+    "profile": {
+      "band_id": "preschool",
+      "version": "development-v2-1",
+      "min_months": 36,
+      "max_months": 72,
+      "requirements": {
+        "language": "he",
+        "reading_mode": "shared_read_aloud",
+        "strategy": "simple_goal",
+        "densities": [
+          {
+            "density": "light",
+            "words_per_page": {
+              "minimum": 12,
+              "maximum": 24
+            }
+          },
+          {
+            "density": "standard",
+            "words_per_page": {
+              "minimum": 25,
+              "maximum": 45
+            }
+          }
+        ],
+        "soft": {
+          "vocabulary": "Familiar vocabulary with contextual new words.",
+          "sentence_words": {
+            "minimum": 5,
+            "maximum": 12
+          },
+          "repetition": "Optional recurring phrase.",
+          "developmental_guidance": "Simple goal, gentle obstacle and resolution."
+        },
+        "narrative_variety": "Use a memorable recurring motif while changing actions, discoveries and scene details; each page contributes to the shared goal."
+      }
+    },
+    "constraints": {
+      "page_count": 27,
+      "words_per_page": {
+        "minimum": 12,
+        "maximum": 24
+      },
+      "total_words": {
+        "minimum": 324,
+        "maximum": 648
+      },
+      "target_ids": [
+        "letter-01",
+        "letter-02",
+        "letter-03",
+        "letter-04",
+        "letter-05",
+        "letter-06",
+        "letter-07",
+        "letter-08",
+        "letter-09",
+        "letter-10",
+        "letter-11",
+        "letter-12",
+        "letter-13",
+        "letter-14",
+        "letter-15",
+        "letter-16",
+        "letter-17",
+        "letter-18",
+        "letter-19",
+        "letter-20",
+        "letter-21",
+        "letter-22",
+        "letter-23",
+        "letter-24",
+        "letter-25",
+        "letter-26",
+        "letter-27"
+      ],
+      "sentence_units_per_page": {
+        "minimum": 2,
+        "maximum": 3
+      },
+      "policy_version": "page-policy-v2-1"
+    },
+    "execution": {
+      "planner_output_tokens": 2792,
+      "writer_output_tokens": 4128,
+      "estimate_version": "page-policy-v2-1"
+    },
+    "language_rubric_version": "language-v1"
+  },
+  "result": {
+    "request_id": "canonical-fixture-only",
+    "usage": {
+      "attempts": [],
+      "known_estimated_cost_usd": 0.0,
+      "upper_estimated_cost_usd": 0.0,
+      "has_unknown_usage": false,
+      "has_unknown_cost": false
+    },
+    "total_latency_seconds": 0.0,
+    "status": "success",
+    "story": {
+      "schema_version": "2",
+      "title": "רועי וגיבורי ממלכת האותיות",
+      "language": "he",
+      "direction": "rtl",
+      "profile_id": "preschool",
+      "profile_version": "development-v2-1",
+      "pages": [
+        {
+          "page_id": "p1",
+          "page_number": 1,
+          "target_id": "letter-01",
+          "sentence_units": [
+            "רועי, א לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p2",
+          "page_number": 2,
+          "target_id": "letter-02",
+          "sentence_units": [
+            "רועי, ב לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p3",
+          "page_number": 3,
+          "target_id": "letter-03",
+          "sentence_units": [
+            "רועי, ג לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p4",
+          "page_number": 4,
+          "target_id": "letter-04",
+          "sentence_units": [
+            "רועי, ד לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p5",
+          "page_number": 5,
+          "target_id": "letter-05",
+          "sentence_units": [
+            "רועי, ה לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p6",
+          "page_number": 6,
+          "target_id": "letter-06",
+          "sentence_units": [
+            "רועי, ו לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p7",
+          "page_number": 7,
+          "target_id": "letter-07",
+          "sentence_units": [
+            "רועי, ז לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p8",
+          "page_number": 8,
+          "target_id": "letter-08",
+          "sentence_units": [
+            "רועי, ח לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p9",
+          "page_number": 9,
+          "target_id": "letter-09",
+          "sentence_units": [
+            "רועי, ט לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p10",
+          "page_number": 10,
+          "target_id": "letter-10",
+          "sentence_units": [
+            "רועי, י לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p11",
+          "page_number": 11,
+          "target_id": "letter-11",
+          "sentence_units": [
+            "רועי, כ לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p12",
+          "page_number": 12,
+          "target_id": "letter-12",
+          "sentence_units": [
+            "רועי, ל לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p13",
+          "page_number": 13,
+          "target_id": "letter-13",
+          "sentence_units": [
+            "רועי, מ לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p14",
+          "page_number": 14,
+          "target_id": "letter-14",
+          "sentence_units": [
+            "רועי, נ לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p15",
+          "page_number": 15,
+          "target_id": "letter-15",
+          "sentence_units": [
+            "רועי, ס לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p16",
+          "page_number": 16,
+          "target_id": "letter-16",
+          "sentence_units": [
+            "רועי, ע לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p17",
+          "page_number": 17,
+          "target_id": "letter-17",
+          "sentence_units": [
+            "רועי, פ לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p18",
+          "page_number": 18,
+          "target_id": "letter-18",
+          "sentence_units": [
+            "רועי, צ לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p19",
+          "page_number": 19,
+          "target_id": "letter-19",
+          "sentence_units": [
+            "רועי, ק לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p20",
+          "page_number": 20,
+          "target_id": "letter-20",
+          "sentence_units": [
+            "רועי, ר לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p21",
+          "page_number": 21,
+          "target_id": "letter-21",
+          "sentence_units": [
+            "רועי, ש לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p22",
+          "page_number": 22,
+          "target_id": "letter-22",
+          "sentence_units": [
+            "רועי, ת לילה נעים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p23",
+          "page_number": 23,
+          "target_id": "letter-23",
+          "sentence_units": [
+            "רועי, ך כ מלך אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p24",
+          "page_number": 24,
+          "target_id": "letter-24",
+          "sentence_units": [
+            "רועי, ם מ ים אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p25",
+          "page_number": 25,
+          "target_id": "letter-25",
+          "sentence_units": [
+            "רועי, ן נ גן אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p26",
+          "page_number": 26,
+          "target_id": "letter-26",
+          "sentence_units": [
+            "רועי, ף פ אף אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        },
+        {
+          "page_id": "p27",
+          "page_number": 27,
+          "target_id": "letter-27",
+          "sentence_units": [
+            "רועי, ץ צ עץ אור רך",
+            "לילה נעים אור רך לילה נעים."
+          ]
+        }
+      ],
+      "page_count": 27
+    },
+    "quality": {
+      "passed": true,
+      "issues": [
+        {
+          "code": "NARRATIVE_COVERAGE_REVIEW",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review active agency, meaningful progression, sentence grammar and educational accuracy; target metadata alone cannot prove them."
+        },
+        {
+          "code": "VOCABULARY_FORM_COUNT",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Body excluding the supplied name contains 36 distinct word forms across 297 tokens; this does not measure reading difficulty."
+        },
+        {
+          "code": "REPETITION_OBSERVED",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Repeated tokens were observed; compare with the profile's refrain guidance. Intentional repetition is allowed."
+        },
+        {
+          "code": "VOCABULARY_NARRATIVE_REVIEW",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review vocabulary and narrative against the captured profile guidance; word counts cannot establish their suitability."
+        }
+      ],
+      "check_version": "quality-v1+book-v2-1",
+      "rubric_version": "language-v1"
+    },
+    "resolved_constraints": {
+      "page_count": 27,
+      "words_per_page": {
+        "minimum": 12,
+        "maximum": 24
+      },
+      "total_words": {
+        "minimum": 324,
+        "maximum": 648
+      },
+      "target_ids": [
+        "letter-01",
+        "letter-02",
+        "letter-03",
+        "letter-04",
+        "letter-05",
+        "letter-06",
+        "letter-07",
+        "letter-08",
+        "letter-09",
+        "letter-10",
+        "letter-11",
+        "letter-12",
+        "letter-13",
+        "letter-14",
+        "letter-15",
+        "letter-16",
+        "letter-17",
+        "letter-18",
+        "letter-19",
+        "letter-20",
+        "letter-21",
+        "letter-22",
+        "letter-23",
+        "letter-24",
+        "letter-25",
+        "letter-26",
+        "letter-27"
+      ],
+      "sentence_units_per_page": {
+        "minimum": 2,
+        "maximum": 3
+      },
+      "policy_version": "page-policy-v2-1"
+    }
+  },
+  "projection": {
+    "schema_version": "1",
+    "book_id": "00000000-0000-0000-0000-000000000003",
+    "creation_mode": "AI_GENERATED",
+    "state": "draft",
+    "revision": 1,
+    "title": "רועי וגיבורי ממלכת האותיות",
+    "language": "he",
+    "direction": "rtl",
+    "page_count": 27,
+    "created_at": "2026-11-05T10:00:00Z",
+    "updated_at": "2026-11-05T10:00:00Z",
+    "origin": {
+      "generation_id": "00000000-0000-0000-0000-000000000002",
+      "template_version_id": null,
+      "page_variant_id": null,
+      "source_display": null
+    },
+    "personalization": null,
+    "finalized_at": null,
+    "archived_at": null,
+    "pages": [
+      {
+        "page_id": "00000000-0000-0000-0000-000000000064",
+        "position": 1,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, א לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p1",
+        "source_target_id": "letter-01"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000065",
+        "position": 2,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ב לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p2",
+        "source_target_id": "letter-02"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000066",
+        "position": 3,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ג לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p3",
+        "source_target_id": "letter-03"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000067",
+        "position": 4,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ד לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p4",
+        "source_target_id": "letter-04"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000068",
+        "position": 5,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ה לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p5",
+        "source_target_id": "letter-05"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000069",
+        "position": 6,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ו לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p6",
+        "source_target_id": "letter-06"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006a",
+        "position": 7,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ז לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p7",
+        "source_target_id": "letter-07"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006b",
+        "position": 8,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ח לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p8",
+        "source_target_id": "letter-08"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006c",
+        "position": 9,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ט לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p9",
+        "source_target_id": "letter-09"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006d",
+        "position": 10,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, י לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p10",
+        "source_target_id": "letter-10"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006e",
+        "position": 11,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, כ לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p11",
+        "source_target_id": "letter-11"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000006f",
+        "position": 12,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ל לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p12",
+        "source_target_id": "letter-12"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000070",
+        "position": 13,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, מ לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p13",
+        "source_target_id": "letter-13"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000071",
+        "position": 14,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, נ לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p14",
+        "source_target_id": "letter-14"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000072",
+        "position": 15,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ס לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p15",
+        "source_target_id": "letter-15"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000073",
+        "position": 16,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ע לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p16",
+        "source_target_id": "letter-16"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000074",
+        "position": 17,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, פ לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p17",
+        "source_target_id": "letter-17"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000075",
+        "position": 18,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, צ לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p18",
+        "source_target_id": "letter-18"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000076",
+        "position": 19,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ק לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p19",
+        "source_target_id": "letter-19"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000077",
+        "position": 20,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ר לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p20",
+        "source_target_id": "letter-20"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000078",
+        "position": 21,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ש לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p21",
+        "source_target_id": "letter-21"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-000000000079",
+        "position": 22,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ת לילה נעים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p22",
+        "source_target_id": "letter-22"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000007a",
+        "position": 23,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ך כ מלך אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p23",
+        "source_target_id": "letter-23"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000007b",
+        "position": 24,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ם מ ים אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p24",
+        "source_target_id": "letter-24"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000007c",
+        "position": 25,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ן נ גן אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p25",
+        "source_target_id": "letter-25"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000007d",
+        "position": 26,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ף פ אף אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p26",
+        "source_target_id": "letter-26"
+      },
+      {
+        "page_id": "00000000-0000-0000-0000-00000000007e",
+        "position": 27,
+        "document": {
+          "schema_version": "1",
+          "layout": {
+            "preset": "text-only-v1"
+          },
+          "blocks": [
+            {
+              "kind": "text",
+              "block_id": "body",
+              "language": "he",
+              "direction": "rtl",
+              "style": "body",
+              "sentence_units": [
+                "רועי, ץ צ עץ אור רך",
+                "לילה נעים אור רך לילה נעים."
+              ]
+            }
+          ]
+        },
+        "asset_bindings": [],
+        "source_page_key": "p27",
+        "source_target_id": "letter-27"
+      }
+    ]
+  }
+}

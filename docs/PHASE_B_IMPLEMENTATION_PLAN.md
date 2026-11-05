@@ -1,6 +1,6 @@
 # Phase B incremental implementation plan
 
-Status: **plan for approval only; no coding or migration execution authorized**.
+Status: **Milestone 1 implemented after explicit approval; milestones 2 onward remain plans requiring approval**. See current handoff for evidence and BACKEND_ROADMAP.md for the commerce extension.
 Prepared 2026-11-05 from Agent 3 branch `feature/storyforge-persistence-foundation`,
 commit `7e38326`, and read-only review of Agent 1's latest
 `docs/AI_BACKEND_INTEGRATION_CONTRACT.md` at `49410d0`.
@@ -19,7 +19,7 @@ dependencies cannot be replaced by permissive runtime stubs.
 | AI allowance | 10 story units and 10 image units independently per effective principal/claimed namespace set; no per-pod or cookie-rotation reset |
 | Consumption | Reserve at acceptance; consume exactly once when first provider dispatch authorization commits durably with its attempt/token/cost journal |
 | Release | Only proven failure/cancellation before committed dispatch authorization, with every potential dispatcher fenced; dispatched/uncertain work remains counted |
-| Anonymous session | 30-day fixed absolute lifetime from issuance (720 hours); token rotation does not extend it. No inherited seven-day idle timeout or implicit sliding extension |
+| Anonymous session | Latest approved design: 7-day idle plus 30-day absolute lifetime; activity/rotation cannot extend the absolute deadline |
 | Idempotency | Entire nonterminal lifetime plus **at least 48 hours after terminal outcome**; retain compatible digest keys/canonicalizers; erased-result tombstones contain no child content |
 | Guest preview | No registration, no saved Book/choices and no AI quota; separate rate/size/concurrency controls |
 | Async story entry | Separate POST `/v3/jobs/stories`, new operation -> 202, Location `/v3/operations/{id}`, polling Retry-After; duplicate matching key -> 200 same status, not a new job |
@@ -35,8 +35,7 @@ Agent 1's other candidate defaults are **not silently adopted**: five-minute que
 TTL, 60-second lease/10-second heartbeat, 15-minute accepted-finalization window,
 three storage-only transaction attempts and deletion within 60 seconds require
 explicit approval and privacy/storage feasibility review before milestone 5.
-Its seven-day idle session proposal is superseded here by the requested 30-day
-lifetime. Book/source retention is still a separate decision.
+The latest user instruction adopts seven-day idle plus 30-day absolute lifetime. Book/source retention is still a separate decision.
 
 ## Dependency and activation order
 
@@ -114,7 +113,7 @@ port and test it using synthetic verified principals only.
 **Migration:** proposed `0003_anonymous_access_ownership`: principals/sessions/
 namespace-claim records; owner FKs/indexes and scope checks. New private writes
 require a real server-issued anonymous principal. Quarantine pre-existing unowned
-stories/Books instead of assigning them to a first reader. Apply 30-day expiry,
+stories/Books instead of assigning them to a first reader. Apply 7-day idle and 30-day absolute expiry,
 revocation, keyed token digests and reproducible session-bound CSRF derivation.
 
 **Endpoints:** POST/GET/DELETE `/v3/session`; scoped GET `/v3/books`,
@@ -126,7 +125,7 @@ Bootstrap/session issuance gets baseline rate controls even before milestone 6.
 contract and secret-injection strategy. No registration required. All local browser
 proofs must use production-equivalent cookie behavior, not an insecure-cookie bypass.
 
-**Tests:** 30-day absolute expiry with frozen clocks; rotation/revocation without
+**Tests:** 7-day idle and 30-day absolute expiry with frozen clocks; rotation/revocation without
 owner change; missing/foreign session, CSRF/origin failures, fixation, safe errors,
 no token/child data logs; PostgreSQL owner isolation and claim/revocation races.
 Synthetic verified-account tests cover single-winner claim and inherited ownership;
@@ -366,7 +365,7 @@ retention; real account claim proof adapter (future, not needed for anonymous us
 Agent 1 durable-port/queue/lease/expiry/finalization-window and encrypted-storage
 deletion policy; cancellation/replay/public safe-error DTOs; abuse thresholds and
 network/privacy tradeoffs; image provider/safety ownership and scope. User-proposed
-UTC, 10+10, durable consumption/proven-release, 30-day session, >=48-hour replay,
+UTC, 10+10, durable consumption/proven-release, 7-day idle/30-day absolute session, >=48-hour replay,
 guest-preview and separate async-route defaults are the baseline, not reopened
 as undecided alternatives. They are not authorization to implement or run AI.
 
