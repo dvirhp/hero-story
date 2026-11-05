@@ -1,0 +1,7 @@
+[
+  {"language":"en","display_name":"Zoë","age_months":0,"theme":"Moon 🌙","page_count":3,"story_type":"bedtime"},
+  {"language":"he","display_name":"אוֹר","age_months":6,"theme":"לילה 🌙","page_count":5,"story_type":"general","text_density":"light"},
+  {"language":"en","display_name":"Renée","age_months":24,"theme":"A garden","page_count":2,"story_type":"adventure"},
+  {"language":"he","display_name":"אור לי","age_months":48,"theme":"צבעים","page_count":2,"story_type":"educational","structure":{"targets":[{"target_id":"red","label":"אדום"},{"target_id":"blue","label":"כחול"}]}},
+  {"language":"en","display_name":"José","age_months":120,"theme":"Letters","page_count":2,"story_type":"alphabet","structure":{"targets":[{"target_id":"a","label":"A","kind":"letter"},{"target_id":"b","label":"B","kind":"letter"}]}}
+]
