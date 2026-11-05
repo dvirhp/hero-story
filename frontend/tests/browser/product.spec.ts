@@ -205,7 +205,7 @@ test("manual studio edits, reorders, removes, saves, reopens, previews and final
     .fill("Together, they watched the stars.");
   await page.getByLabel("Page layout").selectOption("full");
   await page.getByLabel("Page color").selectOption("lavender");
-  await page.getByRole("button", { name: "moon", exact: true }).click();
+  await page.getByRole("button", { name: "Moon", exact: true }).click();
   await page.getByRole("button", { name: "Move earlier" }).click();
   await expect(page.getByLabel(/Words on this page/)).toHaveValue(
     "Together, they watched the stars.",

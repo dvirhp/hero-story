@@ -210,6 +210,113 @@ describe("full product journeys", () => {
     await screen.findByRole("heading", { name: "My sky book" });
     expect(generate).not.toHaveBeenCalled();
   });
+  it("duplicates a page in place and keeps reordering reversible", async () => {
+    renderAt("/studio/new");
+    const user = userEvent.setup();
+    await screen.findByLabelText("Book title");
+    await user.type(screen.getByLabelText(/Words on this page/), "Original page");
+    await user.click(screen.getByRole("button", { name: "Duplicate page" }));
+    expect(
+      screen.getAllByRole("button", { name: /^Pages \d+$/ }),
+    ).toHaveLength(2);
+    expect(
+      (screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement).value,
+    ).toBe("Original page");
+    await user.click(screen.getByRole("button", { name: "Pages 1" }));
+    expect(
+      (screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement).value,
+    ).toBe("Original page");
+    await user.click(screen.getByRole("button", { name: "Pages 2" }));
+    const text = screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement;
+    await user.clear(text);
+    await user.type(text, "Copied page");
+    await user.click(screen.getByRole("button", { name: "Move earlier" }));
+    expect(
+      (screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement).value,
+    ).toBe("Copied page");
+    await user.click(screen.getByRole("button", { name: "Pages 2" }));
+    expect(
+      (screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement).value,
+    ).toBe("Original page");
+  });
+  it("keeps the unsaved warning through preview navigation", async () => {
+    renderAt("/studio/new");
+    const user = userEvent.setup();
+    await screen.findByLabelText("Book title");
+    expect(screen.getByRole("status").textContent).toContain(
+      "No unsaved changes.",
+    );
+    await user.type(screen.getByLabelText("Book title"), "Preview warning");
+    expect(screen.getByRole("status").textContent).toContain(
+      "Changes have not been saved",
+    );
+    await user.click(screen.getByRole("button", { name: "Preview book" }));
+    await screen.findByRole("heading", { name: "Preview warning" });
+    await user.click(screen.getByRole("link", { name: "Continue editing" }));
+    await screen.findByLabelText("Book title");
+    expect(screen.getByRole("status").textContent).toContain(
+      "Changes have not been saved",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Save draft in this tab" }),
+    );
+    expect(screen.getByRole("status").textContent).toContain("Draft saved");
+    await user.click(screen.getByRole("button", { name: "Preview book" }));
+    await screen.findByRole("heading", { name: "Preview warning" });
+    await user.click(screen.getByRole("link", { name: "Continue editing" }));
+    await screen.findByLabelText("Book title");
+    expect(screen.getByRole("status").textContent).toContain(
+      "No unsaved changes.",
+    );
+  });
+  it("edits a copy of an AI sample without mutating the saved original", async () => {
+    const generate = vi
+      .fn<StoryService["generate"]>()
+      .mockImplementation(async (request) => makeSample(request));
+    renderAt("/create/ai", { generate });
+    const user = await fillAi();
+    await user.click(
+      screen.getByRole("button", { name: /Make our sample story/ }),
+    );
+    await screen.findByRole("heading", {
+      name: "The seed that held the moonlight",
+    });
+    await user.click(screen.getByRole("button", { name: "Save to my books" }));
+    await user.click(screen.getByRole("button", { name: "Edit a copy" }));
+    await screen.findByLabelText("Book title");
+    expect(
+      (screen.getByLabelText("Book title") as HTMLInputElement).value,
+    ).toBe("The seed that held the moonlight");
+    expect(screen.getByText(/An edited copy is your own draft/)).toBeDefined();
+    const title = screen.getByLabelText("Book title");
+    await user.clear(title);
+    await user.type(title, "Our edited copy");
+    await user.click(
+      screen.getByRole("button", { name: "Save draft in this tab" }),
+    );
+    await user.click(screen.getAllByRole("link", { name: "My books" })[0]!);
+    expect(
+      screen.getByRole("heading", { name: "Our edited copy" }),
+    ).toBeDefined();
+    const original = screen
+      .getAllByRole("article")
+      .find((article) =>
+        within(article).queryByRole("heading", {
+          name: "The seed that held the moonlight",
+        }),
+      );
+    expect(original).toBeDefined();
+    await user.click(within(original!).getByRole("link", { name: /Open book/ }));
+    expect(
+      screen.getByRole("heading", { name: "The seed that held the moonlight" }),
+    ).toBeDefined();
+    await user.click(
+      screen.getAllByRole("button", { name: /Open the book/ })[0]!,
+    );
+    expect(screen.getByRole("article").textContent).toContain(
+      "Alex found a small golden seed beside the window.",
+    );
+  });
   it("prevents finalizing a blank manual book and removing its only page", async () => {
     renderAt("/studio/new");
     await screen.findByLabelText("Book title");
@@ -234,6 +341,27 @@ describe("full product journeys", () => {
     expect(screen.getByRole("article").getAttribute("dir")).toBe("rtl");
     fireEvent.keyDown(window, { key: "ArrowLeft" });
     expect(screen.getByRole("status").textContent).toBe("Page 2 of 6");
+  });
+  it("updates reader labels in the same render as the interface language", async () => {
+    renderAt("/read/sample-moon-fox-en");
+    const user = userEvent.setup();
+    expect(
+      screen.getByRole("button", { name: "Page overview" }),
+    ).toBeDefined();
+    await user.selectOptions(
+      screen.getByLabelText("Interface language"),
+      "he",
+    );
+    expect(
+      screen.getByRole("button", { name: "מפת עמודים" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "קריאה במסך מלא" }),
+    ).toBeDefined();
+    await user.click(
+      screen.getAllByRole("button", { name: "פתיחת הספר" })[0]!,
+    );
+    expect(screen.getByRole("article").getAttribute("dir")).toBe("ltr");
   });
   it("shows missing-book and unknown-route recovery", () => {
     renderAt("/read/missing");

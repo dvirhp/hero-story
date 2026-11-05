@@ -4,9 +4,12 @@ import {
   bookFromStory,
   canFinalize,
   createBlankBook,
+  duplicatePage,
+  editableCopy,
   movePage,
   reindex,
 } from "../src/domain/book";
+import { contrastRatio, coverInk } from "../src/components/BookCover";
 import {
   catalog,
   personalizeTemplate,
@@ -71,6 +74,52 @@ describe("canonical frontend books", () => {
       reindex(moved.pages.slice(1)).map((page) => page.pageNumber),
     ).toEqual([1, 2]);
   });
+  it("duplicates a page beside its source with a fresh ID and contiguous numbering", () => {
+    const book = createBlankBook("en");
+    book.pages = [
+      { ...blankPage(), sentenceUnits: ["First"] },
+      { ...blankPage(), sentenceUnits: ["Second"] },
+    ];
+    const duplicated = duplicatePage(book, 1);
+    expect(duplicated.pages).toHaveLength(3);
+    expect(duplicated.pages[2]!.sentenceUnits).toEqual(["Second"]);
+    expect(duplicated.pages[2]!.pageId).not.toBe(book.pages[1]!.pageId);
+    expect(duplicated.pages[0]!.pageId).toBe(book.pages[0]!.pageId);
+    expect(duplicated.pages.map((page) => page.pageNumber)).toEqual([1, 2, 3]);
+    expect(duplicated.status).toBe("draft");
+    const full = {
+      ...book,
+      pages: Array.from({ length: 32 }, () => blankPage()),
+    };
+    expect(duplicatePage(full, 0)).toBe(full);
+    expect(duplicatePage(book, -1)).toBe(book);
+  });
+  it("creates an independent editable copy without mutating the AI source", () => {
+    const source = bookFromStory(
+      makeSample(
+        prepareRequest({ ...initialDraft, name: "Alex", theme: "Moon" })
+          .request!,
+      ),
+      "Alex",
+    );
+    source.dedication = "For Alex";
+    const original = structuredClone(source);
+    const copy = editableCopy(source);
+    expect(copy.id).not.toBe(source.id);
+    expect(copy.method).toBe("MANUAL");
+    expect(copy.status).toBe("draft");
+    expect(copy.editedFrom).toEqual({
+      id: source.id,
+      method: "AI_GENERATED",
+    });
+    expect(copy.generation).toBeUndefined();
+    expect(copy.pages.map((page) => page.pageId)).not.toEqual(
+      source.pages.map((page) => page.pageId),
+    );
+    copy.title = "Changed copy";
+    copy.pages[0]!.sentenceUnits = ["Changed page"];
+    expect(source).toEqual(original);
+  });
   it("allows incomplete drafts but requires text on every page for finalizing", () => {
     const book = createBlankBook("en");
     expect(canFinalize(book)).toBe(false);
@@ -134,6 +183,35 @@ describe("versioned template fixtures", () => {
         companion: "unreviewed",
       }).companion,
     ).toBe("required");
+  });
+  it("keeps dedication text literal instead of treating it as template code", () => {
+    const book = personalizeTemplate(
+      catalog[0],
+      {
+        ...templateDefaults(catalog[0]),
+        name: "Maya",
+        dedication: "For {{name}} and {{companion}} — always.",
+      },
+      "en",
+    );
+    expect(book.pages[0].sentenceUnits).toEqual([
+      "For {{name}} and {{companion}} — always.",
+    ]);
+    expect(book.pages[1].sentenceUnits.join(" ")).toContain("Maya");
+    expect(book.pages[2].sentenceUnits.join(" ")).toContain("fox");
+  });
+  it("chooses readable cover ink for every catalog cover colour", () => {
+    const colours = new Set(catalog.map((template) => template.color));
+    for (const template of catalog)
+      for (const field of template.fields)
+        if (field.type === "select" && field.id === "color")
+          for (const option of field.options) colours.add(option.value);
+    for (const colour of colours)
+      expect(contrastRatio(colour, coverInk(colour))).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    expect(coverInk("#414271")).toBe("#fff5d8");
+    expect(coverInk("#b7cfc1")).toBe("#253c42");
   });
   it("includes dedication and chosen companion in real personalized prose", () => {
     const book = personalizeTemplate(

@@ -12,11 +12,32 @@ export type Route =
         | "loading"
         | "error"
         | "not-found";
-      
     }
-  | {page:'cart'|'checkout'|'orders'}
-  | { page: "product" | "personalize" | "reader" | "editor" | 'format' | 'order' | 'confirmation'; id: string };
-const simple: Record<string, Exclude<Route["page"], "product" | "personalize" | "reader" | "editor" | 'format' | 'order' | 'confirmation'>> = {
+  | { page: "cart" | "checkout" | "orders" }
+  | {
+      page:
+        | "product"
+        | "personalize"
+        | "reader"
+        | "editor"
+        | "format"
+        | "order"
+        | "confirmation";
+      id: string;
+    };
+const simple: Record<
+  string,
+  Exclude<
+    Route["page"],
+    | "product"
+    | "personalize"
+    | "reader"
+    | "editor"
+    | "format"
+    | "order"
+    | "confirmation"
+  >
+> = {
   "/": "home",
   "/books": "discover",
   "/create/ai": "create",
@@ -26,7 +47,9 @@ const simple: Record<string, Exclude<Route["page"], "product" | "personalize" | 
   "/privacy": "privacy",
   "/generating": "loading",
   "/generation-error": "error",
-  '/cart':'cart','/checkout':'checkout','/orders':'orders',
+  "/cart": "cart",
+  "/checkout": "checkout",
+  "/orders": "orders",
 };
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/^#/, "").split("?")[0] || "/";
@@ -42,9 +65,20 @@ export function parseRoute(hash: string): Route {
           personalize: "personalize",
           read: "reader",
           studio: "editor",
-          format:'format',orders:'order',confirmation:'confirmation',
+          format: "format",
+          orders: "order",
+          confirmation: "confirmation",
         } as const
-      )[match[1] as "books" | "personalize" | "read" | "studio" | 'format' | 'orders' | 'confirmation'],
+      )[
+        match[1] as
+          | "books"
+          | "personalize"
+          | "read"
+          | "studio"
+          | "format"
+          | "orders"
+          | "confirmation"
+      ],
       id: match[2],
     };
   return { page: "not-found" };

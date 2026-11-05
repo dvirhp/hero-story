@@ -163,6 +163,7 @@ const en = {
   editorLimit: "Up to 32 pages in this demonstration editor.",
   editorSaved:
     "Draft saved. You can reopen it from My books while this tab stays open.",
+  editorClean: "No unsaved changes.",
   finished: "Your book is ready to read.",
   notSaved: "Changes have not been saved to your shelf.",
   discard: "Leave without saving the latest changes?",
@@ -208,7 +209,7 @@ const en = {
     "The studio offers original sample illustrations and page colors. Uploads are not connected, so no upload control pretends to save your files.",
   privacy: "Your details & this demo",
   privacyText:
-    "No accounts. No browser storage. No analytics. All books and entered details stay in the current tab’s memory and are lost on refresh. Future connected services will need their own privacy and ownership design.",
+    "No accounts or analytics. By default work stays in tab memory. You can opt into session storage for books, drafts and your bag using the footer control, and clear it there. Checkout contact details and orders are never stored. Closing the tab clears session storage; this is not a backup. Future connected services need their own privacy and ownership design.",
   notFound: "This page wandered off into a story.",
   goHome: "Back to the beginning",
   footerLine: "A little imagination. A lot of together.",
@@ -379,6 +380,7 @@ const he: ProductCopy = {
   editorLimit: "עד 32 עמודים בעורך ההדגמה.",
   editorSaved:
     "הטיוטה נשמרה. אפשר לחזור אליה דרך הספרים שלי כל עוד הלשונית פתוחה.",
+  editorClean: "אין שינויים שלא נשמרו.",
   finished: "הספר שלכם מוכן לקריאה.",
   notSaved: "השינויים עדיין לא נשמרו במדף שלכם.",
   discard: "לעזוב בלי לשמור את השינויים האחרונים?",
@@ -424,7 +426,7 @@ const he: ProductCopy = {
     "בסטודיו זמינים איורים מקוריים לדוגמה וצבעי עמוד. העלאות אינן מחוברות ולכן אין כפתור שמעמיד פנים ששומר קבצים.",
   privacy: "הפרטים שלכם וההדגמה",
   privacyText:
-    "בלי חשבונות, אחסון בדפדפן או כלי מעקב. הספרים והפרטים נשארים בזיכרון הלשונית ונעלמים ברענון. שירותים עתידיים יצטרכו תכנון פרטיות ובעלות נפרד.",
+    "ללא חשבונות או כלי מעקב. כברירת מחדל העבודה נשארת בזיכרון הלשונית. אפשר להסכים לשמירת ספרים, טיוטות וסל באחסון זמני דרך הבקרה בתחתית האתר, ולמחוק אותם שם. פרטי קשר בהזמנה והזמנות אינם נשמרים באחסון. סגירת הלשונית מוחקת את האחסון הזמני; זה אינו גיבוי. שירותים עתידיים צריכים תכנון פרטיות ובעלות נפרד.",
   notFound: "העמוד הזה יצא להרפתקה.",
   goHome: "חזרה להתחלה",
   footerLine: "קצת דמיון. המון ביחד.",

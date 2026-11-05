@@ -1,5 +1,5 @@
 import type { Language, StoryV2 } from "../api/contracts";
-import type { Character } from '../personalization/character';
+import type { Character } from "../personalization/character";
 export type CreationMethod = "AI_GENERATED" | "TEMPLATE_BASED" | "MANUAL";
 export type Art =
   | "whale"
@@ -20,7 +20,7 @@ export interface BookPage {
   layout: PageLayout;
   background: PageColor;
   character?: Character;
-  imageFrame?: {x:number;y:number;scale:number};
+  imageFrame?: { x: number; y: number; scale: number };
 }
 /** Frontend canonical v1 view model, NOT an existing persistence/manual HTTP DTO. */
 export interface Book {
@@ -32,7 +32,7 @@ export interface Book {
   childName?: string;
   character?: Character;
   dedication?: string;
-  editedFrom?: {id:string;method:CreationMethod};
+  editedFrom?: { id: string; method: CreationMethod };
   createdAt: string;
   updatedAt: string;
   status: "draft" | "ready" | "failed";
@@ -91,6 +91,34 @@ export function movePage(book: Book, from: number, to: number): Book {
   const [page] = pages.splice(from, 1);
   pages.splice(to, 0, page);
   return { ...book, pages: reindex(pages), status: "draft" };
+}
+export function duplicatePage(book: Book, index: number): Book {
+  if (index < 0 || index >= book.pages.length || book.pages.length >= 32)
+    return book;
+  const pages = [...book.pages];
+  pages.splice(index + 1, 0, {
+    ...structuredClone(pages[index]),
+    pageId: newId(),
+  });
+  return { ...book, pages: reindex(pages), status: "draft" };
+}
+export function editableCopy(book: Book): Book {
+  const now = new Date().toISOString();
+  return {
+    ...structuredClone(book),
+    id: newId(),
+    method: "MANUAL",
+    status: "draft",
+    createdAt: now,
+    updatedAt: now,
+    generation: undefined,
+    template: undefined,
+    editedFrom: { id: book.id, method: book.method },
+    pages: book.pages.map((page) => ({
+      ...structuredClone(page),
+      pageId: newId(),
+    })),
+  };
 }
 export function canFinalize(book: Book): boolean {
   return (

@@ -8,6 +8,10 @@ import type { Copy } from "../i18n/locales";
 import { GardenArt } from "./GardenArt";
 import { productCopy } from "../i18n/product";
 import { ageInMonths } from "../domain/brief";
+import { CharacterBuilder } from "../personalization/CharacterBuilder";
+import { fullCharacterSchema } from "../personalization/character";
+import { experience } from "../i18n/experience";
+import { QuotaPanel } from "./QuotaPanel";
 function Field({
   id,
   label,
@@ -44,12 +48,16 @@ export function StoryForm({
   onSubmit,
   copy: c,
   locale,
+  characterValues = {},
+  onCharacterChange,
 }: {
   draft: BriefDraft;
   onChange: (draft: BriefDraft) => void;
   onSubmit: (request: StoryRequestV2) => void;
   copy: Copy;
   locale: Language;
+  characterValues?: Record<string, string>;
+  onCharacterChange?: (values: Record<string, string>) => void;
 }) {
   const [errors, setErrors] = useState<BriefErrors>({});
   const [step, setStep] = useState(0);
@@ -103,6 +111,7 @@ export function StoryForm({
         <p className="eyebrow">{c.formEyebrow}</p>
         <h1 className="form-heading">{c.formTitle}</h1>
         <p className="intro">{c.formIntro}</p>
+        <QuotaPanel locale={locale} />
         <ol className="wizard-steps" aria-label={p.ai}>
           {[p.stepChild, p.stepStory, p.stepBook, p.stepReview].map(
             (label, i) => (
@@ -184,6 +193,17 @@ export function StoryForm({
                 ))}
               </select>
             </Field>
+            {onCharacterChange && (
+              <details className="ai-character-details">
+                <summary>{experience[locale].character}</summary>
+                <CharacterBuilder
+                  schema={fullCharacterSchema}
+                  values={characterValues}
+                  onChange={onCharacterChange}
+                  locale={locale}
+                />
+              </details>
+            )}
           </fieldset>
           <fieldset hidden={step !== 1}>
             <legend>{c.storySection}</legend>

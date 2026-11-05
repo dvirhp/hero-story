@@ -1,7 +1,94 @@
-import type {DemoOrder} from './model';
-import type {Language} from '../api/contracts';
-import {experience,money} from '../i18n/experience';
-export function Orders({orders,locale,id,confirmation=false}:{orders:DemoOrder[];locale:Language;id?:string;confirmation?:boolean}){
- const e=experience[locale],date=new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeZone:'Asia/Jerusalem'}),order=orders.find(item=>item.id===id);
- return <main className="container commerce-page"><p className="eyebrow">{e.demoCommerce}</p><h1>{confirmation?e.confirmation:id?e.orderDetails:e.orderHistory}</h1><p className="demo-notice">{e.confirmationNote}</p>{id&&!order?<div className="empty-panel"><h2>{e.noOrders}</h2><a href="#/orders" className="inline-link">{e.orderHistory}</a></div>:id&&order?<><section className="order-detail"><div><p>{e.orderNumber}</p><strong dir="ltr">DEMO-{order.id.slice(0,8).toUpperCase()}</strong><p className="hint">{date.format(new Date(order.createdAt))}</p></div><span className="status-badge">{e.simulated}</span><dl className="quote-totals"><div><dt>{e.total}</dt><dd>{money(order.quote.totalCents,locale)}</dd></div></dl>{order.lines.map(line=><div className="summary-line" key={line.id}><strong dir="auto">{line.book.title}</strong><span>{e[line.format]} × {line.quantity}</span></div>)}</section><a className="button primary" href="#/orders">{e.orderHistory}</a><a href="#/books" className="inline-link">{e.keepShopping}</a></>:orders.length?<div className="order-list">{orders.map(item=><article key={item.id}><div><h2 dir="ltr">DEMO-{item.id.slice(0,8).toUpperCase()}</h2><p>{date.format(new Date(item.createdAt))}</p><span>{e.simulated}</span></div><strong>{money(item.quote.totalCents,locale)}</strong><a href={`#/orders/${item.id}`} className="button secondary">{e.viewOrder}</a></article>)}</div>:<div className="empty-panel"><h2>{e.noOrders}</h2><a href="#/books" className="button primary">{e.keepShopping}</a></div>}</main>;
+import type { DemoOrder } from "./model";
+import type { Language } from "../api/contracts";
+import { experience, money } from "../i18n/experience";
+export function Orders({
+  orders,
+  locale,
+  id,
+  confirmation = false,
+}: {
+  orders: DemoOrder[];
+  locale: Language;
+  id?: string;
+  confirmation?: boolean;
+}) {
+  const e = experience[locale],
+    date = new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+      timeZone: "Asia/Jerusalem",
+    }),
+    order = orders.find((item) => item.id === id);
+  return (
+    <main className="container commerce-page">
+      <p className="eyebrow">{e.demoCommerce}</p>
+      <h1>
+        {confirmation ? e.confirmation : id ? e.orderDetails : e.orderHistory}
+      </h1>
+      <p className="demo-notice">{e.confirmationNote}</p>
+      {id && !order ? (
+        <div className="empty-panel">
+          <h2>{e.noOrders}</h2>
+          <a href="#/orders" className="inline-link">
+            {e.orderHistory}
+          </a>
+        </div>
+      ) : id && order ? (
+        <>
+          <section className="order-detail">
+            <div>
+              <p>{e.orderNumber}</p>
+              <strong dir="ltr">
+                DEMO-{order.id.slice(0, 8).toUpperCase()}
+              </strong>
+              <p className="hint">{date.format(new Date(order.createdAt))}</p>
+            </div>
+            <span className="status-badge">{e.simulated}</span>
+            <dl className="quote-totals">
+              <div>
+                <dt>{e.total}</dt>
+                <dd>{money(order.quote.totalCents, locale)}</dd>
+              </div>
+            </dl>
+            {order.lines.map((line) => (
+              <div className="summary-line" key={line.id}>
+                <strong dir="auto">{line.book.title}</strong>
+                <span>
+                  {e[line.format]} × {line.quantity}
+                </span>
+              </div>
+            ))}
+          </section>
+          <a className="button primary" href="#/orders">
+            {e.orderHistory}
+          </a>
+          <a href="#/books" className="inline-link">
+            {e.keepShopping}
+          </a>
+        </>
+      ) : orders.length ? (
+        <div className="order-list">
+          {orders.map((item) => (
+            <article key={item.id}>
+              <div>
+                <h2 dir="ltr">DEMO-{item.id.slice(0, 8).toUpperCase()}</h2>
+                <p>{date.format(new Date(item.createdAt))}</p>
+                <span>{e.simulated}</span>
+              </div>
+              <strong>{money(item.quote.totalCents, locale)}</strong>
+              <a href={`#/orders/${item.id}`} className="button secondary">
+                {e.viewOrder}
+              </a>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-panel">
+          <h2>{e.noOrders}</h2>
+          <a href="#/books" className="button primary">
+            {e.keepShopping}
+          </a>
+        </div>
+      )}
+    </main>
+  );
 }

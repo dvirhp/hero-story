@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Language } from "../api/contracts";
 import type {
   Art,
@@ -7,7 +7,14 @@ import type {
   PageColor,
   PageLayout,
 } from "../domain/book";
-import { blankPage, canFinalize, movePage, reindex } from "../domain/book";
+import {
+  blankPage,
+  canFinalize,
+  movePage,
+  reindex,
+  duplicatePage,
+} from "../domain/book";
+import { experience } from "../i18n/experience";
 import type { ProductCopy } from "../i18n/product";
 import { locales } from "../i18n/locales";
 import { BookSpread } from "../components/BookSpread";
@@ -23,6 +30,8 @@ export function Studio({
   book,
   p,
   locale,
+  dirty,
+  onDirtyChange,
   onChange,
   onSave,
   onPreview,
@@ -30,19 +39,21 @@ export function Studio({
   book: Book;
   p: ProductCopy;
   locale: Language;
+  dirty: boolean;
+  onDirtyChange: (dirty: boolean) => void;
   onChange: (book: Book) => void;
   onSave: (book: Book, final: boolean) => void;
   onPreview: (book: Book) => void;
 }) {
   const [selected, setSelected] = useState(0);
-  const [notice, setNotice] = useState<"clean" | "saved" | "invalid" | "dirty">(
-    "clean",
-  );
+  const e = experience[locale];
+  const [notice, setNotice] = useState<"none" | "saved" | "invalid">("none");
   const index = Math.min(selected, book.pages.length - 1);
   const page = book.pages[index];
   const change = (next: Book) => {
     onChange({ ...next, status: "draft", updatedAt: new Date().toISOString() });
-    setNotice("dirty");
+    onDirtyChange(true);
+    setNotice("none");
   };
   const patch = (values: Partial<BookPage>) =>
     change({
@@ -51,16 +62,6 @@ export function Studio({
         i === index ? { ...item, ...values } : item,
       ),
     });
-  useEffect(() => {
-    const warn = (e: BeforeUnloadEvent) => {
-      if (notice === "dirty") {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [notice]);
   const save = (final: boolean) => {
     if (final && !canFinalize(book)) {
       setNotice("invalid");
@@ -74,6 +75,7 @@ export function Studio({
       },
       final,
     );
+    onDirtyChange(false);
     setNotice("saved");
   };
   return (
@@ -88,6 +90,7 @@ export function Studio({
         </a>
       </div>
       <p className="intro">{p.editorNote}</p>
+      {book.editedFrom && <p className="demo-notice">{e.editedNote}</p>}
       <div className="studio-metadata">
         <div className="field">
           <label htmlFor="book-title">{p.bookTitle}</label>
@@ -127,6 +130,39 @@ export function Studio({
           />
         </div>
       </div>
+      <details className="editor-cover-controls">
+        <summary>{e.editCover}</summary>
+        <div className="two-columns">
+          <div className="field">
+            <label htmlFor="manual-cover">{e.cover}</label>
+            <select
+              id="manual-cover"
+              value={book.cover}
+              onChange={(event) =>
+                change({ ...book, cover: event.target.value as Art })
+              }
+            >
+              {artOptions.map((art) => (
+                <option value={art} key={art}>
+                  {e[`${art}Art`]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="manual-dedication">{e.dedication}</label>
+            <textarea
+              id="manual-dedication"
+              maxLength={500}
+              dir="auto"
+              value={book.dedication ?? ""}
+              onChange={(event) =>
+                change({ ...book, dedication: event.target.value })
+              }
+            />
+          </div>
+        </div>
+      </details>
       <div className="studio-layout">
         <aside className="page-rail">
           <h2>
@@ -175,6 +211,16 @@ export function Studio({
           <div className="page-tools">
             <button
               className="button secondary"
+              disabled={book.pages.length >= 32}
+              onClick={() => {
+                change(duplicatePage(book, index));
+                setSelected(index + 1);
+              }}
+            >
+              {e.duplicate}
+            </button>
+            <button
+              className="button secondary"
               disabled={index === 0}
               onClick={() => {
                 change(movePage(book, index, index - 1));
@@ -208,6 +254,42 @@ export function Studio({
             </button>
           </div>
           <div className="page-controls">
+            {page.illustration && (
+              <fieldset className="position-controls">
+                <legend>{p.illustration}</legend>
+                {(["x", "y", "scale"] as const).map((key) => (
+                  <div key={key}>
+                    <label htmlFor={`image-${key}`}>
+                      {key === "x"
+                        ? e.positionX
+                        : key === "y"
+                          ? e.positionY
+                          : e.scale}
+                    </label>
+                    <input
+                      id={`image-${key}`}
+                      type="range"
+                      min={key === "scale" ? 30 : 0}
+                      max="100"
+                      value={
+                        page.imageFrame?.[key] ?? (key === "scale" ? 100 : 50)
+                      }
+                      onChange={(event) =>
+                        patch({
+                          imageFrame: {
+                            x: 50,
+                            y: 50,
+                            scale: 100,
+                            ...page.imageFrame,
+                            [key]: Number(event.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </fieldset>
+            )}
             <div className="field">
               <label htmlFor="page-text">
                 {p.pageText} · {index + 1}
@@ -250,17 +332,9 @@ export function Studio({
                   }
                 >
                   {(["cream", "mint", "pink", "lavender", "sky"] as const).map(
-                    (value, i) => (
+                    (value) => (
                       <option key={value} value={value}>
-                        {locale === "he"
-                          ? ["שמנת", "מנטה", "ורוד", "לבנדר", "תכלת"][i]
-                          : [
-                              "Cream",
-                              "Mint",
-                              "Coral pink",
-                              "Lavender",
-                              "Sky blue",
-                            ][i]}
+                        {e[value]}
                       </option>
                     ),
                   )}
@@ -281,18 +355,7 @@ export function Studio({
                   type="button"
                   key={art}
                   aria-pressed={page.illustration === art}
-                  aria-label={
-                    locale === "he"
-                      ? {
-                          garden: "גינה",
-                          whale: "לווייתן",
-                          moon: "ירח",
-                          alphabet: "אותיות",
-                          hero: "גיבור־על",
-                          family: "משפחה",
-                        }[art]
-                      : art
-                  }
+                  aria-label={e[`${art}Art`]}
                   onClick={() => patch({ illustration: art })}
                 >
                   <img src={`/art/${art}.svg`} alt="" />
@@ -309,9 +372,11 @@ export function Studio({
         >
           {notice === "invalid"
             ? p.editorValidation
-            : notice === "saved"
+            : notice === "saved" && !dirty
               ? p.editorSaved
-              : p.notSaved}
+              : dirty
+                ? p.notSaved
+                : p.editorClean}
         </p>
         <div>
           <button className="button secondary" onClick={() => save(false)}>

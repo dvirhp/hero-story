@@ -34,6 +34,24 @@ export type BriefErrors = Partial<
     keyof Copy
   >
 >;
+export function isBriefDraft(value: unknown): value is BriefDraft {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    Object.entries(initialDraft).every(
+      ([key, defaultValue]) =>
+        typeof row[key] === typeof defaultValue &&
+        (typeof row[key] !== "string" || String(row[key]).length <= 1500),
+    ) &&
+    ["months", "years"].includes(String(row.ageUnit)) &&
+    ["en", "he"].includes(String(row.language)) &&
+    ["general", "bedtime", "adventure", "educational", "alphabet"].includes(
+      String(row.type),
+    ) &&
+    ["light", "standard"].includes(String(row.density)) &&
+    ["concept", "letter"].includes(String(row.targetKind))
+  );
+}
 export function ageInMonths(
   value: string,
   unit: BriefDraft["ageUnit"],

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { catalog, sampleBook } from "../data/catalog";
 import { createBlankBook } from "../domain/book";
 import type { Book } from "../domain/book";
+import { readTab, isBooks, useRecovery } from "../state/tabRecovery";
 function fixtures(): Book[] {
   const first = sampleBook(catalog[0], "en");
   first.id = "demo-whale";
@@ -21,8 +22,11 @@ function fixtures(): Book[] {
   return [draft, second, first];
 }
 /** Deliberately in-memory: no localStorage, cookies, ownership or persistence APIs. */
-export function useLibrary() {
-  const [books, setBooks] = useState<Book[]>(fixtures);
+export function useLibrary(remember = false) {
+  const [books, setBooks] = useState<Book[]>(
+    () => readTab("books", isBooks) ?? fixtures(),
+  );
+  const storageFailed = useRecovery("books", books, remember);
   const save = (book: Book) =>
     setBooks((current) => [
       structuredClone(book),
@@ -30,5 +34,5 @@ export function useLibrary() {
     ]);
   const remove = (id: string) =>
     setBooks((current) => current.filter((item) => item.id !== id));
-  return { books, save, remove };
+  return { books, save, remove, storageFailed };
 }

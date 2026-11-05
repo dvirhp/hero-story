@@ -393,10 +393,11 @@ export function personalizeTemplate(
     template.id === "small-hero" && values.outfit === "striped"
       ? "hero-striped"
       : template.art;
+  const dedication = values.dedication?.trim() ? values.dedication : "";
   const text = [...template.pages[language]];
-  if (values.dedication?.trim()) text.unshift(values.dedication);
+  if (dedication) text.unshift(dedication);
   if (template.id === "small-hero")
-    text[values.dedication?.trim() ? 1 : 0] =
+    text[dedication ? 1 : 0] =
       language === "he"
         ? `ליד הדלת חיכו ${values.outfit === "striped" ? "חולצה מפוספסת" : "מעיל גשם צהוב"} וגלימה. יום חדש התחיל בשביל {{name}}.`
         : `A ${values.outfit === "striped" ? "striped sweater" : "sunshine raincoat"} and a cape waited by the door. Today was a good day to be {{name}}.`;
@@ -422,7 +423,8 @@ export function personalizeTemplate(
     pages: text.map((line, i) => ({
       pageId: `${id}-page-${i + 1}`,
       pageNumber: i + 1,
-      sentenceUnits: [replace(line)],
+      // Dedication is literal adult-authored text, never template code.
+      sentenceUnits: [dedication && i === 0 ? line : replace(line)],
       illustration: art,
       character,
       layout: "split",
