@@ -1,4 +1,5 @@
 """Independent HTTP regressions: real ASGI/graph/gate, scripted offline provider."""
+import asyncio
 import json
 from pathlib import Path
 from uuid import UUID
@@ -150,3 +151,42 @@ def test_http_failures_budget_and_no_failed_draft(post, kind, caplog, capsys):
     public = response.text + caplog.text + captured.out + captured.err
     assert 'dummy-private-credential' not in public
     assert payload['display_name'] not in public
+
+
+def test_concurrent_http_requests_keep_child_content_and_ledgers_isolated(run_async, profiles, caplog):
+    # Real request-local LocalFixtureProvider composition, not a shared fake queue.
+    app = create_app(resources=Resources(profiles=profiles, settings=SETTINGS, limits=LIMITS))
+    payloads = [{**CASES[0], 'display_name': 'AlphaPrivate', 'page_count': 2},
+                {**CASES[1], 'display_name': 'בטאפרטי', 'page_count': 3}]
+    async def perform():
+        async with app.router.lifespan_context(app):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
+                return await asyncio.gather(*(client.post('/v2/stories/generate', json=p) for p in payloads))
+    responses = run_async(perform())
+    ids = set()
+    for index, response in enumerate(responses):
+        assert response.status_code == 200
+        data = assert_envelope(response)
+        ids.add(data['request_id'])
+        assert len(data['story']['pages']) == payloads[index]['page_count']
+        assert payloads[index]['display_name'] in response.text
+        assert payloads[1-index]['display_name'] not in response.text
+        assert len(data['usage']['attempts']) == 2
+        assert [a['attempt_number'] for a in data['usage']['attempts']] == [1, 2]
+        assert data['usage']['has_unknown_usage']
+    assert len(ids) == 2
+    assert all(p['display_name'] not in caplog.text for p in payloads)
+
+
+def test_transient_provider_failure_recovers_with_one_shared_budget(post):
+    payload = CASES[0]
+    plan, story = steps_for(payload)
+    transient = FakeStep(error=GenerationError(code='PROVIDER_UNAVAILABLE', stage='planner',
+                                              retryable=True, message='private-provider-canary'))
+    response, provider = post(payload, (transient, plan, story))
+    assert response.status_code == 200
+    data = assert_envelope(response)
+    assert len(provider.calls) == len(data['usage']['attempts']) == 3
+    assert [a['outcome'] for a in data['usage']['attempts']] == ['failure', 'success', 'success']
+    assert len(data['story']['pages']) == payload['page_count']
+    assert 'private-provider-canary' not in response.text

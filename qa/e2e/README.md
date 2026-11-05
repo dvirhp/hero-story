@@ -1,4 +1,38 @@
-# Deferred browser integration
+# Browser verification and deferred integration
+
+## Executed snapshot checks (2026-11-05)
+
+The QA baseline has no frontend, but Agent 2's committed React frontend is now
+available in a separate branch. `browser-regression.mjs` was executed against an
+isolated export of commit c2b72c2: eight scenarios passed in real Chromium using
+the app's mock service. No API/database integration or template/editor coverage
+is claimed. The snapshot and copied dependencies live under ignored `qa/.local/`.
+The QA strategy/matrix list exact scope and blocked workflows.
+
+From the QA root, these local commands reproduce the setup using already installed
+tooling, without editing another worktree or downloading packages:
+
+```powershell
+python qa/prepare_snapshot.py frontend
+Push-Location qa/.local/frontend-snapshot/frontend
+npm test
+npm run build
+node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4184 --strictPort
+# Server runs in foreground; in a second QA-root terminal:
+$env:STORYFORGE_PLAYWRIGHT_MODULE = 'C:/Users/dvir3/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs'
+$env:STORYFORGE_CHROMIUM = 'C:/Users/dvir3/AppData/Local/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-win64/chrome-headless-shell.exe'
+node qa/e2e/browser-regression.mjs
+```
+
+Stop only the server you started when finished. Snapshot preparation refuses to
+overwrite an existing snapshot. The hardcoded local module/browser locations are
+environment-specific; set the two environment variables to your own installed
+Playwright module and browser when reproducing elsewhere. Verified Playwright
+version: 1.62.0; Chromium cache build: 1228. No installation was performed by QA.
+This executable runner uses Playwright's browser API and node assertions, not the
+optional Playwright Test spec/config below. The spec/config remain unexecuted.
+
+## Optional future Playwright Test configuration
 
 No frontend or package.json exists on baseline 5ae24e9. These optional files are
 an unexecuted smoke foundation, not story journey coverage. They do not start a
