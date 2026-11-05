@@ -1,80 +1,151 @@
-import { useEffect, useState } from "react";
-import type { StoryV2 } from "../api/contracts";
+﻿import { useEffect, useState } from "react";
+import type { Book } from "../domain/book";
 import type { Copy } from "../i18n/locales";
+import type { ProductCopy } from "../i18n/product";
+import { BookCover } from "./BookCover";
+import { BookSpread } from "./BookSpread";
 export function StoryReader({
-  story,
+  book,
   copy: c,
+  p,
   onCreate,
+  saved = false,
+  onSave,
 }: {
-  story: StoryV2 | null;
+  book: Book | null;
   copy: Copy;
+  p: ProductCopy;
   onCreate: () => void;
+  saved?: boolean;
+  onSave?: () => void;
 }) {
-  const [index, setIndex] = useState(0);
-  useEffect(() => setIndex(0), [story]);
-  if (!story?.pages.length)
+  const [index, setIndex] = useState(-1);
+  useEffect(() => setIndex(-1), [book?.id]);
+  useEffect(() => {
+    const keys = (event: KeyboardEvent) => {
+      if (
+        !book ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      )
+        return;
+      const forward = book.language === "he" ? "ArrowLeft" : "ArrowRight";
+      const back = book.language === "he" ? "ArrowRight" : "ArrowLeft";
+      if (event.key === forward) {
+        event.preventDefault();
+        setIndex((i) => Math.min(book.pages.length - 1, i + 1));
+      }
+      if (event.key === back) {
+        event.preventDefault();
+        setIndex((i) => Math.max(-1, i - 1));
+      }
+    };
+    window.addEventListener("keydown", keys);
+    return () => window.removeEventListener("keydown", keys);
+  }, [book]);
+  if (!book?.pages.length)
     return (
       <main className="state-screen container">
         <div className="state-symbol" aria-hidden="true">
           ✧
         </div>
-        <h1>{c.emptyTitle}</h1>
-        <p>{c.emptyText}</p>
+        <h1>{p.noBook}</h1>
+        <p>{p.noBookText}</p>
         <button className="button primary" onClick={onCreate}>
           {c.create}
         </button>
+        <a href="#/books" className="inline-link">
+          {p.browse}
+        </a>
       </main>
     );
-  const page = story.pages[index];
+  const page = book.pages[Math.max(0, index)];
   return (
     <main className="reader container">
-      <p className="eyebrow">{c.readerEyebrow}</p>
-      <h1 lang={story.language} dir={story.direction}>
-        {story.title}
-      </h1>
-      <p className="reader-note">{c.readerNote}</p>
-      <article
-        className="story-sheet"
-        lang={story.language}
-        dir={story.direction}
-        aria-label={`${c.page} ${index + 1}`}
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <div className="page-ornament" aria-hidden="true">
-          ✧
-        </div>
-        <div className="story-text" key={page.page_id}>
-          {page.sentence_units.map((text, i) => (
-            <p key={i}>{text}</p>
-          ))}
-        </div>
-        <span className="printed-page" aria-hidden="true">
-          {index + 1}
+      <div className="reader-heading">
+        <a className="inline-link" href="#/my-books">
+          {p.libraryBack}
+        </a>
+        <span className="micro-label">
+          {book.demo ? p.demoProduct : p.ready}
         </span>
-      </article>
-      <nav className="reader-navigation" aria-label={c.readerEyebrow}>
+        {book.method === "MANUAL" && (
+          <a className="inline-link" href={`#/studio/${book.id}`}>
+            {p.continueEditing}
+          </a>
+        )}
+        {onSave && book.method === "AI_GENERATED" && (
+          <button
+            className="button secondary"
+            disabled={saved}
+            onClick={onSave}
+          >
+            {saved ? p.saved : p.saveLibrary}
+          </button>
+        )}
+      </div>
+      <h1 lang={book.language} dir={book.language === "he" ? "rtl" : "ltr"}>
+        {book.title || p.untitled}
+      </h1>
+      {index === -1 ? (
+        <div className="reader-cover-scene">
+          <BookCover
+            title={book.title || p.untitled}
+            art={book.cover}
+            color={book.coverColor}
+            language={book.language}
+          />
+          <button className="button primary" onClick={() => setIndex(0)}>
+            {p.openBook} ↗
+          </button>
+        </div>
+      ) : (
+        <article
+          className="reader-book"
+          lang={book.language}
+          dir={book.language === "he" ? "rtl" : "ltr"}
+          aria-label={`${c.page} ${index + 1}`}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <BookSpread page={page} language={book.language} />
+        </article>
+      )}
+      <nav className="reader-navigation" aria-label={p.readerProgress}>
         <button
           className="button secondary"
-          disabled={index === 0}
+          disabled={index === -1}
           onClick={() => setIndex(index - 1)}
         >
-          {c.previous}
+          {index === 0 ? p.backCover : c.previous}
         </button>
         <span className="page-counter" role="status">
-          {c.page} {index + 1} {c.of} {story.pages.length}
+          {index === -1
+            ? p.cover
+            : `${c.page} ${index + 1} ${c.of} ${book.pages.length}`}
         </span>
         <button
           className="button secondary"
-          disabled={index === story.pages.length - 1}
+          disabled={index === book.pages.length - 1}
           onClick={() => setIndex(index + 1)}
         >
-          {c.next}
+          {index === -1 ? p.openBook : c.next}
         </button>
       </nav>
+      <progress
+        className="reading-progress"
+        value={index + 1}
+        max={book.pages.length}
+        aria-label={p.readerProgress}
+      />
+      <p className="hint reader-keyboard-help">{p.keyboardHelp}</p>
       <div className="reader-end">
         <button className="text-button" onClick={onCreate}>
-          {c.startOver} <span aria-hidden="true">✧</span>
+          {c.startOver} ✧
         </button>
       </div>
     </main>

@@ -1,64 +1,100 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../src/App";
 import { makeSample } from "../src/api/mock";
 import type { StoryService } from "../src/api/contracts";
 afterEach(cleanup);
-beforeEach(() => vi.spyOn(window, "scrollTo").mockImplementation(() => {}));
-describe("story creation and reading", () => {
-  it("completes a local request, navigates pages and preserves the brief", async () => {
+beforeEach(() => {
+  window.history.replaceState(null, "", "#/");
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+});
+function renderAt(path: string, service?: StoryService) {
+  window.history.replaceState(null, "", `#${path}`);
+  return render(<App service={service} />);
+}
+async function fillAi() {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText("Child’s name"), "Alex");
+  await user.click(screen.getByRole("button", { name: /Continue/ }));
+  await user.type(
+    screen.getByLabelText("What is the story about?"),
+    "Moon garden",
+  );
+  await user.click(screen.getByRole("button", { name: /Continue/ }));
+  await user.click(screen.getByRole("button", { name: /Continue/ }));
+  return user;
+}
+describe("full product journeys", () => {
+  it("closes the mobile menu with Escape even while focus remains on its toggle", async () => {
+    render(<App />);
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Menu" }));
+    expect(screen.getByRole("navigation", { name: "Menu" })).toBeDefined();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Menu" }),
+    );
+  });
+  it("exposes all three confirmed methods on the homepage", () => {
+    render(<App />);
+    expect(
+      screen.getByRole("heading", { name: "Create with AI" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "Personalize a Book" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "Create Your Own" }),
+    ).toBeDefined();
+  });
+  it("reviews before generation, reads pages and explicitly saves an AI sample", async () => {
     const generate = vi
       .fn<StoryService["generate"]>()
       .mockImplementation(async (request) => makeSample(request));
-    render(<App service={{ generate }} />);
+    renderAt("/create/ai", { generate });
+    const user = await fillAi();
+    expect(generate).not.toHaveBeenCalled();
+    expect(screen.getByText("36", { selector: "dd" })).toBeDefined();
     await user.click(
-      screen.getAllByRole("button", { name: /Create a story/ })[0],
+      screen.getByRole("button", { name: /Make our sample story/ }),
     );
-    await user.type(screen.getByLabelText("Child’s name"), "Alex");
-    await user.type(
-      screen.getByLabelText("What is the story about?"),
-      "Moon garden",
-    );
-    await user.click(screen.getByRole("button", { name: /Make our story/ }));
     await screen.findByRole("heading", {
       name: "The seed that held the moonlight",
     });
     expect(generate).toHaveBeenCalledTimes(1);
-    expect(
-      (
-        screen.getByRole("button", {
-          name: "Previous page",
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
-    await user.click(screen.getByRole("button", { name: "Next page" }));
-    expect(screen.getByRole("status").textContent).toBe("Page 2 of 6");
-    for (let i = 0; i < 4; i++)
+    expect(generate.mock.calls[0][0].page_count).toBe(6);
+    await user.click(
+      screen.getAllByRole("button", { name: /Open the book/ })[0],
+    );
+    expect(screen.getByRole("status").textContent).toBe("Page 1 of 6");
+    for (let i = 0; i < 5; i++)
       await user.click(screen.getByRole("button", { name: "Next page" }));
     expect(
       (screen.getByRole("button", { name: "Next page" }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
-    await user.click(screen.getByRole("button", { name: /Create another/ }));
+    await user.click(screen.getByRole("button", { name: "Save to my books" }));
     expect(
-      (screen.getByLabelText("Child’s name") as HTMLInputElement).value,
-    ).toBe("Alex");
+      (
+        screen.getByRole("button", {
+          name: "Saved in this tab",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
   });
-  it("renders validation before any service call and focuses the invalid field", async () => {
+  it("validates the current wizard step and focuses the invalid field", async () => {
     const generate = vi.fn();
-    render(<App service={{ generate }} />);
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Create a story/ })[0],
-    );
-    fireEvent.click(screen.getByRole("button", { name: /Make our story/ }));
+    renderAt("/create/ai", { generate });
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
     expect(screen.getByRole("alert").textContent).toContain("highlighted");
     expect(generate).not.toHaveBeenCalled();
     await waitFor(() =>
@@ -67,44 +103,21 @@ describe("story creation and reading", () => {
       ),
     );
   });
-  it("switches interface direction independently from story language", async () => {
-    render(<App />);
-    fireEvent.change(screen.getByLabelText("Interface language"), {
-      target: { value: "he" },
-    });
-    expect(document.documentElement.dir).toBe("rtl");
-    expect(document.documentElement.lang).toBe("he");
-    fireEvent.click(screen.getByRole("button", { name: /קריאת סיפור לדוגמה/ }));
-    expect(screen.getByRole("article").getAttribute("dir")).toBe("rtl");
-    fireEvent.change(screen.getByLabelText("שפת הממשק"), {
-      target: { value: "en" },
-    });
-    expect(document.documentElement.dir).toBe("ltr");
-    expect(screen.getByRole("article").getAttribute("dir")).toBe("rtl");
-  });
-  it("shows loading, aborts on cancel and ignores a stale result", async () => {
+  it("cancels a pending request and ignores late completion", async () => {
     let resolve!: (story: ReturnType<typeof makeSample>) => void;
-    const generate = vi.fn<StoryService["generate"]>().mockImplementation(
-      () =>
-        new Promise((done) => {
-          resolve = done;
-        }),
+    const generate = vi
+      .fn<StoryService["generate"]>()
+      .mockImplementation(() => new Promise((done) => (resolve = done)));
+    renderAt("/create/ai", { generate });
+    const user = await fillAi();
+    await user.click(
+      screen.getByRole("button", { name: /Make our sample story/ }),
     );
-    render(<App service={{ generate }} />);
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Create a story/ })[0],
-    );
-    fireEvent.change(screen.getByLabelText("Child’s name"), {
-      target: { value: "Alex" },
+    await screen.findByRole("heading", {
+      name: "A little world is on its way…",
     });
-    fireEvent.change(screen.getByLabelText("What is the story about?"), {
-      target: { value: "Moon" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Make our story/ }));
-    expect(screen.getByRole("status").textContent).toContain(
-      "world is taking shape",
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await screen.findByLabelText("Child’s name");
     expect(generate.mock.calls[0][1].aborted).toBe(true);
     resolve(makeSample(generate.mock.calls[0][0]));
     await waitFor(() =>
@@ -112,39 +125,137 @@ describe("story creation and reading", () => {
     );
     expect(screen.queryByRole("article")).toBeNull();
   });
-  it("returns from a service failure without losing the brief", async () => {
-    const generate = vi
-      .fn()
-      .mockRejectedValue(new Error("private server diagnostic"));
-    render(<App service={{ generate }} />);
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Create a story/ })[0],
+  it("keeps the brief after a service failure and hides diagnostics", async () => {
+    renderAt("/create/ai", {
+      generate: vi.fn().mockRejectedValue(new Error("private diagnostic")),
+    });
+    const user = await fillAi();
+    await user.click(
+      screen.getByRole("button", { name: /Make our sample story/ }),
     );
-    fireEvent.change(screen.getByLabelText("Child’s name"), {
-      target: { value: "Alex" },
-    });
-    fireEvent.change(screen.getByLabelText("What is the story about?"), {
-      target: { value: "Moon" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /Make our story/ }));
     await screen.findByRole("alert");
-    expect(screen.queryByText("private server diagnostic")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Return to my brief" }));
+    expect(screen.queryByText("private diagnostic")).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Return to my brief" }),
+    );
     expect(
-      (screen.getByLabelText("Child’s name") as HTMLInputElement).value,
+      ((await screen.findByLabelText("Child’s name")) as HTMLInputElement)
+        .value,
     ).toBe("Alex");
   });
-  it("shows recoverable error and empty reader states", async () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Preview error" }));
-    expect(screen.getByRole("alert").textContent).toContain("another moment");
-    fireEvent.click(screen.getByRole("button", { name: "Return to my brief" }));
-    expect(screen.getByLabelText("Child’s name")).toBeDefined();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Preview empty reader" }),
-    );
+  it("filters catalog and recovers from empty search", async () => {
+    renderAt("/books");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Bedtime" }));
+    expect(screen.getAllByRole("article").length).toBe(1);
+    await user.type(screen.getByLabelText("Find a story"), "zzzz");
     expect(
-      screen.getByRole("heading", { name: "Your next adventure is waiting." }),
+      screen.getByRole("heading", {
+        name: "No books in this little corner yet.",
+      }),
     ).toBeDefined();
+    await user.click(screen.getByRole("button", { name: "Show all stories" }));
+    expect(screen.getAllByRole("article").length).toBe(6);
+  });
+  it("renders per-template fields, previews changes and saves without AI", async () => {
+    const generate = vi.fn();
+    renderAt("/personalize/sky-whale", { generate });
+    const user = userEvent.setup();
+    expect(screen.getByLabelText(/A traveling companion/)).toBeDefined();
+    expect(screen.queryByLabelText(/Explorer’s outfit/)).toBeNull();
+    await user.type(screen.getByLabelText(/Child’s name/), "Maya");
+    await user.selectOptions(
+      screen.getByLabelText(/A traveling companion/),
+      "rabbit",
+    );
+    expect(screen.getByText("Maya & the Sky-Whale Express")).toBeDefined();
+    await user.click(screen.getByRole("button", { name: "Save to my books" }));
+    await screen.findByRole("heading", {
+      name: "Maya & the Sky-Whale Express",
+    });
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it("validates template required fields before saving", async () => {
+    renderAt("/personalize/moon-fox");
+    fireEvent.click(screen.getByRole("button", { name: "Save to my books" }));
+    expect(screen.getByRole("alert").textContent).toContain("marked");
+    expect(screen.getByText("Please add this detail.")).toBeDefined();
+  });
+  it("edits, reorders, previews, saves and reopens a manual draft", async () => {
+    const generate = vi.fn();
+    renderAt("/studio/new", { generate });
+    const user = userEvent.setup();
+    await screen.findByLabelText("Book title");
+    await user.type(screen.getByLabelText("Book title"), "My sky book");
+    await user.type(screen.getByLabelText(/Words on this page/), "First page");
+    await user.click(screen.getByRole("button", { name: /Add a page/ }));
+    await user.type(screen.getByLabelText(/Words on this page/), "Second page");
+    await user.click(screen.getByRole("button", { name: "Move earlier" }));
+    expect(
+      (screen.getByLabelText(/Words on this page/) as HTMLTextAreaElement)
+        .value,
+    ).toBe("Second page");
+    await user.click(
+      screen.getByRole("button", { name: "Save draft in this tab" }),
+    );
+    expect(screen.getByRole("status").textContent).toContain("Draft saved");
+    await user.click(screen.getByRole("button", { name: "Preview book" }));
+    await screen.findByRole("heading", { name: "My sky book" });
+    await user.click(screen.getByRole("link", { name: "Continue editing" }));
+    await screen.findByLabelText("Book title");
+    expect(
+      (screen.getByLabelText("Book title") as HTMLInputElement).value,
+    ).toBe("My sky book");
+    await user.click(screen.getByRole("button", { name: /Finish my book/ }));
+    await screen.findByRole("heading", { name: "My sky book" });
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it("prevents finalizing a blank manual book and removing its only page", async () => {
+    renderAt("/studio/new");
+    await screen.findByLabelText("Book title");
+    fireEvent.click(screen.getByRole("button", { name: /Finish my book/ }));
+    expect(screen.getByRole("status").textContent).toContain("Add a title");
+    expect(
+      (screen.getByRole("button", { name: "Remove page" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+  it("keeps reader direction independent of interface language", async () => {
+    renderAt("/read/sample-moon-fox-he");
+    const user = userEvent.setup();
+    await user.click(
+      screen.getAllByRole("button", { name: "Open the book" })[0],
+    );
+    expect(screen.getByRole("article").getAttribute("dir")).toBe("rtl");
+    await user.selectOptions(screen.getByLabelText("Interface language"), "he");
+    expect(document.documentElement.dir).toBe("rtl");
+    await user.selectOptions(screen.getByLabelText("שפת הממשק"), "en");
+    expect(document.documentElement.dir).toBe("ltr");
+    expect(screen.getByRole("article").getAttribute("dir")).toBe("rtl");
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect(screen.getByRole("status").textContent).toBe("Page 2 of 6");
+  });
+  it("shows missing-book and unknown-route recovery", () => {
+    renderAt("/read/missing");
+    expect(
+      screen.getByRole("heading", { name: "This book isn’t on your shelf." }),
+    ).toBeDefined();
+  });
+  it("supports a complete support page and native disclosure controls", async () => {
+    renderAt("/help");
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Where are my books saved?"));
+    expect(screen.getByText(/Only in this tab/)).toBeDefined();
+  });
+  it("removes a local book only after a second explicit action", async () => {
+    renderAt("/my-books");
+    const user = userEvent.setup();
+    const articles = screen.getAllByRole("article");
+    await user.click(
+      within(articles[0]).getByRole("button", { name: /Remove from shelf/ }),
+    );
+    expect(screen.getAllByRole("article").length).toBe(3);
+    await user.click(screen.getByRole("button", { name: "Remove book" }));
+    expect(screen.getAllByRole("article").length).toBe(2);
   });
 });

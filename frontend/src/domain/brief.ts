@@ -16,8 +16,8 @@ export interface BriefDraft {
 }
 export const initialDraft: BriefDraft = {
   name: "",
-  age: "3",
-  ageUnit: "years",
+  age: "36",
+  ageUnit: "months",
   language: "en",
   theme: "",
   guidance: "",

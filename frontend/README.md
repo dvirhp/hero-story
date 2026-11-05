@@ -1,8 +1,14 @@
-# StoryForge web
+﻿# StoryForge web
 
-Local React + TypeScript + Vite frontend. All visible generation uses an in-memory editorial sample. No API keys, backend, AI calls, accounts or storage are required.
+A React + TypeScript + Vite product demo with three independent creation journeys:
 
-From `frontend/`, with Node 22.12+ and npm:
+- **Create with AI**: a four-step reviewed brief, cancellable local sample generation, reading and explicit library save.
+- **Personalize a Book**: original catalog, product previews and dynamic per-template personalization schemas. No AI calls.
+- **Create Your Own**: page editor with text, ordering, layouts, backgrounds, original illustrations, preview, draft reopening and finalization.
+
+All books and drafts live in React memory in the current tab. Refreshing or closing the tab loses them. There are no accounts, purchases, uploads or cloud saves. No backend server, keys or AI provider requests are required.
+
+With Node 22.12+ and npm, from `frontend/`:
 
 ```sh
 npm ci
@@ -12,10 +18,17 @@ npm run build
 npm run preview
 ```
 
-Open the local URL printed by Vite. The default dev URL is http://127.0.0.1:5173. The preview command serves the built `dist/` directory. Do not publish this local foundation as a production service.
+Open the local URL Vite prints (normally http://127.0.0.1:5173). Hash routes support browser history and direct links without a hosting rewrite. Start at `/#/` and use the three creation cards. `/#/books`, `/#/my-books`, `/#/create/ai`, `/#/studio/new`, `/#/help` are useful entry points. Synthetic sample books are preloaded into the demo library.
 
-Start at `src/App.tsx`; reusable screens are in `src/components/`, brief normalization is in `src/domain/`, request lifecycle is in `src/hooks/`, and transport contracts/services are in `src/api/`. UI dictionaries and generation language descriptors live in `src/i18n/locales.ts`. No routing/state/i18n library is required yet.
+For browser checks after building:
 
-The HTTP client is intentionally disconnected. It uses POST `/v2/stories/generate` only when explicitly constructed and injected. Connecting it can make paid provider requests depending on backend configuration. See [the full handoff](../docs/FRONTEND_HANDOFF.md) for contract sources, limitations and integration decisions.
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
 
-Use the language selector to change interface direction; story language is independently selected in the form. Footer “Demo states” provides error and empty-reader previews. Form details remain in memory until the tab is refreshed or closed.
+The Playwright runner owns a production preview on port 5186. It runs Chromium desktop and mobile projects, intercepts unexpected network/API requests, checks workflows, keyboard behavior, overflow and axe WCAG A/AA findings. An already installed compatible Chromium can be selected using `STORYFORGE_CHROMIUM_PATH` (absolute executable path). Screenshots are written to `../docs/frontend-screenshots/`; traces and transient reports are ignored. Only the Playwright browser installation requires a download; tests themselves use localhost and local assets.
+
+Architecture: `src/pages/` holds product screens; `src/components/` holds shared covers/spreads/forms/reader; `src/domain/` holds the canonical frontend book model and exact brief normalization; `src/data/` holds typed versioned template fixtures; `src/routing/` implements hash routing; `src/hooks/` owns request cancellation and the memory library; `src/i18n/` contains typed locale dictionaries; `src/api/` retains the v2 HTTP seam and separate mock service. Original SVG artwork lives in `public/art/`.
+
+The HTTP client is deliberately disconnected. Only an explicitly reviewed composition change should inject it into App; an unknown backend could call a paid provider. See [the complete handoff](../docs/FRONTEND_HANDOFF.md) for contracts, mock limits, screenshots and integration requirements.

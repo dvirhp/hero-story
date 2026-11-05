@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { Language, StoryRequestV2, StoryType } from "../api/contracts";
 import { prepareRequest } from "../domain/brief";
@@ -6,6 +6,8 @@ import type { BriefDraft, BriefErrors } from "../domain/brief";
 import { locales, storyTypes } from "../i18n/locales";
 import type { Copy } from "../i18n/locales";
 import { GardenArt } from "./GardenArt";
+import { productCopy } from "../i18n/product";
+import { ageInMonths } from "../domain/brief";
 function Field({
   id,
   label,
@@ -50,6 +52,12 @@ export function StoryForm({
   locale: Language;
 }) {
   const [errors, setErrors] = useState<BriefErrors>({});
+  const [step, setStep] = useState(0);
+  const p = productCopy[locale];
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    stepHeading.current?.focus();
+  }, [step]);
   const formRef = useRef<HTMLFormElement>(null);
   const update = <K extends keyof BriefDraft>(key: K, value: BriefDraft[K]) => {
     onChange({ ...draft, [key]: value });
@@ -64,9 +72,24 @@ export function StoryForm({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const result = prepareRequest(draft);
-    setErrors(result.errors);
-    if (result.request) onSubmit(result.request);
-    else
+    const stepKeys: (keyof BriefErrors)[][] = [
+      ["name", "age"],
+      ["theme", "guidance"],
+      ["pages", "targets"],
+    ];
+    const relevant =
+      step === 3
+        ? result.errors
+        : Object.fromEntries(
+            Object.entries(result.errors).filter(([key]) =>
+              stepKeys[step].includes(key as keyof BriefErrors),
+            ),
+          );
+    setErrors(relevant);
+    if (!Object.keys(relevant).length) {
+      if (step < 3) setStep(step + 1);
+      else if (result.request) onSubmit(result.request);
+    } else
       requestAnimationFrame(() =>
         formRef.current
           ?.querySelector<HTMLElement>('[aria-invalid="true"]')
@@ -80,13 +103,26 @@ export function StoryForm({
         <p className="eyebrow">{c.formEyebrow}</p>
         <h1 className="form-heading">{c.formTitle}</h1>
         <p className="intro">{c.formIntro}</p>
+        <ol className="wizard-steps" aria-label={p.ai}>
+          {[p.stepChild, p.stepStory, p.stepBook, p.stepReview].map(
+            (label, i) => (
+              <li key={label} aria-current={step === i ? "step" : undefined}>
+                <span>{i + 1}</span>
+                {label}
+              </li>
+            ),
+          )}
+        </ol>
+        <h2 ref={stepHeading} tabIndex={-1} className="step-heading">
+          {[p.stepChild, p.stepStory, p.stepBook, p.stepReview][step]}
+        </h2>
         <form ref={formRef} onSubmit={submit} noValidate>
           {Object.keys(errors).length > 0 && (
             <p className="error-banner" role="alert">
               {c.invalid}
             </p>
           )}
-          <fieldset>
+          <fieldset hidden={step !== 0}>
             <legend>{c.childSection}</legend>
             <Field id="name" label={c.name} error={error("name")}>
               <input
@@ -149,7 +185,7 @@ export function StoryForm({
               </select>
             </Field>
           </fieldset>
-          <fieldset>
+          <fieldset hidden={step !== 1}>
             <legend>{c.storySection}</legend>
             <Field id="theme" label={c.theme} error={error("theme")}>
               <input
@@ -193,7 +229,7 @@ export function StoryForm({
               </select>
             </Field>
           </fieldset>
-          <fieldset>
+          <fieldset hidden={step !== 2}>
             <legend>{c.bookSection}</legend>
             <Field
               id="pages"
@@ -284,10 +320,71 @@ export function StoryForm({
               )}
             </div>
           </fieldset>
-          <button className="button primary submit" type="submit">
-            {c.generate}
-            <span aria-hidden="true">✧</span>
-          </button>
+          {step === 3 && (
+            <section className="review-panel">
+              <h3>{p.reviewTitle}</h3>
+              <p>{p.reviewIntro}</p>
+              <dl>
+                <div>
+                  <dt>{c.name}</dt>
+                  <dd>
+                    <bdi>{draft.name}</bdi>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{p.ageMonths}</dt>
+                  <dd>{ageInMonths(draft.age, draft.ageUnit)}</dd>
+                </div>
+                <div>
+                  <dt>{c.language}</dt>
+                  <dd>{locales[draft.language].label}</dd>
+                </div>
+                <div>
+                  <dt>{c.theme}</dt>
+                  <dd dir="auto">{draft.theme}</dd>
+                </div>
+                <div>
+                  <dt>{c.type}</dt>
+                  <dd>{storyTypes[locale][draft.type]}</dd>
+                </div>
+                <div>
+                  <dt>{c.pages}</dt>
+                  <dd>{draft.pages}</dd>
+                </div>
+                <div>
+                  <dt>{c.density}</dt>
+                  <dd>{draft.density === "light" ? c.light : c.standard}</dd>
+                </div>
+                <div>
+                  <dt>{p.guidance}</dt>
+                  <dd dir="auto">{draft.guidance || p.noGuidance}</dd>
+                </div>
+                <div>
+                  <dt>{c.targets}</dt>
+                  <dd dir="auto">{structured ? draft.targets : p.noTargets}</dd>
+                </div>
+              </dl>
+              <p className="demo-notice">{p.aiDisclaimer}</p>
+            </section>
+          )}
+          <div className="wizard-actions">
+            {step > 0 && (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => {
+                  setStep(step - 1);
+                  setErrors({});
+                }}
+              >
+                {p.back}
+              </button>
+            )}
+            <button className="button primary submit" type="submit">
+              {step === 3 ? p.confirm : p.next}
+              <span aria-hidden="true">✧</span>
+            </button>
+          </div>
           <p className="privacy">{c.privacy}</p>
         </form>
       </div>
