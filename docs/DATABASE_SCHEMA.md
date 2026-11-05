@@ -4,6 +4,8 @@ Status: **design for approval, not implemented** (2026-11-05). SQLAlchemy async,
 
 Revision note: the common Book architecture is accepted in principle, but Phase B remains on hold. Anonymous owner/session and capability-quota tables below are proposed additions, not existing database objects. Registration is optional; ownership enforcement is not.
 
+The [Phase B implementation plan](PHASE_B_IMPLEMENTATION_PLAN.md) is the current delivery/migration allocation: proposed 0002 canonical Book/assets, 0003 anonymous ownership, 0004 catalog/templates, 0005 durable operations, 0006 quota admission. This supersedes the older illustrative numbering below; actual 0001 remains unchanged. Plan defaults are UTC/10+10, committed first-dispatch consumption/proven-unsent release, fixed 30-day session and >=48-hour terminal replay. No migration file or setting is implemented here.
+
 ## Preserve the accepted foundation
 
 Keep `stories` as the AI generation ledger with its existing pending/processing/completed/failed states, minimized child/request metadata, schema/policy versions, approved content header, safe usage metadata and error code. Keep `story_pages` as the immutable accepted AI source pages. Do not rename these tables into generic Books or relax their completed-content invariant. Their existing UUIDs, deterministic order and repository API remain valid. Source failures never acquire a Book projection or saved draft content.
@@ -95,7 +97,7 @@ Indexes: retain story status index. Add products(status,visibility,created_at,id
 | Proposed table/change | Keys, minimal fields and invariants |
 | --- | --- |
 | `access_principals` | id UUID PK; kind anonymous/account; status active/claimed/revoked; nullable claimed_by_principal_id FK RESTRICT; created_at/expires_at. Only anonymous may point to an active account principal; no chains/cycles/self-link. A claim is one-way and uniquely audit-recorded. No child names, email/passwords or inferred identities. Account principals are allocated only from a future verified identity adapter, not client owner IDs. |
-| `access_sessions` | id UUID PK; principal_id FK; token_digest unique; digest_key_version; csrf_digest; csrf_nonce (non-secret random salt) and csrf_key_version; created_at/last_seen_at/idle_expires_at/absolute_expires_at/revoked_at. Raw bearer/CSRF tokens never stored. Derive the returned CSRF token with a separate server HMAC key over session ID/nonce/credential version so GET session can reproduce it without storing plaintext; verify the session-bound token in constant time. Rotate credentials/CSRF context while keeping principal identity; absolute expiry cannot extend through rotation. Index token_digest, principal_id and expiry cleanup. Key material stays in secret configuration, not rows. |
+| `access_sessions` | id UUID PK; principal_id FK; token_digest unique; digest_key_version; csrf_digest; csrf_nonce (non-secret random salt) and csrf_key_version; created_at/last_seen_at/expires_at/revoked_at. expires_at is fixed at issuance +30 days; no shorter idle timeout or last_seen-based extension. Raw bearer/CSRF tokens never stored. Derive the returned CSRF token with a separate server HMAC key over session ID/nonce/credential version so GET session can reproduce it without storing plaintext; verify in constant time. Rotate credentials/CSRF context while keeping principal identity and original expiry. Index token_digest, principal_id and expiry cleanup. Key material stays in secret configuration, not rows. |
 | `principal_claims` | anonymous_principal_id PK/FK; account_principal_id FK; claimed_at; claim_operation_id unique. Only the verified account plus fresh anonymous proof may authorize; double claim to another account fails. Existing ownership references remain to the claimed namespace, which is now accessible only through that account. Minimal audit contains IDs/outcome, not credentials or child data. Future verified subject-to-account mapping is owned by the auth adapter, not a speculative users table here. |
 | Owner columns | Add owner_principal_id FK RESTRICT to Book, source stories, private assets and creation operations. Book pages/personalization inherit Book ownership. Editorial public assets use NULL owner with scope check; private assets require owner. Old 0001 stories remain NULL-owned/quarantined and inaccessible to new anonymous APIs; never grant to first reader. New public-entry writes require an actual principal. Verify linked Book/source/operation/private-asset authorization using the canonical account-plus-claimed namespace scope. |
 | `creation_operations` | id UUID PK; owner_principal_id FK (issuance namespace); capability story_generation/image_generation; idempotency_key_digest; request_fingerprint HMAC and key version; admitted_schema_version/execution_policy_version; frozen configuration reference/digest; request_id; admission_day date; created_at/updated_at; dispatch_authorized_at nullable; terminal_outcome nullable fixed enum; source_story_id nullable unique FK; idempotency_expires_at. UNIQUE(owner_principal_id,capability,idempotency_key_digest); capability/source shape checks. No raw payload, prompts, provider messages or tokens. Execution/job states, encrypted request-envelope storage and leases await Agent 1's design; do not create competing job ledgers. |
@@ -124,18 +126,44 @@ Add indexes on claimed_by_principal_id, principal_claims(account_principal_id), 
 
 ## Migration sequence and rollback proposal
 
-All identifiers below are reserved design labels, **no migration files exist beyond 0001**.
+Current allocation follows [the incremental plan](PHASE_B_IMPLEMENTATION_PLAN.md).
+These are proposed labels only: no migration file exists beyond actual 0001.
+Earlier catalog-first numbering was never applied and is superseded.
 
-1. `0002_catalog_templates_assets`: additive catalog/localization/assets/template tables, FK/indexes and sealed-version triggers. No proprietary fixtures. Downgrade drops only these new tables in dependency order, and must refuse while referenced by later Book tables.
-2. `0003_books_documents`: additive Book/choice/page/binding tables, checks, revision/lifecycle triggers and constraints. No stories rename/data deletion. Deployment remains gated; upgrade and standalone downgrade tests run on disposable PostgreSQL.
-3. `0004_access_principals_sessions` (new proposal): principal/session/claim records and owner FKs/indexes on Book/stories/private assets. Keep legacy ownerless records quarantined; do not invent user ownership or alter 0001's source-content checks. Backfill ownership only with verified provenance. Anonymous public-entry features stay disabled until mandatory scoping and session/CSRF/retention tests pass. Rollback requires disabling access and preserving/revoking all live sessions; do not orphan private records or expose them globally.
-4. `0005_capability_admission` (new proposal, coordinate with Agent 1): operations, daily buckets, reservations and image source/result references, with dispatch/settlement constraints. Exact migration split/IDs depend on Agent 1's execution/outbox design; no independent duplicate operations schema. Downgrade must stop admissions/workers, resolve active work and preserve accounting evidence before dropping state; never erase same-day counters to re-enable spending.
-5. Explicit optional backfill command, not an unbounded Alembic side effect: read only completed source stories, reconstruct/validate stored StoryV2 shape, allocate one AI Book via unique source_story_id, copy pages deterministically in per-book transactions and report counts/IDs only. Idempotent rerun skips existing projections. Existing 0001 rows do not retain full resolved constraints/profile snapshots: do not pretend to rerun historical contextual quality against current profiles. Require recognizable source schema/policy/profile versions and recorded completion provenance; quarantine unsupported/missing evidence for review, or import only as an unverified private draft with explicit approval. Reject invalid legacy rows with fixed codes; never promote pending/failed/rejected sources. Keep backups and an operator manifest of created projection IDs for reversible review. Original rows/UUIDs remain untouched. Backfill choice requires approval.
+| Milestone / proposed revision | Additive change and gate |
+| --- | --- |
+| 1 / `0002_canonical_books_assets` | Common Book/Page/asset reference schema and transaction helpers; AI/manual origins internally testable, template branch gated until valid source FKs exist; no public unowned Book routes |
+| 2 / `0003_anonymous_access_ownership` | Principal/session/claim records, mandatory new-write ownership and owner-leading indexes; preserve/quarantine legacy NULL-owned sources; fixed 30-day session |
+| 3 / `0004_catalog_template_versions` | Catalog/localizations/sealed templates/page variants/media plus Book personalization/template source FKs; enable valid TEMPLATE_BASED origin after constraints pass |
+| 4 / no revision expected | Manual commands use existing revision/ordering/lifecycle constraints; propose any missing invariant before assigning a new migration, never edit an applied one |
+| 5A / `0005_durable_creation_operations` | One operation, frozen artifacts, lease/fence, versioned replay metadata, attempt journal and approved encrypted temporary stores; only internal fake fixtures until real quota adapter exists |
+| 6 / `0006_daily_capability_usage` | Separate capability/day buckets, one-to-one reservations and operation/source/dispatch coherence; no public AI admission until fully connected; 5B activates fake-only end-to-end tests |
 
-Before rollback: disable new routes/writes/workers, back up private data and accounting/access state; dropping Book tables destroys manual/template customer work and cannot be reconstructed from AI stories. No automatic rollback is safe after production use. Reverse dependents 0005 -> 0004 -> 0003 -> 0002, preserving 0001 and quarantining records whose owner scope cannot be retained. PostgreSQL triggers/deferrable constraints require real runtime tests; SQLite cannot prove them. Migration lock time and volume need rehearsal on representative synthetic data. No production deployment or data migration is authorized by Phase A.
+Final splits/identifiers require joint Agent 1 review before implementation;
+backend job and admission ledgers must not diverge. Every revision tests upgrade,
+downgrade, constraints and preservation of 0001 on real disposable PostgreSQL.
+
+Optional historical backfill remains an explicit approved command, not an
+unbounded Alembic side effect. Read only completed source stories, reconstruct
+stored StoryV2 and copy ordered pages into one unique AI Book per source in a
+transaction. Repeated runs skip existing projections. 0001 lacks full historical
+profile/constraint snapshots: never claim revalidation against current policy.
+Unsupported provenance/version/owner evidence is quarantined; any unverified
+private draft import requires explicit approval. Never assign legacy data to a
+first reader or promote pending/failed/rejected sources. Preserve original IDs,
+backups and a sanitized manifest of created projections; no child-content logs.
+
+Rollback must disable new writes/admissions/workers, resolve active dispatch and
+preserve private data/accounting/ownership evidence. Reverse 0006 -> 0005 -> 0004
+-> 0003 -> 0002 only after dependent data/constraints are deliberately handled;
+retain 0001. Never drop quota rows to restore allowance or drop ownership and
+expose records globally. Dropping Book tables destroys manual/template work not
+recoverable from source stories. No automatic rollback is safe after production
+use. TTL/backup/erasure and lock-time rehearsal need separate review; no production
+migration or data backfill is authorized by this plan.
 
 ## Ownership and unresolved policy
 
 No session/identity/quota schema exists today. The revised product target supports anonymous creation and private ownership immediately upon a future secure rollout; it does not wait for account registration. Implement the principal/session/owner boundary first, then expose only session-scoped private APIs. Current code remains synthetic-local-only until that future implementation is authorized and verified. Public catalog has no private projection. All-owner library queries, UUID-based claims and ownerless legacy resource delivery are prohibited. Future account linking requires a genuine verified identity adapter, not invented user IDs. Expiry, orphan cleanup, deletion of linked source/assets and data-retention periods require approval before real-child-data rollout.
 
-Open approval decisions: UTC day boundary and count-at-dispatch/failure policy; session idle/absolute TTL and claim proof window; operation/idempotency retention and optional temporary raster-preview TTL; adaptive-abuse thresholds and privacy tradeoffs; Agent 1 execution/lease/outbox and image-safety contracts; editor/schema/body limits; publication permissions; finalization/forks; linked-data retention/deletion; media rights; legacy backfill opt-in. Ten units per AI capability is fixed by the product requirement, not a limit the client or templates can raise. No commerce tables are introduced.
+Remaining approvals: account claim proof handoff; content/snapshot/backup retention and optional raster-preview TTL; abuse thresholds/privacy tradeoffs; Agent 1 queue/lease/journal/accepted-finalization recovery settings; image provider/safety scope; editor/schema/body limits; publication permissions; finalization/forks; linked-data deletion; media rights; legacy backfill opt-in; implementation milestones/base. UTC, 10+10, first-dispatch/proven-release, 30-day session and >=48-hour terminal replay are now the supplied planning defaults. No commerce tables or executable migrations are introduced.

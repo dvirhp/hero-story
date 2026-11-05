@@ -1,6 +1,6 @@
 # Persistence foundation handoff
 
-> **Latest task: anonymous access / daily-capability-limit design revision (2026-11-05).** Phase A is accepted in principle, but **Phase B is not authorized**. See [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md), [API_CONTRACTS.md](API_CONTRACTS.md) and the revision delta below. Anonymous story/image generation and account-free template preview are now required; secure anonymous ownership replaces the earlier account-required/private-local-only product target. No session, quota, image, product or new API code/schema exists. Historical implementation/test evidence remains valid only for the accepted persistence foundation. Earlier integration plans/security decisions below are historical where superseded; the v2 save=true proposal remains unimplemented and superseded by v3.
+> **Latest task: incremental Phase B implementation plan (2026-11-05).** Phase A is accepted in principle, but **coding is not authorized**. See [PHASE_B_IMPLEMENTATION_PLAN.md](PHASE_B_IMPLEMENTATION_PLAN.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) and [API_CONTRACTS.md](API_CONTRACTS.md). The plan uses the user's proposed defaults and Agent 1's latest `49410d0` contract. No new implementation/migration exists. Earlier defaults/transport choices below are historical where superseded, including seven-day idle expiry, negotiated async and v2 save=true.
 
 ## Scope, branch and baseline
 
@@ -212,3 +212,56 @@ Remaining decisions for approval (the product's ten-per-capability limit and reg
 - Agent 1 async/sync choice, operation states/ownership, worker/outbox/fencing/cancellation, and a coordinated legacy client/session-gate rollout. No unreviewed job queue, auth provider, image adapter, production deployment or Phase B implementation is approved by this delta.
 
 Verification for this revision: all **9 fenced JSON examples parsed**, **16 local Markdown link targets resolved**, code fences balanced, Mermaid manually reviewed (not rendered), `git diff --check` passed, and scope verified as only the four requested Markdown files. OWASP session/CSRF and PostgreSQL 17 timestamp/conflict documentation are linked next to the relevant design choices. No application, quota, session, image, claim, distributed or browser E2E tests were run or newly claimed. Historical foundation evidence remains 14 real PostgreSQL / 773 total tests; it does not validate the proposed access/admission model. Identify this revision commit with `git log -1 --format="%H %s" -- docs/DATABASE_SCHEMA.md`. Stop for review after documenting the delta.
+
+## Phase B incremental planning handoff (2026-11-05)
+
+Requested scope: implementation plan only. Baseline `7e38326`; new document
+`docs/PHASE_B_IMPLEMENTATION_PLAN.md` supplies modules/migrations/endpoints/
+dependencies/tests/acceptance for each milestone. Existing four design documents
+are aligned to current defaults; no executable file, actual migration or database
+record changes. The earlier review ZIP remains its original snapshot.
+
+Planning defaults: UTC day; separate ten-story/ten-image allowances; consume once
+at durable first-dispatch authorization, release only proven pre-dispatch work
+with fencing; fixed 30-day anonymous session (no seven-day idle cutoff/rolling
+extension); all nonterminal lifetime plus >=48h terminal replay; guest previews
+consume no AI quota; new async story submission at POST `/v3/jobs/stories` -> 202.
+These settle planning alternatives, not implementation or live-call permission.
+
+Milestones: (1) canonical Book/Page/assets + 0002; (2) anonymous access/ownership
+and 0003; (3) catalog/template/personalization + 0004; (4) manual editing on existing
+schema; (5A) durable operation/worker/frozen-input/dispatch-journal foundation +
+0005, not publicly dispatchable; (6) atomic daily quotas/abuse + 0006; (5B) connect
+the real transactional quota adapter and exercise fake-only async HTTP workflow;
+(7) full combined API/PostgreSQL/browser QA. Prior migration numbers were only
+illustrative proposals; actual 0001 stays intact. Future shared-route work and
+branch merges still require approved base/owner coordination. No permissive quota
+stub is shipped to bridge milestones 5-6.
+
+Earliest complete deterministic Book vertical slice is milestone 3, contingent on
+Agent 2's actual same-origin HTTPS client and Agent 4 executing the journey:
+anonymous browse -> personalize -> preview with no save/AI -> explicit template
+save -> PostgreSQL -> reopen after API restart; second guest denied. Session-only
+milestone-2 wiring or ASGI/mock-client tests do not count as this browser E2E.
+
+Agent 1 latest inspection: `docs/AI_BACKEND_INTEGRATION_CONTRACT.md`, commit
+`49410d0` read without modifying its branch. Align separate async/sync routes,
+cancelled operation state, atomic quota+attempt/token/cost first-dispatch journal,
+immutable admitted policies, cross-route replay, retained canonicalizers/HMAC keys,
+erased-result tombstones, canonical byte-capacity preflight and zero automatic
+unknown-send replays. Its proposed seven-day idle expiry is superseded by the
+user's 30-day session default. Its queue/lease/heartbeat/encrypted snapshot TTL,
+15-minute accepted-finalization recovery and bounded storage-retry defaults still
+need explicit approval before milestone 5; no additional engine attempts/chunking
+or provider changes are approved. Real account login/image provider scope remains
+separate from their testable ports and generic quota capability.
+
+Every milestone has unit/API/real-PostgreSQL tests appropriate to its scope; final
+milestone consolidates independent QA and actual browser proof. No new runtime
+test result is claimed for this planning task; accepted prior foundation evidence
+remains 14 PostgreSQL / 773 total. Documentation verification passed: seven complete
+milestone inventories, nine parsed JSON examples, 21 local links, balanced fences,
+four manually reviewed (not rendered) Mermaid blocks and whitespace/scope checks;
+only the five planning Markdown documents changed. Locate the plan commit with
+`git log -1 --format="%H %s" -- docs/PHASE_B_IMPLEMENTATION_PLAN.md`.
+Stop for review, do not implement.
