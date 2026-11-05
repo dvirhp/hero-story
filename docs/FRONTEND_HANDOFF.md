@@ -7,7 +7,7 @@ Updated: 2026-11-05 (Asia/Jerusalem). This document supersedes the earlier found
 Worktree: `C:/Users/dvir3/storyforge-frontend`.
 Branch: `feature/storyforge-frontend-foundation`.
 Previous foundation: `d961b6f9a1061bf8083e3a2c9ec58e119ce9c112`; documentation/base for this iteration: `c2b72c2`.
-Current product-experience implementation commit: recorded after final verification below. A subsequent documentation-only commit records its exact hash (a commit cannot include its own hash).
+Product-experience implementation commit: `1e2a3e6d7d23d5af332b3dab54e552e9ed7b900b` (`feat(frontend): build three complete storybook creation journeys`). The subsequent documentation-only commit records this identifier; obtain its exact ID with `git log -1 --format="%H %s"`. All source changes and 22 screenshots are in the implementation commit. Working tree is clean at delivery.
 
 The original StoryForge checkout at `C:/Users/dvir3/OneDrive/Desktop/heroStory` and the persistence/QA worktrees were inspected read-only. No merge or cherry-pick of another agent's branch. The starting workspace `conversation-dashboard` remains unrelated and untouched.
 
