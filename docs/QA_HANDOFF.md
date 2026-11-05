@@ -4,6 +4,16 @@ Updated 2026-11-05 (Asia/Jerusalem). Agent 4's expanded product QA preparation;
 this replaces the earlier foundation-only handoff. No conversation context is
 needed to reproduce the work or understand its limits.
 
+Subsequent engine diagnosis on the same date: see
+[AI_ENGINE_QA_REPORT.md](AI_ENGINE_QA_REPORT.md). Seventeen additional offline
+characterization probes reproduce one P2 local fixture distribution defect and
+document known semantic-quality gaps. The selected regression run passed 449
+cases (including those 17); diagnostics snapshot rerun passed 42. No failed or
+skipped tests. These selected runs do not replace the earlier 789-case full-run
+evidence below or claim a fresh complete-suite run. The earlier no-confirmed-defect
+statement describes the product-strategy phase; the local fixture defect is the
+new finding, with exact reproduction and owner recommendations in the report.
+
 ## Location, source versions and ownership
 
 QA worktree: `C:\Users\dvir3\storyforge-qa`.
