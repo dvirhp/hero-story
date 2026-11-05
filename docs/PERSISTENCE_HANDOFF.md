@@ -76,6 +76,8 @@ Future saved-story routes require real ownership/authentication, access control,
 
 ## Runtime verification follow-up (2026-11-05)
 
+Runtime verification/read-consistency implementation commit: `6cc8ef947ed671b097e546c462cae8c924ec15ed` on `feature/storyforge-persistence-foundation`. A subsequent documentation-only commit records this identifier.
+
 Docker initially returned `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.` `docker desktop status` reported that Desktop was not running. `docker desktop start` succeeded. Docker engine **28.5.1** became available; Compose pulled `postgres:17` and started a healthy isolated container on `127.0.0.1:5433`. Runtime server: **PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2)**. The local `storyforge` database was migrated to **0001 (head)** and `alembic check` reported no new upgrade operations. No production database or AI service was contacted.
 
 New file: `tests/test_persistence_postgresql.py`, marked `postgresql`. These are real PostgreSQL/asyncpg connections and transactions, with Alembic-created tables; no database operation is mocked or replaced by SQLite. Story content comes from existing offline synthetic fixtures, not an LLM. Shared contract tests reuse assertions from `test_persistence.py` with a real PostgreSQL session factory. The distinct SQLite tests still use in-memory aiosqlite; offline SQL compilation alone is not a runtime test.
