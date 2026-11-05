@@ -4,6 +4,24 @@ Updated 2026-11-05 (Asia/Jerusalem). Agent 4's expanded product QA preparation;
 this replaces the earlier foundation-only handoff. No conversation context is
 needed to reproduce the work or understand its limits.
 
+Latest frontend/UX assignment: see [FRONTEND_UX_QA_REPORT.md](FRONTEND_UX_QA_REPORT.md),
+[FRONTEND_E2E_TEST_MATRIX.md](FRONTEND_E2E_TEST_MATRIX.md) and the concise
+[Agent 2 handoff](FRONTEND_AGENT2_QA_HANDOFF.md). Independent immutable frontend
+exports verified delivered 1647d71 (74 unit/12 browser passes), reader bd40358
+(75 unit/14 browser passes), then expanded b09f54b (87 unit passes/build passed).
+Latest upstream browser run: 5 passed/13 failed; twelve failures identify the new
+header cart axe issue and one transient mobile reader connection failure passed
+an isolated rerun. A later full rerun was blocked by occupied port 5186 before tests.
+
+Latest independent regression on a separately owned preview: 17 functional passes,
+eight finding probes inspected/present, one axe sweep inspected, zero harness
+failures or unverified cases. All 22 axe scenarios report the header accessible-name
+regression. Screenshots/results are under docs/qa-screenshots/frontend-ux-latest;
+earlier evidence remains under frontend-ux. P1s: Hebrew cover binding and cover
+title contrast. Local avatar and simulated format/cart/checkout/confirmation now
+work; no real commerce, frontend/API/PostgreSQL or secure account/session integration
+is verified. Later uncommitted Agent 2 changes remain excluded and need a fresh run.
+
 Subsequent engine diagnosis on the same date: see
 [AI_ENGINE_QA_REPORT.md](AI_ENGINE_QA_REPORT.md). Seventeen additional offline
 characterization probes reproduce one P2 local fixture distribution defect and
