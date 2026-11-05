@@ -71,3 +71,7 @@ The demo uses synthetic names and scripted fixture text, not paid/generated lite
 Milestone 3 work is recorded on `feature/milestone-3-langgraph`; Milestone 4 continues on `feature/milestone-4-fastapi`. Git was initialized from the tested Milestone 2 source baseline using the existing author identity. No identity or credential settings were changed; no remote was created. Environments, `.env` variants (except sample/template files), key files, caches, generated archives and build artifacts are ignored. For future changes: inspect status/diff, make a small coherent change, run relevant tests, review staged files, then commit with a meaningful `feat:`, `fix:`, `test:`, `docs:` or `chore:` message. Never create empty commits, commit failing changes or include sensitive content. No pushes or deployment without user approval.
 
 Open decisions remain model/provider selection, real tokenizer/capacity/pricing validation and spend ceiling, bilingual prompt evaluation, reviewed moderation expansion and human release criteria. Milestone 4's HTTP layer is separate from this engine and has its own approved local branch; do not begin real providers (Milestone 5) without approval.
+
+## Diagnostic-only follow-up
+
+Failed attempts now retain allowlisted provider categories and nullable upstream HTTP status. Final failures carry a separate orchestration stop_reason; existing error codes, HTTP mappings, retry policy and limits remain unchanged. See [safe diagnostic fields, compatibility and the approval-gated next-run procedure](PROVIDER_DIAGNOSTICS.md).

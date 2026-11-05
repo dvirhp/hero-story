@@ -106,3 +106,7 @@ Open: approved live-run/model availability and tier, real literary quality, fram
 ## Local preflight follow-up
 
 The explicit `.env` path and current smoke files were verified without starting a server, constructing an SDK client or making any provider request. The real local key was read only in a disposable process and never displayed; its value is excluded from secret repr/serialization. See [preflight report and commands](GEMINI_PREFLIGHT.md). Loading a secret is not authentication or project-access verification. No limits were changed.
+
+## Diagnostic-only follow-up
+
+Failed attempts now retain allowlisted provider categories and nullable upstream HTTP status. Final failures carry a separate orchestration stop_reason; existing error codes, HTTP mappings, retry policy and limits remain unchanged. See [safe diagnostic fields, compatibility and the approval-gated next-run procedure](PROVIDER_DIAGNOSTICS.md).

@@ -170,3 +170,5 @@ Current verification: **750 passed, 0 failed** on Python 3.13.3 and Python 3.12.
 ```
 
 Both commands are offline. The Roy request and proposed runtime are linked in [PAGE_COUNT_V2.md](docs/PAGE_COUNT_V2.md). The ordinary fake server retains small default capacities; it may reject long books instead of raising its limits. Roy uses an explicit isolated configuration in tests. Live use requires fresh approval and current metadata verification; the $0.075 proposal does not modify the original newborn $0.015 configuration. The v1 HTTP examples and demo above retain their legacy behavior.
+
+Provider failures now include [safe diagnostic metadata](docs/PROVIDER_DIAGNOSTICS.md) and a separate orchestration stop reason. Verification: **792 passed, 0 failed** in the complete Python 3.13 suite; **189 passed** in the Python 3.12 subset. This diagnostic-only patch does not authorize another live request or change public error codes, retries or budgets.

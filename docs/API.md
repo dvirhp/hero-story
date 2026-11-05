@@ -141,3 +141,7 @@ HTTP tests use HTTPX `ASGITransport`, explicit lifespan contexts and the existin
 Branch: `feature/milestone-4-fastapi`, created from the clean completed Milestone 3 branch. Preserve history and make small tested commits after checking staged changes. Do not commit secrets, caches or generated builds; existing ignores remain in effect. No remote, merge, push or deployment was performed or authorized.
 
 Open: verified model/tokenization/pricing metadata, separately approved paid evaluation, multilingual/provider expansion, human quality thresholds, production authentication/abuse controls and privacy/release decisions. OpenAI and Gemini integrations are implemented and tested offline. This local unauthenticated application is not a public deployment plan. Stop after Milestone 6.
+
+## Diagnostic-only follow-up
+
+Failed attempts now retain allowlisted provider categories and nullable upstream HTTP status. Final failures carry a separate orchestration stop_reason; existing error codes, HTTP mappings, retry policy and limits remain unchanged. See [safe diagnostic fields, compatibility and the approval-gated next-run procedure](PROVIDER_DIAGNOSTICS.md).
