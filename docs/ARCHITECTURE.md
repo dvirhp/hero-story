@@ -1,5 +1,81 @@
 # Architecture
 
+> **Phase A product design, 2026-11-05:** the proposed three-mode product architecture is specified below and in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) and [API_CONTRACTS.md](API_CONTRACTS.md). It is awaiting approval; no product schema, renderer, editing service or new API has been implemented. Existing engine sections below remain the implemented baseline. Their historical no-persistence/product scope does not describe the separately accepted persistence foundation.
+
+## Proposed product architecture: one Book, three creation modes
+
+`Product` is a discoverable catalog offering, not an individual customer book. `Template` is an authored family belonging to a product. `TemplateVersion` is a language-specific authored revision containing a personalization schema, ordered page documents, layout and asset references. `Personalization` is the validated choice snapshot for one instantiated book. `Book` is the private individual work, and `BookPage` is its ordered editable content. `Asset` identifies externally stored immutable media. These are separate identities with explicit references; no commerce or user tables are proposed in this phase.
+
+```mermaid
+flowchart LR
+    C[Catalog: Product and localized metadata] --> T[Published TemplateVersion]
+    T --> R[Validated choices and deterministic renderer]
+    R --> B[Book draft and ordered BookPages]
+    M[Manual document commands] --> B
+    A[Existing v2 request and bounded StoryEngine] --> Q{Accepted result?}
+    Q -->|yes| S[Complete stories record and pages]
+    S --> B
+    Q -->|no| F[Failed generation metadata; no Book or draft content]
+    B --> E[Validated manual edits with revision checks]
+    E --> Z[Finalized private Book]
+    X[Asset repository and media resolver] --> R
+    X --> E
+```
+
+The generation lifecycle `pending -> processing -> completed/failed` stays in `stories`. Book lifecycle is separately `draft -> finalized -> archived`, with `draft -> archived` also allowed. Finalized is a private, immutable finished document, **not public publication** and not a claim of AI quality approval. The requested published-book concept is represented by this customer-ready finalized state; public sharing/distribution requires a separate access-policy decision. Catalog publication is a third lifecycle. A failed generation has a story ID but no Book. Template and manual creation make Books without synthetic story records, provider calls or fake usage. AI completion creates its source story and Book projection in one database transaction. Legacy completed stories remain retrievable through the accepted repository; historical Book projections are migrated only through an explicit backfill.
+
+AI uses the public bounded engine and unchanged four graph nodes, budgets, retries, admission, quality and provider protections. A service adapts an accepted StoryV2 into PageDocument v1, retaining source page IDs and target IDs. Immutable `stories` remain the source approval record. Later edits affect BookPages only; original quality/usage metadata is labeled source metadata and never certifies edited content. Template rendering makes zero AI calls. Manual finalization performs structural/content-policy validation, not an invented AI quality pass.
+
+### Typed documents and deterministic personalization
+
+Use strict, extra-forbidden Pydantic discriminated models, not arbitrary JSON dictionaries at public/service boundaries. `PageDocument` v1 contains an allowlisted layout preset and ordered `text`/`image` blocks. Text has sentence units, explicit language/direction and a style token from a registry. An image references a normalized page asset slot; position/crop data is bounded finite numeric geometry. No HTML, Markdown execution, CSS, JS, URLs or executable expressions. Unicode stays in logical order. Document schema, personalization schema, renderer, layout registry and policy versions are independent named versions, not reused API version numbers.
+
+`PersonalizationSchema` v1 defines stable field IDs; type-discriminated text, choice, boolean or bounded integer fields; required/default rules; supported options; and localized labels/help. Example: required child name, finite character/cover-color options and optional dedication. No inferred gender or appearance. Author constraints cannot expand centrally configured server limits. Defaults are validated using the same rules; no real-child default values. Unknown fields/options/locales, missing required inputs and type coercion fail safely. Field localization is separate from story language; template publication requires every supported locale to be complete.
+
+TemplateDocument v1 uses text segments `literal`, `field` and bounded `select` branches over declared choice fields. Insertion is plain text, never reparsed as syntax. No `eval`, Jinja, traversal, arbitrary functions, file/network access or recursion through personalized values. Image options resolve only to version-pinned editorial asset slots. Fixed length uses one page sequence; configurable length uses a finite authored set of named page variants, each an explicit ordered list of page keys. The customer chooses a variant; the renderer does not pad, truncate or derive count from age/name. Richer algorithmic book assembly requires separate design.
+
+Publishing seals the complete template-version aggregate: personalization rules, translations, page variants, page documents, asset bindings and renderer/layout versions. Corrections create a new version. Existing Books retain pinned source IDs, resolved choices, actual rendered pages and the small source metadata snapshot needed for display. Product text edits, release-pointer changes and template retirement do not rerender existing Books. Referenced assets have immutable object keys/checksums; replacing media creates a new Asset. A catalog preview uses synthetic public sample content, never a customer's personalized Book.
+
+### Proposed modules and dependency direction
+
+| Module | Exact responsibility |
+| --- | --- |
+| `domain/books.py`, `domain/documents.py` | Book origin/lifecycle, document/block unions, geometry, ordered-page and revision invariants; no ORM/HTTP/provider imports |
+| `domain/catalog.py`, `domain/personalization.py` | Product/template/version/localization and typed personalization contracts |
+| `application/ports.py` | CatalogRepository, BookRepository, TemplateRepository, AssetRepository, unit-of-work and media-resolution protocols |
+| `application/books.py` | Create/read/list/edit/finalize/archive use cases, authorization checks and atomic revision-checked commands |
+| `application/templates.py` | Select published version, validate choices, preview in memory or instantiate an atomic Book snapshot |
+| `application/ai_books.py` | Preflight using existing normalizer/config snapshot, call existing request-scoped engine execution, adapt only accepted result, save atomically; no provider policy |
+| `personalization/validation.py`, `personalization/rendering.py` | Pure bounded schema validation and deterministic AST rendering; no database/network |
+| `api/book_routes.py`, `api/catalog_routes.py`, `api/template_routes.py` | Proposed additive v3 routers; request/response translation only |
+| `api/contracts/books.py`, `catalog.py`, `templates.py` | Named OpenAPI DTOs; never serialize ORM entities directly |
+| `api/product_dependencies.py` | Explicit feature gates, configuration, request access context, service construction and DB lifecycle |
+| `persistence/models.py` plus `catalog_models.py`, `book_models.py` | Retained source tables and new relational mappings, constraints/indexes; no renderer or LLM calls |
+| `persistence/repository.py`, `book_repository.py`, `catalog_repository.py`, `unit_of_work.py` | Async repository operations and explicit shared transactions; preserve existing public repository signatures |
+| `infrastructure/media.py` | Resolve authorized asset IDs to approved delivery references; no binary upload/illustration generation in this phase |
+| `tests/product/`, `tests/postgresql/` | Pure/API tests versus opt-in real database scenarios, including all three modes |
+
+Dependencies point routers -> application -> domain/ports; persistence and media implement ports. Existing StoryEngine is injected into the AI use case; LangGraph and provider adapters remain independent of persistence. No dependency, queue, distributed workflow, CMS frontend, asset-upload service, export renderer or commerce engine is added by this design. Future illustrations attach Asset records; future exports consume finalized PageDocuments. Neither runs now.
+
+### Branch dependencies and required approval
+
+Read-only inspection on 2026-11-05 found the following independent branches sharing `5ae24e9`. Nothing was merged or cherry-picked.
+
+| Owner / branch tip | Contract inspected | Integration consequence |
+| --- | --- | --- |
+| Agent 1 `fix/provider-diagnostics` at `7105be9` | `docs/PROVIDER_DIAGNOSTICS.md`; implementation `ec33b93` | Adds safe per-attempt diagnostic metadata and failure stop_reason; existing code/status mappings stay. Existing persistence allowlist deliberately does not store diagnostics. Preserve this privacy choice, document omission, and reconcile error DTOs rather than broad-dumping usage. |
+| Agent 2 `feature/storyforge-frontend-foundation` at `c2b72c2` | `docs/FRONTEND_HANDOFF.md`, `frontend/src/api/contracts.ts` | React mock-first UI; v2 StoryV2 reader only, no catalog/manual-editor/saved-book client. Agree v3 DTOs, revision headers and local access policy with Agent 2; retain current v2 reader. |
+| Agent 4 `feature/storyforge-qa-foundation` at `4dca2ac` | `docs/QA_HANDOFF.md`; tests `136296c` | 37 additional offline HTTP scenarios, not PostgreSQL or frontend/backend E2E evidence. Reconcile additive diagnostics and new routes before integrated QA. |
+| Agent 3 `feature/storyforge-persistence-foundation` | `0001`, accepted repository and handoff; design base `73ac933` | Accepted 14 PostgreSQL / 773 total prior tests; contains none of the three branches above. |
+
+**Before shared API edits:** obtain approval for an integration branch/base and merges of Agent 1 diagnostics, Agent 3 persistence and Agent 4 QA; Agent 2 frontend is a separate approved integration dependency. Agent 3 must not independently merge them. `docs/ARCHITECTURE.md` is shared documentation: coordinate this Phase A diff with the eventual integrator. Reconcile overlapping FastAPI composition, dependency manifests/lockfiles, docs and error serialization there. Run combined regression tests; branch-local pass counts cannot be added to claim a merged-suite result. Phase B can begin only after design approval; Phase C additionally requires this branch reconciliation. Current documentation reading does not assert uninspected work is integrated or tested.
+
+### Product references and design decisions for approval
+
+The [Wonderbly catalog](https://www.wonderbly.com/) demonstrates discovery by age/theme/occasion. [ABC for You](https://www.wonderbly.com/personalized-products/abc-for-you-book) exposes a cover/interior preview gallery and name/character personalization. [Dared to Dream](https://www.wonderbly.com/personalized-products/dared-to-dream-book) exposes name/character/dedication choices and whole-book preview. Observed 2026-11-05; these are behavioral references, not copied content/artwork or evidence about their private architecture. StoryForge's derived design is a localized catalog, per-version choice schema and deterministic preview of its own authored content. No competitor educational claims, prices or content are adopted.
+
+Approval points: additive v3 endpoints; separate generation/Book/publication lifecycles; immutable finalized Books and template releases; finite authored page variants; explicit AI persistence opt-in through v3 rather than the earlier unapproved v2 save-query proposal; local-only private use until authentication; server policy limits for editor/schema/preview sizes; migration/backfill and publication-trigger strategy in DATABASE_SCHEMA.md. No identities, commerce requirements or production release policy are silently decided.
+
 > Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
 
 Status: Milestones 1 through 6 implemented. Fake is the default; OpenAI/Gemini are available only by explicit opt-in. Developmental profiles remain provisional hypotheses. Milestone 7 requires separate approval.
