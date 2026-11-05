@@ -1,0 +1,656 @@
+{
+  "pin": "b09f54bc3ba0f6b175b71a80b7a3965b8d23429d",
+  "snapshot": "C:\\Users\\dvir3\\storyforge-qa\\qa\\.local\\frontend-ux-latest\\frontend",
+  "origin": "http://127.0.0.1:4197",
+  "generatedAt": "2026-11-05T15:56:04.781Z",
+  "environment": {
+    "node": "v22.16.0",
+    "playwright": "1.64.1",
+    "axe": "4.14.0",
+    "chromium": "149.0.7827.55"
+  },
+  "results": [
+    {
+      "name": "UX-01 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-02 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-03 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-04 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-05 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-06 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-07 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "UX-08 probe",
+      "status": "inspected",
+      "evidence": "present"
+    },
+    {
+      "name": "reader physical spread order, geometry and backwards keys en",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "reader native touch single-page direction en",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "reader physical spread order, geometry and backwards keys he",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "reader native touch single-page direction he",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "reader direction stays book-owned under the opposite interface locale",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "template capabilities, cover language and ordinary dedication parity",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "character builder state, keyboard use, saved persistence and locale",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "fullscreen enter/exit and reduced motion on latest reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "keyboard skip, creation routes, and mobile menu Escape on latest frontend",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "manual editor save, reorder and reopen without warning loss",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "demo commerce journey: format, cart, discount, decline, confirmation and order history",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "cart removal, empty states and maximum quantity boundary",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "responsive overflow at 360px including commerce and reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "responsive overflow at 390px including commerce and reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "responsive overflow at 768px including commerce and reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "responsive overflow at 1024px including commerce and reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "responsive overflow at 1440px including commerce and reader",
+      "status": "passed",
+      "evidence": "real Chromium, local demo build"
+    },
+    {
+      "name": "axe sweep across current routes in both interface locales",
+      "status": "inspected",
+      "evidence": "real Chromium, local demo build"
+    }
+  ],
+  "findings": [
+    {
+      "id": "UX-01",
+      "title": "Hebrew physical cover binding side",
+      "severity": "P1",
+      "status": "present",
+      "expected": "Hebrew cover spine, hinge and depth cues sit on the physical right.",
+      "actual": "he hinge=right, spine=left; en hinge=left, spine=left",
+      "evidence": "bounding boxes of .cover-on-table .book-cover and .book-spine"
+    },
+    {
+      "id": "UX-02",
+      "title": "Reader tool labels after interface-language change",
+      "severity": "P2",
+      "status": "present",
+      "expected": "All reader labels switch with the interface locale while the book language keeps direction.",
+      "actual": "after he: \"Page overview Two-page spread Read fullscreen\"; hint=\"Turn with the buttons, arrow keys or a horizontal swipe. Book language determines direction.\"; after en: \"מפת עמודים כפולת עמודים קריאה במסך מלא\"; book dir=ltr",
+      "evidence": "immediate label snapshot after #ui-language change, before any other interaction"
+    },
+    {
+      "id": "UX-03",
+      "title": "Literal dedication is treated as template syntax",
+      "severity": "P2",
+      "status": "present",
+      "expected": "A user-written dedication is preserved byte-for-byte; substitution applies only to authored template text.",
+      "actual": "preview=\"Dear Maya, from fox. <b>literal</b> 🌙\"; saved=\"Dear Maya, from fox. <b>literal</b> 🌙\"",
+      "evidence": "authored input=\"Dear {{name}}, from {{companion}}. <b>literal</b> 🌙\""
+    },
+    {
+      "id": "UX-04",
+      "title": "Preview round-trip clears the unsaved-edit guard",
+      "severity": "P2",
+      "status": "present",
+      "expected": "Preview and return keeps the dirty revision and its beforeunload guard.",
+      "actual": "before=true; after=false; text preserved=true",
+      "evidence": "cancelable beforeunload event dispatched on the editor before/after preview"
+    },
+    {
+      "id": "UX-05",
+      "title": "Companion change has inspectable live-preview feedback",
+      "severity": "P3",
+      "status": "present",
+      "expected": "Changing the companion either updates the visible page or offers page navigation to the affected page.",
+      "actual": "preview changed=false; page controls=0; with dedication only first page rendered=true",
+      "evidence": "live preview text and available preview navigation after companion change"
+    },
+    {
+      "id": "UX-06",
+      "title": "Cover title contrast against illustrated artwork",
+      "severity": "P1",
+      "status": "present",
+      "expected": "Every title line meets at least the 3:1 large-text contrast minimum against the actual artwork behind it.",
+      "actual": "en color=rgb(37, 60, 66) on authored #414271 => 1.243:1 (sampled rgb(64, 66, 112) => 1.237:1); he => 1.243:1; overlap=67.9px",
+      "evidence": "computed title color, title/image overlap, and canvas sample of the artwork behind the title"
+    },
+    {
+      "id": "UX-07",
+      "title": "Cart link accessible name does not contain its visible text",
+      "severity": "P2",
+      "status": "present",
+      "expected": "The accessible name includes the visible label and quantity so speech input can activate it by what is shown.",
+      "actual": "aria-label=\"Your bag (0)\"; visible=\"♧ Your bag 0\"; axe hits=1",
+      "evidence": "axe label-content-name-mismatch plus computed labels on the header cart link"
+    },
+    {
+      "id": "UX-08",
+      "title": "Presentation choice has no visible output effect",
+      "severity": "P3",
+      "status": "present",
+      "expected": "An offered presentation option has a documented effect or is clearly identified as metadata-only.",
+      "actual": "selected presentation=girl; rendered SVG changed=false",
+      "evidence": "SVG comparison excluding the data-character metadata attribute; no gendered design prescribed"
+    }
+  ],
+  "a11y": [
+    {
+      "scenario": "en:/",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/books",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/books/sky-whale",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/personalize/sky-whale",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/my-books",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/studio/demo-draft",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/read/sample-moon-fox-he",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/cart",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/orders",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/format/sample-moon-fox-en",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "en:/checkout",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/books",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/books/sky-whale",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/personalize/sky-whale",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/my-books",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/studio/demo-draft",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/read/sample-moon-fox-he",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/cart",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/orders",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/format/sample-moon-fox-en",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "he:/checkout",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "wcag": [
+            "wcag21a",
+            "wcag253"
+          ],
+          "nodes": [
+            [
+              ".bag-link"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "width": 360,
+      "routes": 9,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "routes": 9,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 768,
+      "routes": 9,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1024,
+      "routes": 9,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "routes": 9,
+      "horizontalOverflow": false
+    }
+  ],
+  "externalAttempts": [],
+  "summary": {
+    "passed": 17,
+    "failed": 0,
+    "inspected": 9,
+    "unverified": 0,
+    "findings": {
+      "present": 8
+    },
+    "a11yScenarios": 22,
+    "a11yScenariosWithViolations": 22,
+    "externalAttempts": 0
+  }
+}
