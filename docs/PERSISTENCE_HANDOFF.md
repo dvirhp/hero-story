@@ -6,7 +6,7 @@ Authorized initial persistence foundation only. Existing documents describe pers
 
 Branch: `feature/storyforge-persistence-foundation`.
 Baseline: `5ae24e9` (existing v2 contracts). Worktree: `C:/Users/dvir3/storyforge-persistence`.
-Implementation commit: use `git log -1 --format=%H` on this branch; the handoff is included in that commit. Other agents' uncommitted provider/diagnostics changes were deliberately excluded.
+Implementation commit: `b26626b5cfcff33691004197bebdc97a4856a330`. The following documentation-only commit records this identifier; use `git log -1 --format=%H` for the branch tip. Other agents' uncommitted provider/diagnostics changes were deliberately excluded.
 
 ## Architecture and decisions
 
