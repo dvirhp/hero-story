@@ -10,7 +10,8 @@ Updated 2026-11-05 (Asia/Jerusalem). Supersedes the earlier foundation and three
 - M2 `a3b221d`: typed template character schemas, original avatar previews, sort and gallery.
 - M3 `b09f54b`: formats, bag, complete guest checkout, payment simulation, confirmation/history/detail.
 - M4 `e5d4d11`: editor duplication/position/cover/dedication, source-copy editing, opt-in guest recovery, proposed async/session/usage ports.
-- M5 and final documentation identifiers are recorded in the delivery section below after verification.
+- M5 `816a8c3`: multilingual/RTL/responsive/accessibility hardening, complete cross-device verification and updated handoff.
+- Final documentation commit records the implementation identifiers; retrieve its own ID using `git log -1 --format="%H %s"`.
 
 | Status | Delivered behavior |
 | --- | --- |
@@ -141,7 +142,7 @@ npm run test:e2e
 
 Browser installation is a one-time download; ordinary tests use local assets/localhost only. Playwright owns port 5186, with desktop 1440x1000 and emulated iPhone 13 Chromium projects. Set `STORYFORGE_CHROMIUM_PATH` to an installed compatible executable if needed. On this machine the verified path was `C:/Users/dvir3/AppData/Local/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-win64/chrome-headless-shell.exe`. Stop only an identified task-owned preview if port 5186 is already occupied. Dev usually uses 5173. Production assets, dependencies, transient browser reports/traces are ignored. No backend tests were modified or rerun for this frontend-only work.
 
-Verification results and M5 commit are finalized below after the final run. Earlier milestones: M1 75 unit/component +2 focused browser; M2 77+2; M3 87+2; M4 106+2. Build passed at each milestone. Initial broad hardening runs found bag accessible-name spacing; it was fixed and targeted axe verification confirmed the correction before the final full rerun. Reader positioning regression received a browser assertion. Automated checks do not prove full WCAG conformance, native-language quality, developmental suitability or compatibility with Safari/Firefox/real mobile hardware.
+Final verification results are recorded in section 11. Earlier milestones: M1 75 unit/component +2 focused browser; M2 77+2; M3 87+2; M4 106+2. Build passed at each milestone. Initial broad hardening runs found bag accessible-name spacing; it was fixed and targeted axe verification confirmed the correction before the final full rerun. Reader positioning regression received a browser assertion. Automated checks do not prove full WCAG conformance, native-language quality, developmental suitability or compatibility with Safari/Firefox/real mobile hardware.
 
 ## 9. Screenshots and files
 
@@ -176,4 +177,6 @@ Stop after delivery for review. No push, merge, deployment or live provider/paym
 - Axe A/AA tags (WCAG 2/2.1 and 2.2 on hardening/commerce routes): zero findings in final checked states. This is automated coverage, not a certification or exhaustive assistive-technology test.
 - Tests that intercept network/API requests recorded no unexpected calls. No live provider/payment/backend integration was activated.
 - Representative actual screenshots visually reviewed: storefront desktop, Hebrew checkout mobile and Hebrew reader desktop.
-- Local-only commits and scope/whitespace checks complete. M5 implementation hash is recorded by the subsequent documentation commit below; use `git log --oneline` to retrieve the documentation commit itself.
+- Local-only commits and scope/whitespace checks complete. M5 implementation: `816a8c3`. Final documentation commit follows it; use `git log --oneline` for its own identifier.
+
+Final implementation commits: `bd40358`, `a3b221d`, `b09f54b`, `e5d4d11`, `816a8c3`. All are local on `feature/storyforge-frontend-foundation`. Scope review against `1647d71` found no files outside frontend/ and the audit/handoff/screenshots. No backend files changed.
