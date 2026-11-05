@@ -6,6 +6,10 @@ A personalized children's story engine supporting Hebrew and English from birth.
 
 **Milestones 1 through 6 are implemented**, including offline-tested OpenAI and Gemini adapters. Default HTTP generation uses synthetic fixture text. Stop before Milestone 7. Worldwide languages and provider comparison are long-term requirements; only Hebrew and English are executable today.
 
+The separately approved [Phase B1 offline AI text projection](docs/PHASE_B1.md)
+adds canonical text contracts, capacity admission and lossless accepted-source
+mapping. It is not connected to HTTP generation, persistence, jobs or authentication.
+
 ## Implemented foundation
 
 - Python 3.12+ package with strict, immutable Pydantic v2 contracts for requests, briefs, plans, stories, results, quality reports and usage records.

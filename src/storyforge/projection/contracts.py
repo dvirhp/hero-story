@@ -79,7 +79,7 @@ class AITextBookProjection(ProjectionContract):
     book_id: UUID
     creation_mode: Literal["AI_GENERATED"] = "AI_GENERATED"
     state: Literal["draft"] = "draft"
-    revision: Literal[1] = 1
+    revision: Annotated[int, Field(ge=1, le=1)] = 1
     title: Label
     language: Language
     direction: Literal["rtl", "ltr"]
