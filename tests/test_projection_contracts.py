@@ -1,13 +1,14 @@
 """Offline B1 structural ceilings, separate from legacy generation contracts."""
 
 import json
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
 
 from storyforge.projection.capacity import CapacityPolicy, canonical_json_bytes
-from storyforge.projection.contracts import AITextBlock, AITextBookPage, AITextPageDocument
+from storyforge.projection.contracts import AIOrigin, AITextBlock, AITextBookPage, AITextBookProjection, AITextPageDocument
 
 
 @pytest.mark.parametrize("language,direction", [("he", "rtl"), ("en", "ltr")])
@@ -60,3 +61,13 @@ def test_exact_unit_limits_and_new_page_identity():
 def test_no_extra_layout_asset_or_direction_features(changes):
     with pytest.raises(ValidationError):
         AITextBlock(**dict(language="en", direction="ltr", sentence_units=("word",)) | changes)
+
+
+def test_equal_instant_does_not_allow_non_utc_updated_timestamp():
+    created = datetime(2026, 11, 5, tzinfo=timezone.utc)
+    page = AITextBookPage(page_id=UUID(int=1), position=1, source_page_key="source", source_target_id=None,
+        document=AITextPageDocument(blocks=(AITextBlock(language="en", direction="ltr", sentence_units=("word",)),)))
+    with pytest.raises(ValidationError):
+        AITextBookProjection(book_id=UUID(int=2), title="Night", language="en", direction="ltr", page_count=1,
+            created_at=created, updated_at=created.astimezone(timezone(timedelta(hours=1))),
+            origin=AIOrigin(generation_id=UUID(int=3)), pages=(page,))

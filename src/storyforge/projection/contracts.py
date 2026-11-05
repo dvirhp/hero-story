@@ -100,7 +100,8 @@ class AITextBookProjection(ProjectionContract):
                 or len({page.page_id for page in self.pages}) != self.page_count
                 or len({page.source_page_key for page in self.pages}) != self.page_count):
             raise ValueError("Invalid canonical page structure")
-        if (self.created_at.utcoffset() != timedelta(0) or self.updated_at != self.created_at):
+        if (self.created_at.utcoffset() != timedelta(0) or self.updated_at.utcoffset() != timedelta(0)
+                or self.updated_at != self.created_at):
             raise ValueError("Initial timestamps must match and be UTC")
         if any((page.document.blocks[0].language, page.document.blocks[0].direction)
                != (self.language, self.direction) for page in self.pages):
