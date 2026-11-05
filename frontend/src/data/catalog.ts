@@ -2,6 +2,8 @@ import type { Language, StoryType } from "../api/contracts";
 import type { Art, Book } from "../domain/book";
 import { newId } from "../domain/book";
 import type { ProductCopy } from "../i18n/product";
+import { characterFromValues,characterOptions,defaultCharacter,fullCharacterSchema } from '../personalization/character';
+import type { CharacterSchema } from '../personalization/character';
 export type Localized = Record<Language, string>;
 export type Category =
   | "adventure"
@@ -34,6 +36,7 @@ export interface BookTemplate {
   color: string;
   storyType: StoryType;
   fields: TemplateField[];
+  character?: CharacterSchema;
   pages: Record<Language, string[]>;
 }
 const name: TemplateField = {
@@ -314,6 +317,11 @@ export const catalog: BookTemplate[] = [
     },
   },
 ];
+for(const template of catalog){
+ if(['sky-whale','small-hero'].includes(template.id))template.character=fullCharacterSchema;
+ if(template.id==='alphabet-garden')template.character={version:'1',fields:['presentation','skin','hair','hairstyle','eye','glasses','freckles']};
+ if(template.id==='moon-fox')template.character={version:'1',fields:['skin','hair','hairstyle','glasses']};
+}
 export const categories: Category[] = [
   "adventure",
   "bedtime",
@@ -331,15 +339,18 @@ export const ageLabels: Record<AgeGroup, keyof ProductCopy> = {
 export function templateDefaults(
   template: BookTemplate,
 ): Record<string, string> {
-  return Object.fromEntries(
+  return {...Object.fromEntries(
     template.fields.map((field) => [field.id, field.default]),
-  );
+  ),...Object.fromEntries((template.character?.fields??[]).map(key=>[`character_${key}`,String(defaultCharacter[key])]))};
 }
 export function templateErrors(
   template: BookTemplate,
   values: Record<string, string>,
 ): Record<string, "required" | "tooLong"> {
   const errors: Record<string, "required" | "tooLong"> = {};
+  const allowed=new Set([...template.fields.map(field=>field.id),...(template.character?.fields??[]).map(key=>`character_${key}`)]);
+  for(const key of Object.keys(values))if(!allowed.has(key))errors[key]='required';
+  for(const key of template.character?.fields??[]){const value=values[`character_${key}`];if(value!==undefined&&!(key==='glasses'||key==='freckles'?['true','false'].includes(value):characterOptions[key]?.some(option=>option.value===value)))errors[`character_${key}`]='required';}
   for (const field of template.fields) {
     const value = values[field.id] ?? "";
     if (
@@ -377,6 +388,7 @@ export function personalizeTemplate(
       key === "name" ? name : companion,
     );
   const now = new Date().toISOString();
+  const character=template.character?characterFromValues(values,template.character):undefined;
   const art: Art =
     template.id === "small-hero" && values.outfit === "striped"
       ? "hero-striped"
@@ -395,6 +407,7 @@ export function personalizeTemplate(
     title: replace(template.personalTitle[language]),
     language,
     childName: name,
+    character,
     createdAt: now,
     updatedAt: now,
     status: "ready",
@@ -411,6 +424,7 @@ export function personalizeTemplate(
       pageNumber: i + 1,
       sentenceUnits: [replace(line)],
       illustration: art,
+      character,
       layout: "split",
       background: "cream",
     })),

@@ -12,6 +12,7 @@ import type { ProductCopy } from "../i18n/product";
 import { locales } from "../i18n/locales";
 import { BookCover } from "../components/BookCover";
 import { BookSpread } from "../components/BookSpread";
+import {CharacterBuilder} from '../personalization/CharacterBuilder';
 export function Personalize({
   template,
   locale,
@@ -136,6 +137,7 @@ export function Personalize({
                 )}
               </div>
             ))}
+            {template.character&&<CharacterBuilder schema={template.character} values={values} onChange={next=>{setValues(next);setErrors({});}} locale={locale}/>}
             <button className="button primary submit" type="submit">
               {p.saveLibrary}
               <span aria-hidden="true">✧</span>
@@ -165,6 +167,7 @@ export function Personalize({
               art={book.cover}
               color={book.coverColor}
               language={language}
+              character={book.character}
             />
           ) : (
             <BookSpread page={book.pages[0]} language={language} preview />

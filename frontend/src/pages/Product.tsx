@@ -4,6 +4,9 @@ import type { ProductCopy } from "../i18n/product";
 import type { BookTemplate } from "../data/catalog";
 import { ageLabels } from "../data/catalog";
 import { BookCover } from "../components/BookCover";
+import {experience} from '../i18n/experience';
+import {CharacterPreview} from '../personalization/CharacterPreview';
+import {defaultCharacter} from '../personalization/character';
 export function Product({
   template: t,
   locale,
@@ -14,6 +17,7 @@ export function Product({
   p: ProductCopy;
 }) {
   const [sample, setSample] = useState(0);
+  const [gallery,setGallery]=useState(0);const e=experience[locale];
   return (
     <main className="container product-page">
       <a className="inline-link breadcrumb" href="#/books">
@@ -21,13 +25,14 @@ export function Product({
       </a>
       <div className="product-grid">
         <div className={`product-stage world-${t.art}`}>
-          <BookCover
+          {gallery===0?<BookCover
             title={t.title[locale]}
             art={t.art}
             color={t.color}
             language={locale}
-          />
+          />:gallery===1?<img className="gallery-art" src={`/art/${t.art}.svg`} alt={t.title[locale]}/>:<CharacterPreview character={defaultCharacter} label={e.appearanceSummary}/>}
           <span className="product-sticker">{p.demoProduct}</span>
+          <div className="gallery-controls" role="group" aria-label={e.gallery}>{[e.galleryCover,e.galleryInside,...(t.character?[e.galleryCharacter]:[])].map((label,i)=><button key={label} aria-pressed={gallery===i} onClick={()=>setGallery(i)}>{label}</button>)}</div>
         </div>
         <div className="product-copy">
           <p className="eyebrow">

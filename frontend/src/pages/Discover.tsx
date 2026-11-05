@@ -5,12 +5,14 @@ import type { AgeGroup, Category } from "../data/catalog";
 import { BookCard } from "../components/BookCard";
 import { locales } from "../i18n/locales";
 import type { ProductCopy } from "../i18n/product";
+import {experience} from '../i18n/experience';
 export function Discover({ locale, p }: { locale: Language; p: ProductCopy }) {
   const query = new URLSearchParams(location.hash.split("?")[1]);
   const [category, setCategory] = useState(query.get("category") || "all");
   const [age, setAge] = useState(query.get("age") || "all");
   const [search, setSearch] = useState("");
   const [language, setLanguage] = useState<Language>(locale);
+  const [sort,setSort]=useState('recommended');const e=experience[locale];
   const results = catalog.filter(
     (book) =>
       (category === "all" || book.category === category) &&
@@ -19,7 +21,7 @@ export function Discover({ locale, p }: { locale: Language; p: ProductCopy }) {
       `${book.title[locale]} ${book.description[locale]}`
         .toLocaleLowerCase()
         .includes(search.toLocaleLowerCase()),
-  );
+  ).sort((a,b)=>sort==='title'?new Intl.Collator(locale).compare(a.title[locale],b.title[locale]):sort==='category'?new Intl.Collator(locale).compare(p[a.category],p[b.category]):0);
   const reset = () => {
     setCategory("all");
     setAge("all");
@@ -36,6 +38,7 @@ export function Discover({ locale, p }: { locale: Language; p: ProductCopy }) {
       </section>
       <div className="container catalog-section">
         <div className="catalog-filters">
+          <div><label htmlFor="catalog-sort">{e.sort}</label><select id="catalog-sort" value={sort} onChange={event=>setSort(event.target.value)}><option value="recommended">{e.recommended}</option><option value="title">{e.titleSort}</option><option value="category">{e.categorySort}</option></select></div>
           <div className="search-field">
             <label htmlFor="catalog-search">{p.search}</label>
             <input

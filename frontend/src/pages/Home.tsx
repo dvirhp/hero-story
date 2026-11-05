@@ -4,8 +4,10 @@ import type { ProductCopy } from "../i18n/product";
 import { catalog, categories, ages, ageLabels } from "../data/catalog";
 import { BookCard } from "../components/BookCard";
 import { BookCover } from "../components/BookCover";
+import {experience} from '../i18n/experience';
 export function Home({ locale, p }: { locale: Language; p: ProductCopy }) {
   const [name, setName] = useState("");
+  const e=experience[locale];
   return (
     <main>
       <section className="store-hero">
@@ -13,11 +15,11 @@ export function Home({ locale, p }: { locale: Language; p: ProductCopy }) {
           <div className="hero-copy">
             <p className="eyebrow">✦ {p.heroKicker}</p>
             <h1>
-              {p.heroTitle}
+              {e.hero}
               <br />
-              <em>{p.heroAccent}</em>
+              <em>{e.heroAccent}</em>
             </h1>
-            <p className="hero-description">{p.heroText}</p>
+            <p className="hero-description">{e.heroText}</p>
             <a href="#/books" className="button primary">
               {p.browse}
               <span aria-hidden="true">↗</span>

@@ -1,17 +1,21 @@
 import type { Art } from "../domain/book";
 import type { CSSProperties } from "react";
+import {CharacterPreview} from '../personalization/CharacterPreview';
+import type {Character} from '../personalization/character';
 export function BookCover({
   title,
   art,
   color,
   language = "en",
   small = false,
+  character,
 }: {
   title: string;
   art: Art;
   color?: string;
   language?: string;
   small?: boolean;
+  character?:Character;
 }) {
   const resolvedColor = color || "#b7cfc1";
   const channels = [1, 3, 5]
@@ -32,6 +36,7 @@ export function BookCover({
       dir={language === "he" ? "rtl" : "ltr"}
     >
       <img src={`/art/${art}.svg`} alt="" loading="lazy" />
+      {character&&<div className="cover-avatar"><CharacterPreview character={character}/></div>}
       <div className="cover-heading">
         <span className="cover-imprint">STORYFORGE ORIGINALS</span>
         <strong>{title}</strong>

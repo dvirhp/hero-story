@@ -1,4 +1,5 @@
 import type { Language, StoryV2 } from "../api/contracts";
+import type { Character } from '../personalization/character';
 export type CreationMethod = "AI_GENERATED" | "TEMPLATE_BASED" | "MANUAL";
 export type Art =
   | "whale"
@@ -18,6 +19,8 @@ export interface BookPage {
   illustration: Art | null;
   layout: PageLayout;
   background: PageColor;
+  character?: Character;
+  imageFrame?: {x:number;y:number;scale:number};
 }
 /** Frontend canonical v1 view model, NOT an existing persistence/manual HTTP DTO. */
 export interface Book {
@@ -27,6 +30,9 @@ export interface Book {
   title: string;
   language: Language;
   childName?: string;
+  character?: Character;
+  dedication?: string;
+  editedFrom?: {id:string;method:CreationMethod};
   createdAt: string;
   updatedAt: string;
   status: "draft" | "ready" | "failed";
