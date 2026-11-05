@@ -1,0 +1,254 @@
+{
+  "snapshot": "bd40358aa88c090d012dc0a47c067d5b3bd616de",
+  "results": [
+    {
+      "name": "reader physical coordinates, order and backwards keys en",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "native touch single-page direction en",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "reader physical coordinates, order and backwards keys he",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "native touch single-page direction he",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "reader reduced motion and actual fullscreen enter/exit",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "physical reader direction remains book-owned in opposite interface locales",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "responsive routes and reader scaling at 360",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "responsive routes and reader scaling at 390",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "responsive routes and reader scaling at 768",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "responsive routes and reader scaling at 1024",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "responsive routes and reader scaling at 1440",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "keyboard navigation, mobile menu Escape, and all three creation links",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "schema-specific personalization fields, artwork, color and language",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "template required validation, preview and saved-book text consistency",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "manual explicit save/reopen and stable page order",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-01: Hebrew cover spine remains physically on the left",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-02: reader tool labels lag behind interface language",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-03: user dedication is evaluated as a template",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-04: preview roundtrip clears unsaved reload warning",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-05: companion selection has no inspectable preview page",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "UX-06: title overlaps dark illustration with insufficient contrast",
+      "status": "defect reproduced",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "axe WCAG A/AA including 2.2 tags and localization sweep en",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    },
+    {
+      "name": "axe WCAG A/AA including 2.2 tags and localization sweep he",
+      "status": "passed",
+      "evidence": "real Chromium, local mock app"
+    }
+  ],
+  "findings": [
+    {
+      "id": "UX-01",
+      "reproduced": true,
+      "scope": "Hebrew cover spine; declared hinge is right"
+    },
+    {
+      "id": "UX-02",
+      "reproduced": true,
+      "scope": "reader experience labels read stale document.lang during render"
+    },
+    {
+      "id": "UX-03",
+      "reproduced": true,
+      "scope": "dedication literal text changed in preview and saved snapshot"
+    },
+    {
+      "id": "UX-04",
+      "reproduced": true,
+      "scope": "editor dirty state reset on unmount/remount"
+    },
+    {
+      "id": "UX-05",
+      "reproduced": true,
+      "scope": "preview only exposes first page; companion occurs on second"
+    },
+    {
+      "id": "UX-06",
+      "reproduced": true,
+      "contrast": 1.2432944333353162,
+      "geometry": {
+        "overlap": 67.89505004882812,
+        "color": "rgb(37, 60, 66)",
+        "fontSize": "36px"
+      },
+      "scope": "visual/SVG-background contrast; body title remains available outside cover"
+    }
+  ],
+  "a11y": [
+    {
+      "scenario": "en:/",
+      "violations": []
+    },
+    {
+      "scenario": "en:/books",
+      "violations": []
+    },
+    {
+      "scenario": "en:/books/sky-whale",
+      "violations": []
+    },
+    {
+      "scenario": "en:/personalize/small-hero",
+      "violations": []
+    },
+    {
+      "scenario": "en:/my-books",
+      "violations": []
+    },
+    {
+      "scenario": "en:/studio/demo-draft",
+      "violations": []
+    },
+    {
+      "scenario": "en:/read/sample-moon-fox-he",
+      "violations": []
+    },
+    {
+      "scenario": "en:/generation-error",
+      "violations": []
+    },
+    {
+      "scenario": "he:/",
+      "violations": []
+    },
+    {
+      "scenario": "he:/books",
+      "violations": []
+    },
+    {
+      "scenario": "he:/books/sky-whale",
+      "violations": []
+    },
+    {
+      "scenario": "he:/personalize/small-hero",
+      "violations": []
+    },
+    {
+      "scenario": "he:/my-books",
+      "violations": []
+    },
+    {
+      "scenario": "he:/studio/demo-draft",
+      "violations": []
+    },
+    {
+      "scenario": "he:/read/sample-moon-fox-he",
+      "violations": []
+    },
+    {
+      "scenario": "he:/generation-error",
+      "violations": []
+    }
+  ],
+  "metrics": [
+    {
+      "width": 360,
+      "routes": 7,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "routes": 7,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 768,
+      "routes": 7,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1024,
+      "routes": 7,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "routes": 7,
+      "horizontalOverflow": false
+    }
+  ],
+  "passed": 17,
+  "reproducedDefects": 6,
+  "failed": 0
+}
