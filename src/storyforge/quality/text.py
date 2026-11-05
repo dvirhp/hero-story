@@ -75,6 +75,11 @@ def letter_counts(text: str, language: str) -> tuple[int, int]:
     return matching, len(letters)
 
 
+def normalized_comparison_text(text: str) -> str:
+    """Comparison copy only: ignore case, Unicode compatibility and whitespace runs."""
+    return " ".join(unicodedata.normalize("NFKC", text).casefold().split())
+
+
 def lexical_tokens(text: str) -> tuple[str, ...]:
     """Comparison copy only: canonicalize case/marks for narrow literal matching."""
     folded = unicodedata.normalize("NFKD", text).casefold()

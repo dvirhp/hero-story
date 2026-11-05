@@ -14,7 +14,7 @@ class ScriptRule(Contract):
 
 
 class QualityRules(Contract):
-    version: Label = "quality-v1"
+    version: Label = "quality-v2"
     rubric_version: Label = "language-v1"
     scripts: tuple[ScriptRule, ...] = (ScriptRule(language="en"), ScriptRule(language="he"))
     # Whole-sentence directive matches only, not a general keyword blocklist.

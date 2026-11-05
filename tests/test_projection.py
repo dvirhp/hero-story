@@ -127,6 +127,15 @@ def test_rejects_failed_incomplete_forged_or_uncorrelated_sources(mutation, code
     assert "private-canary" not in str(failure.value)
 
 
+@pytest.mark.parametrize("field", ["check_version", "rubric_version"])
+def test_quality_version_evidence_must_match_current_deterministic_rules(field):
+    brief, result = source()
+    forged = result.quality.model_copy(update={field: "forged-v999"})
+    result = result.model_copy(update={"quality": forged})
+    with pytest.raises(ProjectionError, match="SOURCE_NOT_ACCEPTED"):
+        project(result, brief)
+
+
 @pytest.mark.parametrize("change", [
     {"source_owner_id": UUID(int=9)}, {"book_owner_id": UUID(int=9)},
     {"authorized_owner_ids": (UUID(int=9),)},

@@ -9,7 +9,7 @@ Milestone 2 introduced pure validation and quality functions with no provider ca
 - `normalize_request(request: StoryRequest, config: DevelopmentConfig, rules: QualityRules = DEFAULT_RULES) -> NormalizedBrief`: pure validation/context resolution. It revalidates the supplied request, checks every nested string for prohibited controls/directives and resolves the age/language profile. It does not trim, normalize, translate, reverse, vocalize or otherwise rewrite supplied text. An immutable brief retains exact names, interests, pronouns, profile and adult/shared read-aloud guidance.
 - Invalid or unsupported input raises `NormalizationError` with an existing `GenerationError` (`INPUT_INVALID` or `POLICY_REJECTED`, stage `validation`, non-retryable). Messages contain no rejected values. Raw request parsing remains the caller's responsibility; use the existing strict `StoryRequest` and avoid exposing raw Pydantic errors.
 - `assess_story(candidate: Story | str | Mapping[str, object], brief: NormalizedBrief, rules: QualityRules = DEFAULT_RULES) -> QualityReport`: pure assessment of typed stories, raw JSON, or JSON-compatible mappings. Revalidates even typed models, applies configured hard checks and adds advisory observations. Schema errors produce sanitized reports rather than validation exception details.
-- Rules are injected explicitly. Default check version is `quality-v1`; default language rubric version is `language-v1`. Normalization captures the rubric version; a mismatch during assessment is terminal. When changing script thresholds, increment the rubric version; increment the check version when changing any assessment rule. Keep the exact immutable rules object with request dependencies in future orchestration.
+- Rules are injected explicitly. Default check version is `quality-v2`; default language rubric version is `language-v1`. Normalization captures the rubric version; a mismatch during assessment is terminal. When changing script thresholds, increment the rubric version; increment the check version when changing any assessment rule. Keep the exact immutable rules object with request dependencies in future orchestration.
 
 `Story.validate_for(brief)` remains the Milestone 1 structural contract helper. It does not replace the full assessment function. No new parallel story/report schemas are introduced. `QualityRules` and `ScriptRule` are configuration models using the existing immutable base contract.
 
@@ -60,6 +60,7 @@ All use existing severity `advisory` and never block acceptance:
 | Code | Observation |
 | --- | --- |
 | `SENTENCE_LENGTH_OBSERVATION` | Per-page punctuation-based sentence/utterance counts outside the profile's soft word range; abbreviations and dialogue can distort counts |
+| `DUPLICATE_PAGE_TEXT` | A page repeats another page's substantive text after case, Unicode-compatibility and whitespace normalization; short refrains and sound patterns are exempt, and intentional repetition may still be acceptable |
 | `REPETITION_OBSERVED` | A body token (excluding the name) repeats; repetition can be intentional, especially for babies |
 | `REFRAIN_REVIEW` | No repeated body tokens were seen; compare manually with the profile's optional or suggested guidance |
 | `VOCABULARY_FORM_COUNT` | Counts of distinct comparison-copy word forms and tokens; not reading difficulty or a vocabulary-age score |

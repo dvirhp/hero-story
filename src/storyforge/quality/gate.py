@@ -13,8 +13,29 @@ from storyforge.domain.story_v2 import NormalizedBriefV2, StoryV2
 from storyforge.quality.rules import DEFAULT_RULES, QualityRules
 from storyforge.quality.text import (
     contains_prohibited_directive, forbidden_controls, letter_counts, lexical_tokens,
-    name_spans, sentences, string_values, without_name,
+    name_spans, normalized_comparison_text, sentences, string_values, without_name,
 )
+
+# A full page must carry enough varied prose before repeated text is treated as a
+# duplicate-page signal. Short refrains, sounds and single-word patterns stay below this.
+_DUPLICATE_PAGE_MIN_WORDS = 8
+_DUPLICATE_PAGE_MIN_DISTINCT_TOKENS = 6
+
+
+def _duplicate_page_numbers(pages) -> tuple[int, ...]:
+    seen: set[str] = set()
+    duplicates: list[int] = []
+    for page in pages:
+        text = page.text
+        if (len(text.split()) < _DUPLICATE_PAGE_MIN_WORDS
+                or len(set(lexical_tokens(text))) < _DUPLICATE_PAGE_MIN_DISTINCT_TOKENS):
+            continue
+        normalized = normalized_comparison_text(text)
+        if normalized in seen:
+            duplicates.append(page.page_number)
+        else:
+            seen.add(normalized)
+    return tuple(duplicates)
 
 
 def _issue(
@@ -106,6 +127,10 @@ def assess_story(
     for page in story.pages:
         for value in (page.page_id, page.text):
             issues.extend(_text_issues(value, rules, page.page_number))
+    for page_number in _duplicate_page_numbers(story.pages):
+        issues.append(_issue("DUPLICATE_PAGE_TEXT", "advisory",
+                             "Review pages that repeat the same substantive text; keep only intentional refrains or educational patterns.",
+                             page_number))
 
     profile = brief.profile
     hard = brief.constraints if isinstance(brief, NormalizedBriefV2) else profile.requirements.hard

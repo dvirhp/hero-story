@@ -1,4 +1,5 @@
 import json
+import unicodedata
 
 import pytest
 from pydantic import ValidationError
@@ -215,6 +216,56 @@ def test_short_baby_refrains_have_no_plot_or_grammar_requirement(brief_for, draf
     assert report.passed
     assert {"SENTENCE_LENGTH_OBSERVATION", "REPETITION_OBSERVED", "READ_ALOUD_REVIEW"} <= codes(report)
     assert all(i.severity == "advisory" for i in report.issues)
+
+
+def test_short_repeated_refrains_are_not_duplicate_page_issues(brief_for, draft_for):
+    brief = brief_for(name="Alexander")
+    draft = draft_for(brief)
+    for page in draft["pages"]:
+        page["text"] = "Alexander. La la. Sh sh."
+    report = assess_story(draft, brief)
+    assert report.passed
+    assert "DUPLICATE_PAGE_TEXT" not in codes(report)
+
+
+@pytest.mark.parametrize("language,text,repeat", [
+    ("en", "Zoë and the moon say goodnight softly now.",
+     "  ZOË and the moon say goodnight softly now.\n"),
+    ("he", "אוֹר וְהַיָּרֵחַ אוֹמְרִים לַיְלָה טוֹב בְּשֶׁקֶט וּבְרַכּוּת עַכְשָׁיו.",
+     "  אוֹר וְהַיָּרֵחַ אוֹמְרִים לַיְלָה טוֹב בְּשֶׁקֶט וּבְרַכּוּת עַכְשָׁיו.\n"),
+])
+def test_duplicate_substantive_page_text_is_flagged_advisory(brief_for, draft_for, language, text, repeat):
+    brief = brief_for(language=language)
+    draft = draft_for(brief)
+    draft["pages"][0]["text"] = text
+    draft["pages"][1]["text"] = repeat
+    report = assess_story(draft, brief)
+    assert report.passed
+    issue = next(i for i in report.issues if i.code == "DUPLICATE_PAGE_TEXT")
+    assert issue.severity == "advisory"
+    assert issue.page_number == 2
+
+
+def test_duplicate_detection_ignores_unicode_and_whitespace_variants(brief_for, draft_for):
+    brief = brief_for(name="Zoë")
+    draft = draft_for(brief)
+    text = "Zoë and the moon say goodnight softly now."
+    draft["pages"][0]["text"] = text
+    # Canonical equivalence plus non-breaking spaces and a line break.
+    draft["pages"][1]["text"] = " " + unicodedata.normalize("NFD", text).replace(" ", "\u00a0") + "\n"
+    report = assess_story(draft, brief)
+    assert report.passed
+    assert next(i for i in report.issues if i.code == "DUPLICATE_PAGE_TEXT").page_number == 2
+
+
+def test_varied_substantive_pages_are_not_duplicate_page_issues(brief_for, draft_for):
+    brief = brief_for(name="Zoë")
+    draft = draft_for(brief)
+    for number, page in enumerate(draft["pages"], 1):
+        page["text"] = f"Zoë watches the quiet moon rise over the sleeping garden {number}."
+    report = assess_story(draft, brief)
+    assert report.passed
+    assert "DUPLICATE_PAGE_TEXT" not in codes(report)
 
 
 def test_name_substring_is_not_personalization(brief_for, draft_for):
