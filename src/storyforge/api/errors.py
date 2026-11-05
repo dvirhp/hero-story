@@ -57,7 +57,7 @@ def public_failure(request: Request, failure: GenerationFailure) -> JSONResponse
     )
     safe = GenerationFailure(request_id=request_id(request), usage=failure.usage,
                              total_latency_seconds=failure.total_latency_seconds,
-                             quality=failure.quality, error=safe_error)
+                             quality=failure.quality, error=safe_error, stop_reason=failure.stop_reason)
     return JSONResponse(safe.model_dump(mode="json"), status_code=failure_status(safe_error),
                         headers=response_headers(request))
 

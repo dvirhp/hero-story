@@ -36,13 +36,14 @@ async def execute_request(
             if isinstance(result, GenerationFailure):
                 return GenerationFailure(
                     request_id=request_id, usage=result.usage, total_latency_seconds=result.total_latency_seconds,
-                    quality=result.quality,
+                    quality=result.quality, stop_reason="cancelled",
                     error=GenerationError(code="CANCELLED", stage=result.error.stage, retryable=False,
                                           message="Generation cancelled after disconnect"),
                 )
             return GenerationFailure(
                 request_id=request_id, usage=result.usage if hasattr(result, "usage") else UsageSummary(),
                 total_latency_seconds=result.total_latency_seconds if hasattr(result, "total_latency_seconds") else 0.0,
+                stop_reason="cancelled",
                 error=GenerationError(code="CANCELLED", stage="validation", retryable=False,
                                       message="Generation cancelled after disconnect"),
             )

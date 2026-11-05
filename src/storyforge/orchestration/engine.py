@@ -17,6 +17,7 @@ from pydantic import ValidationError
 from storyforge.config import AppSettings
 from storyforge.development.models import DevelopmentConfig
 from storyforge.domain.base import Contract
+from storyforge.domain.diagnostics import ProviderDiagnostic, StopReason, diagnostic_for_code, stop_reason_for_code
 from storyforge.domain.generation import (
     AttemptRecord, GenerationError, GenerationFailure, GenerationResult,
     QualityReport, TokenUsage,
@@ -125,8 +126,9 @@ class StoryEngine:
             remaining_cost_usd=max(0.0, self.limits.max_cost_usd - sum(a.reserved_cost_usd for a in run.attempts)),
         )
 
-    def _fail(self, run: RunState, code: str) -> RunState:
-        return run.updated(status="failure", error=_error(code, run.stage))
+    def _fail(self, run: RunState, code: str, *, stop_reason: StopReason | None = None) -> RunState:
+        return run.updated(status="failure", error=_error(code, run.stage),
+                           stop_reason=stop_reason or stop_reason_for_code(code))
 
     @staticmethod
     def _publish(run: RunState, session: Session) -> GraphState:
@@ -155,8 +157,10 @@ class StoryEngine:
                                   + allocation.writer_output_tokens)
                 minimum_cost = (self.pricing.reservation_cost(self.settings.max_input_tokens, allocation.planner_output_tokens)
                                 + self.writer_pricing.reservation_cost(self.settings.max_input_tokens, allocation.writer_output_tokens))
-                if minimum_tokens > self.limits.max_total_tokens or minimum_cost > self.limits.max_cost_usd:
-                    run = self._fail(run, "BUDGET_EXCEEDED")
+                if minimum_tokens > self.limits.max_total_tokens:
+                    run = self._fail(run, "BUDGET_EXCEEDED", stop_reason="token_budget_exhausted")
+                elif minimum_cost > self.limits.max_cost_usd:
+                    run = self._fail(run, "BUDGET_EXCEEDED", stop_reason="cost_budget_exhausted")
         except NormalizationError as exc:
             run = run.updated(raw_input=None, status="failure", error=exc.error)
         except (ValueError, TypeError, RecursionError):
@@ -185,11 +189,14 @@ class StoryEngine:
         future_cost = (self.writer_pricing.reservation_cost(self.settings.max_input_tokens, writer_output)
                        if request.stage == "planner" else 0.0)
         required_slots = 2 if request.stage == "planner" else 1
-        if (tokens_in > self.settings.max_input_tokens
-                or run.attempts_used + required_slots > self.settings.max_attempts
-                or reserve_tokens + future_tokens > run.remaining_tokens
-                or reserve_cost + future_cost > run.remaining_cost_usd):
-            return self._fail(run, "BUDGET_EXCEEDED"), None
+        if tokens_in > self.settings.max_input_tokens:
+            return self._fail(run, "BUDGET_EXCEEDED", stop_reason="input_capacity_exceeded"), None
+        if run.attempts_used + required_slots > self.settings.max_attempts:
+            return self._fail(run, "BUDGET_EXCEEDED", stop_reason="attempt_capacity_exhausted"), None
+        if reserve_tokens + future_tokens > run.remaining_tokens:
+            return self._fail(run, "BUDGET_EXCEEDED", stop_reason="token_budget_exhausted"), None
+        if reserve_cost + future_cost > run.remaining_cost_usd:
+            return self._fail(run, "BUDGET_EXCEEDED", stop_reason="cost_budget_exhausted"), None
         duration_limit = min(self.settings.attempt_timeout_seconds, run.remaining_seconds)
         request = LLMRequest.model_validate({**request.model_dump(), "remaining_seconds": duration_limit})
         reserved = AttemptRecord(
@@ -208,11 +215,13 @@ class StoryEngine:
         error = None
         quality = run.quality
         retry_after = 0.0
+        diagnostic = None
         try:
             async with asyncio.timeout(duration_limit):
                 response = await self.provider.generate(request, schema)
             usage, latency = response.usage, response.latency_seconds
             if isinstance(response, ProviderFailure):
+                diagnostic = response.provider_diagnostic or diagnostic_for_code(response.error.code)
                 code = response.error.code
                 recoverable = (code in ("PROVIDER_UNAVAILABLE", "PROVIDER_OUTPUT_INVALID", "DEADLINE_EXCEEDED")
                                and response.error.retryable)
@@ -249,25 +258,27 @@ class StoryEngine:
         except TimeoutError:
             error = _error("DEADLINE_EXCEEDED", request.stage, True)
         except (ConnectionError, OSError):
+            diagnostic = ProviderDiagnostic(category="connection_error")
             error = _error("PROVIDER_UNAVAILABLE", request.stage, True)
         except (ValidationError, ValueError):
             error = _error("PROVIDER_OUTPUT_INVALID", request.stage, True)
         except Exception:
             error = _error("CONFIGURATION_ERROR", request.stage)
         latency = max(latency, self.clock() - started)
-        run = self._complete_attempt(run, reserved, usage, latency, error, quality, started)
+        run = self._complete_attempt(run, reserved, usage, latency, error, quality, started, diagnostic)
         run = run.updated(retry_after_seconds=retry_after)
         if run.remaining_seconds <= 0:
             run = self._fail(run, "DEADLINE_EXCEEDED")
             payload = None
         if run.remaining_tokens == 0 and payload is None:
-            run = self._fail(run, "BUDGET_EXCEEDED")
+            run = self._fail(run, "BUDGET_EXCEEDED", stop_reason="token_budget_exhausted")
         session.current = run
         return run, payload if error is None and run.status != "failure" else None
 
     def _complete_attempt(
         self, run: RunState, reserved: AttemptRecord, usage: TokenUsage, latency: float,
         error: GenerationError | None, quality: QualityReport | None, started: float,
+        diagnostic: ProviderDiagnostic | None = None,
     ) -> RunState:
         cost = self._stage_pricing(reserved.stage).usage_cost(usage)
         reserve_cost = max(reserved.reserved_cost_usd, cost or 0.0)
@@ -276,6 +287,7 @@ class StoryEngine:
             **reserved.model_dump(), "usage": usage, "latency_seconds": latency,
             "estimated_cost_usd": cost, "reserved_cost_usd": reserve_cost,
             "outcome": "failure" if error else "success", "error": error,
+            "provider_diagnostic": (diagnostic or diagnostic_for_code(error.code)) if error else None,
         })
         simulated = max(0.0, latency - max(0.0, self.clock() - started))
         return self._refresh(run.updated(
@@ -289,10 +301,10 @@ class StoryEngine:
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED")
         if run.status == "failure" or not run.error.retryable:
-            return run.updated(status="failure")
+            return run.updated(status="failure", stop_reason=run.stop_reason or stop_reason_for_code(run.error.code))
         required_slots = 2 if run.stage == "planner" else 1
         if run.attempts_used + required_slots > self.settings.max_attempts:
-            return self._fail(run, "BUDGET_EXCEEDED")
+            return self._fail(run, "BUDGET_EXCEEDED", stop_reason="attempt_capacity_exhausted")
         return run  # Conditional self-edge schedules the sole retry mechanism.
 
     async def _planner(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
@@ -392,4 +404,6 @@ class StoryEngine:
             extra = {"resolved_constraints": run.brief.constraints} if isinstance(run.brief, NormalizedBriefV2) else {}
             return self.contracts.success_schema(**common, story=run.draft, quality=run.quality, **extra)
         return GenerationFailure(**common, error=run.error or _error("CONFIGURATION_ERROR", run.stage),
-                                 quality=run.quality)
+                                 quality=run.quality,
+                                 stop_reason=run.stop_reason or stop_reason_for_code(
+                                     run.error.code if run.error else "CONFIGURATION_ERROR"))

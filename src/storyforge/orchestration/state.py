@@ -4,6 +4,7 @@ from typing import Literal, TypedDict
 
 from pydantic import Field, model_validator
 
+from storyforge.domain.diagnostics import StopReason
 from storyforge.domain.base import Contract, Label, Money, NonNegativeInt, Seconds
 from storyforge.domain.generation import AttemptRecord, GenerationError, QualityReport, Stage, UsageSummary
 from storyforge.domain.story import NormalizedBrief, Story, StoryPlan, StoryRequest
@@ -20,6 +21,7 @@ class RunState(Contract):
     quality: QualityReport | None = None
     error: GenerationError | None = None
     stage: Stage = "validation"
+    stop_reason: StopReason | None = None
     status: Literal["running", "success", "failure"] = "running"
     attempts: tuple[AttemptRecord, ...] = ()
     attempts_used: NonNegativeInt = 0

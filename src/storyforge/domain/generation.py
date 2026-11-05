@@ -7,6 +7,7 @@ from pydantic import Field, TypeAdapter, model_validator
 
 from storyforge.domain.base import Contract, Label, Money, NonNegativeInt, PositiveInt, Seconds, Text
 from storyforge.domain.story import Story
+from storyforge.domain.diagnostics import ProviderDiagnostic, StopReason, diagnostic_for_code
 
 Stage = Literal["validation", "planner", "writer", "quality"]
 ErrorCode = Literal[
@@ -58,11 +59,16 @@ class AttemptRecord(Contract):
     pricing_version: Label | None = None
     outcome: Literal["success", "failure"]
     error: GenerationError | None = None
+    provider_diagnostic: ProviderDiagnostic | None = None
 
     @model_validator(mode="after")
     def consistent_outcome(self) -> "AttemptRecord":
         if (self.outcome == "failure") != (self.error is not None):
             raise ValueError("only failed attempts require an error")
+        if self.outcome == "success" and self.provider_diagnostic is not None:
+            raise ValueError("successful attempts cannot have failure diagnostics")
+        if self.outcome == "failure" and self.provider_diagnostic is None:
+            object.__setattr__(self, "provider_diagnostic", diagnostic_for_code(self.error.code))
         if self.usage.source == "unknown" and self.estimated_cost_usd is not None:
             raise ValueError("unknown usage retains reservation, not a known cost")
         if self.estimated_cost_usd is not None and self.pricing_version is None:
@@ -138,6 +144,7 @@ class GenerationFailure(ResultBase):
     status: Literal["failure"] = "failure"
     error: GenerationError
     quality: QualityReport | None = None
+    stop_reason: StopReason | None = None
 
 
 GenerationResult = Annotated[GenerationSuccess | GenerationFailure, Field(discriminator="status")]

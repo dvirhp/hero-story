@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from storyforge.domain.base import Contract, Label, PositiveInt, Seconds, Text
 from storyforge.domain.generation import GenerationError, QualityReport, TokenUsage
+from storyforge.domain.diagnostics import ProviderDiagnostic
 
 OutputT = TypeVar("OutputT", bound=BaseModel)
 
@@ -50,6 +51,7 @@ class ProviderFailure(Contract):
     latency_seconds: Seconds
     quality: QualityReport | None = None
     retry_after_seconds: Seconds | None = None
+    provider_diagnostic: ProviderDiagnostic | None = None
 
 
 class LLMProvider(Protocol):

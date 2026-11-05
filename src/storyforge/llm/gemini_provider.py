@@ -2,6 +2,8 @@
 
 import asyncio
 import math
+import socket
+import ssl
 import time
 from collections.abc import Callable
 from email.utils import parsedate_to_datetime
@@ -12,6 +14,7 @@ from google.genai import errors, types
 from pydantic import ValidationError
 
 from storyforge.domain.generation import GenerationError, QualityReport, TokenUsage
+from storyforge.domain.diagnostics import ProviderDiagnostic, diagnostic_for_code, diagnostic_for_http
 from storyforge.llm.configuration import GeminiConfig, ModelCapabilities
 from storyforge.llm.gemini_schema import gemini_schema
 from storyforge.llm.protocol import LLMRequest, OutputT, ProviderFailure, ProviderSuccess
@@ -94,6 +97,18 @@ def _retry_after(error: errors.APIError) -> float | None:
     return max(0.0, seconds) if math.isfinite(seconds) else None
 
 
+def _transport_diagnostic(error: httpx.TransportError) -> ProviderDiagnostic:
+    # Inspect only known exception types, never messages, URLs, headers or args.
+    cause: BaseException | None = error
+    for _ in range(5):
+        if isinstance(cause, ssl.SSLError):
+            return ProviderDiagnostic(category="tls_error")
+        if isinstance(cause, socket.gaierror):
+            return ProviderDiagnostic(category="dns_error")
+        cause = cause.__cause__ if cause is not None else None
+    return ProviderDiagnostic(category="connection_error" if isinstance(error, httpx.ConnectError) else "transport_error")
+
+
 class GeminiProvider:
     provider_name = "gemini"
 
@@ -110,7 +125,7 @@ class GeminiProvider:
         started = self._clock()
         usage = TokenUsage(source="unknown")
 
-        def failure(code: str, retryable: bool = False, *, quality=None, retry_after=None):
+        def failure(code: str, retryable: bool = False, *, quality=None, retry_after=None, diagnostic=None):
             messages = {
                 "CONFIGURATION_ERROR": "Provider credentials, model or request configuration is invalid",
                 "PROVIDER_UNAVAILABLE": "Provider temporarily unavailable",
@@ -122,6 +137,7 @@ class GeminiProvider:
             return ProviderFailure(provider="gemini", model=request.model, usage=usage,
                                    latency_seconds=max(0.0, self._clock() - started), quality=quality,
                                    retry_after_seconds=retry_after,
+                                   provider_diagnostic=diagnostic or diagnostic_for_code(code),
                                    error=GenerationError(code=code, stage=request.stage, retryable=retryable,
                                                          message=messages[code]))
 
@@ -181,14 +197,16 @@ class GeminiProvider:
             raise
         except (TimeoutError, httpx.TimeoutException):
             return failure("DEADLINE_EXCEEDED", True)
-        except httpx.TransportError:
-            return failure("PROVIDER_UNAVAILABLE", True)
+        except httpx.TransportError as exc:
+            return failure("PROVIDER_UNAVAILABLE", True, diagnostic=_transport_diagnostic(exc))
         except errors.APIError as exc:
+            status = getattr(exc.response, "status_code", None)
+            diagnostic = diagnostic_for_http(status if type(status) is int else exc.code)
             if exc.code in (408, 504):
-                return failure("DEADLINE_EXCEEDED", True)
+                return failure("DEADLINE_EXCEEDED", True, diagnostic=diagnostic)
             if exc.code in (409, 429) or (isinstance(exc.code, int) and exc.code >= 500):
-                return failure("PROVIDER_UNAVAILABLE", True, retry_after=_retry_after(exc))
-            return failure("CONFIGURATION_ERROR")
+                return failure("PROVIDER_UNAVAILABLE", True, retry_after=_retry_after(exc), diagnostic=diagnostic)
+            return failure("CONFIGURATION_ERROR", diagnostic=diagnostic)
         except (ValidationError, ValueError, TypeError, AttributeError, errors.UnknownApiResponseError):
             return failure("PROVIDER_OUTPUT_INVALID", True)
         except Exception:
