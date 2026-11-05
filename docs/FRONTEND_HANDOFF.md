@@ -9,7 +9,7 @@ The supplied working directory (`C:/Users/dvir3/conversation-dashboard`) was an 
 Dedicated Git worktree: `C:/Users/dvir3/storyforge-frontend`.
 Branch: `feature/storyforge-frontend-foundation`.
 Base commit: `5ae24e9` (`docs: document v2 migration and approval-gated Roy test requirements`).
-Implementation commit: see `git log -1 --format="%H %s" -- frontend` for the exact commit containing this handoff and implementation. A commit cannot include its own hash. Delivery will report that hash; later documentation-only commits do not change the implementation identity.
+Implementation commit: `d961b6f9a1061bf8083e3a2c9ec58e119ce9c112` (`feat(frontend): add bilingual StoryForge web foundation`). A subsequent documentation-only commit records this hash; obtain its exact ID with `git log -1 --format="%H %s"`. All implementation and test results above refer to the implementation commit.
 
 Implemented local foundation; ready for review, with HTTP integration deliberately inactive. No pushes, merges, cherry-picks, deployments, backend changes or real AI calls.
 
