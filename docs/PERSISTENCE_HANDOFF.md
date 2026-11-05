@@ -2,8 +2,9 @@
 
 2026-11-05. This section supersedes historical status/defaults below. Explicit approval covers
 milestone 1 only. Worktree `C:/Users/dvir3/storyforge-persistence`, branch
-`feature/storyforge-persistence-foundation`, parent commit `b6af124`. Implementation commit is
-recorded by the follow-up delivery record and `git log`; no merge/push/deployment occurred.
+`feature/storyforge-persistence-foundation`, parent commit `b6af124`. Implementation commit:
+`a8fcbe5b3134c86fe9bc163f34233ee6640b9e95`. This documentation-only follow-up records
+that identifier; `git log -1 --format=%H` identifies the final delivery tip. No merge/push/deployment occurred.
 
 ## Implemented architecture and interfaces
 
@@ -83,8 +84,8 @@ docker compose -f compose.persistence.yaml up -d
 .venv/Scripts/python.exe -m alembic upgrade head
 ```
 
-Verify actual environment variable names in migrations/env.py/database.py before invocation;
-see existing local setup below for URL values. Downgrade deletes canonical Book/asset data but
+The verified variables are STORYFORGE_DATABASE_URL (Alembic) and
+STORYFORGE_TEST_POSTGRES_URL (opt-in PostgreSQL tests); see local setup below for URL values. Downgrade deletes canonical Book/asset data but
 retains source stories. Never run destructive migration checks against non-disposable data.
 PostgreSQL tests run migrations themselves; no claim is made that production databases were migrated.
 
