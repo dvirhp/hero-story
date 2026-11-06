@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import ConfigDict, Field
 
 from storyforge.domain.base import Contract
+from storyforge.domain.output_validation import OutputValidationIssue
 
 FailureCategory = Literal[
     "invalid_request", "authentication", "permission_denied", "not_found", "conflict",
@@ -18,6 +19,9 @@ class ProviderDiagnostic(Contract):
     model_config = ConfigDict(revalidate_instances="always")
     category: FailureCategory
     upstream_http_status: Annotated[int, Field(ge=100, le=599)] | None = None
+    # Internal evaluation detail only: excluded from production JSON/OpenAPI.
+    validation_issues: Annotated[tuple[OutputValidationIssue, ...], Field(max_length=8, exclude=True)] = ()
+    validation_issues_truncated: bool = Field(default=False, exclude=True)
 
 
 def diagnostic_for_code(code: str) -> ProviderDiagnostic:

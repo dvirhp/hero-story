@@ -6,6 +6,7 @@ from pydantic import Field, StringConstraints, model_validator
 
 from storyforge.development.models import DevelopmentalProfile, Strategy
 from storyforge.domain.base import Contract, Label, Language, NonNegativeInt, PositiveInt, Text
+from storyforge.domain.output_validation import OutputContractError
 
 Name = Annotated[str, StringConstraints(min_length=1, max_length=40, pattern=r"\S")]
 
@@ -83,18 +84,24 @@ class StoryPlan(Contract):
 
     @model_validator(mode="after")
     def coherent_structure(self) -> "StoryPlan":
-        if tuple(p.page_number for p in self.pages) != tuple(range(1, len(self.pages) + 1)):
-            raise ValueError("page intents must be ordered and numbered from one")
+        for index, page in enumerate(self.pages):
+            if page.page_number != index + 1:
+                raise OutputContractError("page_order", path=("pages", index, "page_number"))
         if self.strategy in ("simple_goal", "connected_scenes") and self.plot is None:
-            raise ValueError("selected strategy requires plot elements")
+            raise OutputContractError("plot_missing", path=("plot",))
         return self
 
     def validate_for(self, brief: NormalizedBrief) -> "StoryPlan":
         requirements = brief.profile.requirements
-        if (self.language != brief.request.language or self.protagonist != brief.request.display_name
-                or self.strategy != requirements.strategy
-                or len(self.pages) != requirements.hard.page_count):
-            raise ValueError("plan must match brief and profile constraints")
+        if self.language != brief.request.language:
+            raise OutputContractError("language_mismatch", path=("language",))
+        if self.protagonist != brief.request.display_name:
+            raise OutputContractError("plan_context_mismatch", path=("protagonist",))
+        if self.strategy != requirements.strategy:
+            raise OutputContractError("plan_context_mismatch", path=("strategy",))
+        if len(self.pages) != requirements.hard.page_count:
+            raise OutputContractError("page_count_mismatch", path=("pages",), observed_count=len(self.pages),
+                minimum_count=requirements.hard.page_count, maximum_count=requirements.hard.page_count)
         return self
 
 
@@ -116,23 +123,35 @@ class Story(Contract):
     @model_validator(mode="after")
     def ordered_pages(self) -> "Story":
         if self.direction != {"en": "ltr", "he": "rtl"}[self.language]:
-            raise ValueError("direction must match language")
-        if tuple(p.page_number for p in self.pages) != tuple(range(1, len(self.pages) + 1)):
-            raise ValueError("pages must be ordered and numbered from one")
-        if len({p.page_id for p in self.pages}) != len(self.pages):
-            raise ValueError("page IDs must be unique")
+            raise OutputContractError("direction_mismatch", path=("direction",))
+        seen = set()
+        for index, page in enumerate(self.pages):
+            if page.page_number != index + 1:
+                raise OutputContractError("page_order", path=("pages", index, "page_number"))
+            if page.page_id in seen:
+                raise OutputContractError("duplicate_page_id", path=("pages", index, "page_id"))
+            seen.add(page.page_id)
         return self
 
     def validate_for(self, brief: NormalizedBrief) -> "Story":
         """Validate hard structural/length contracts, not developmental quality."""
         p = brief.profile
         hard = p.requirements.hard
-        if (self.language != brief.request.language or self.profile_id != p.band_id
-                or self.profile_version != p.version or len(self.pages) != hard.page_count):
-            raise ValueError("story must match brief and profile metadata/page count")
+        if self.language != brief.request.language:
+            raise OutputContractError("language_mismatch", path=("language",))
+        if self.profile_id != p.band_id:
+            raise OutputContractError("profile_mismatch", path=("profile_id",))
+        if self.profile_version != p.version:
+            raise OutputContractError("profile_mismatch", path=("profile_version",))
+        if len(self.pages) != hard.page_count:
+            raise OutputContractError("page_count_mismatch", path=("pages",), observed_count=len(self.pages),
+                minimum_count=hard.page_count, maximum_count=hard.page_count)
         counts = tuple(len(page.text.split()) for page in self.pages)
-        if any(not hard.words_per_page.minimum <= n <= hard.words_per_page.maximum for n in counts):
-            raise ValueError("page word count outside configured hard range")
+        for index, count in enumerate(counts):
+            if not hard.words_per_page.minimum <= count <= hard.words_per_page.maximum:
+                raise OutputContractError("page_word_count", path=("pages", index), observed_count=count,
+                    minimum_count=hard.words_per_page.minimum, maximum_count=hard.words_per_page.maximum)
         if not hard.total_words.minimum <= sum(counts) <= hard.total_words.maximum:
-            raise ValueError("total word count outside configured hard range")
+            raise OutputContractError("total_word_count", observed_count=sum(counts),
+                minimum_count=hard.total_words.minimum, maximum_count=hard.total_words.maximum)
         return self

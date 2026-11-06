@@ -7,6 +7,7 @@ from pydantic import Field, StringConstraints, model_validator
 from storyforge.development.models import WordRange
 from storyforge.development.v2 import Density, DevelopmentSnapshotV2
 from storyforge.domain.base import Contract, Label, PositiveInt
+from storyforge.domain.output_validation import OutputContractError
 from storyforge.domain.story import Name, Story, StoryPlan, StoryRequest, PageIntent
 
 ShortText = Annotated[str, StringConstraints(min_length=1, max_length=400, pattern=r"\S")]
@@ -140,16 +141,23 @@ class StoryPlanV2(StoryPlan):
     @model_validator(mode="after")
     def count_matches_pages(self) -> "StoryPlanV2":
         if self.page_count != len(self.pages):
-            raise ValueError("Declared plan count must match actual pages")
+            raise OutputContractError("declared_page_count", path=("page_count",),
+                observed_count=len(self.pages), minimum_count=self.page_count, maximum_count=self.page_count)
         return self
 
     def validate_for(self, brief: NormalizedBriefV2) -> "StoryPlanV2":
         expected = brief.constraints.target_ids or (None,) * brief.request.page_count
-        if (self.page_count != brief.request.page_count or len(self.pages) != self.page_count
-                or self.language != brief.request.language or self.protagonist != brief.request.display_name
-                or self.strategy != brief.profile.requirements.strategy
-                or tuple(page.target_id for page in self.pages) != expected):
-            raise ValueError("Plan must match requested length, targets and developmental strategy")
+        if self.page_count != brief.request.page_count or len(self.pages) != self.page_count:
+            raise OutputContractError("page_count_mismatch", path=("page_count",),
+                observed_count=len(self.pages), minimum_count=brief.request.page_count, maximum_count=brief.request.page_count)
+        if self.language != brief.request.language:
+            raise OutputContractError("language_mismatch", path=("language",))
+        if self.protagonist != brief.request.display_name:
+            raise OutputContractError("plan_context_mismatch", path=("protagonist",))
+        if self.strategy != brief.profile.requirements.strategy:
+            raise OutputContractError("plan_context_mismatch", path=("strategy",))
+        if tuple(page.target_id for page in self.pages) != expected:
+            raise OutputContractError("target_sequence_mismatch", path=("pages",))
         return self
 
 
@@ -173,27 +181,37 @@ class StoryV2(Story):
     @model_validator(mode="after")
     def count_matches_pages(self) -> "StoryV2":
         if self.page_count != len(self.pages):
-            raise ValueError("Declared story count must match actual pages")
+            raise OutputContractError("declared_page_count", path=("page_count",),
+                observed_count=len(self.pages), minimum_count=self.page_count, maximum_count=self.page_count)
         return self
 
     def validate_for(self, brief: NormalizedBriefV2) -> "StoryV2":
         hard = brief.constraints
-        if (self.page_count != brief.request.page_count or len(self.pages) != hard.page_count
-                or self.language != brief.request.language or self.profile_id != brief.profile.band_id
-                or self.profile_version != brief.profile.version):
-            raise ValueError("Story must match requested length and resolved metadata")
+        if self.page_count != brief.request.page_count or len(self.pages) != hard.page_count:
+            raise OutputContractError("page_count_mismatch", path=("page_count",), observed_count=len(self.pages),
+                minimum_count=hard.page_count, maximum_count=hard.page_count)
+        if self.language != brief.request.language:
+            raise OutputContractError("language_mismatch", path=("language",))
+        if self.profile_id != brief.profile.band_id:
+            raise OutputContractError("profile_mismatch", path=("profile_id",))
+        if self.profile_version != brief.profile.version:
+            raise OutputContractError("profile_mismatch", path=("profile_version",))
         counts = [len(page.text.split()) for page in self.pages]
-        if any(not hard.words_per_page.minimum <= count <= hard.words_per_page.maximum for count in counts):
-            raise ValueError("Page word count outside configured density")
+        for index, count in enumerate(counts):
+            if not hard.words_per_page.minimum <= count <= hard.words_per_page.maximum:
+                raise OutputContractError("page_word_count", path=("pages", index), observed_count=count,
+                    minimum_count=hard.words_per_page.minimum, maximum_count=hard.words_per_page.maximum)
         if not hard.total_words.minimum <= sum(counts) <= hard.total_words.maximum:
-            raise ValueError("Total word count outside derived range")
+            raise OutputContractError("total_word_count", observed_count=sum(counts),
+                minimum_count=hard.total_words.minimum, maximum_count=hard.total_words.maximum)
         if tuple(page.target_id for page in self.pages) != (hard.target_ids or (None,) * hard.page_count):
-            raise ValueError("Story target order must match request")
+            raise OutputContractError("target_sequence_mismatch", path=("pages",))
         if brief.request.requested_title and self.title != brief.request.requested_title:
-            raise ValueError("Story title must match the requested title")
-        if hard.sentence_units_per_page and any(
-            not hard.sentence_units_per_page.minimum <= len(page.sentence_units) <= hard.sentence_units_per_page.maximum
-            for page in self.pages
-        ):
-            raise ValueError("Sentence-unit count must match request")
+            raise OutputContractError("title_mismatch", path=("title",))
+        if hard.sentence_units_per_page:
+            for index, page in enumerate(self.pages):
+                if not hard.sentence_units_per_page.minimum <= len(page.sentence_units) <= hard.sentence_units_per_page.maximum:
+                    raise OutputContractError("sentence_unit_count", path=("pages", index, "sentence_units"),
+                        observed_count=len(page.sentence_units), minimum_count=hard.sentence_units_per_page.minimum,
+                        maximum_count=hard.sentence_units_per_page.maximum)
         return self

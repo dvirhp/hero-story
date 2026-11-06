@@ -6,8 +6,9 @@ import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Literal
-from uuid import uuid4
+from uuid import UUID, uuid4, uuid5
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
@@ -18,10 +19,11 @@ from pydantic import ValidationError
 from storyforge.config import AppSettings
 from storyforge.development.models import DevelopmentConfig
 from storyforge.domain.base import Contract
+from storyforge.domain.output_validation import OutputContractError
 from storyforge.domain.diagnostics import ProviderDiagnostic, StopReason, diagnostic_for_code, stop_reason_for_code
 from storyforge.domain.generation import (
     AttemptRecord, GenerationError, GenerationFailure, GenerationResult,
-    QualityReport, TokenUsage,
+    QualityReport, TokenUsage, UsageSummary,
 )
 from storyforge.domain.story_v2 import NormalizedBriefV2
 from storyforge.domain.generation_v2 import GenerationResultV2
@@ -36,12 +38,18 @@ from storyforge.validation.page_policy import PagePolicy
 from storyforge.quality.gate import assess_story, inspect_output_safety, quality_check_version
 from storyforge.quality.rules import DEFAULT_RULES, QualityRules
 from storyforge.validation.normalization import NormalizationError
+from storyforge.validation.output_diagnostics import validation_diagnostic
+from storyforge.orchestration.synchronous import (
+    FrozenEngineManifestV1, FrozenExecution, FrozenExecutionInvalid, ExecutionBoundaryStopped,
+    SynchronousExecutionHooks, AttemptProposal, canonical_digest, cost_nanos,
+)
 
 
 @dataclass
 class Session:
     # Request-local journal survives node cancellation before a graph update.
     current: RunState
+    frozen: FrozenExecution | None = None
 
 
 def _error(code: str, stage: str, retryable: bool = False) -> GenerationError:
@@ -74,8 +82,10 @@ class StoryEngine:
         contract_version: Literal["1", "2"] = "1",
         profiles_v2: DevelopmentProfilesV2 | None = None,
         page_policy: PagePolicy = PagePolicy(),
+        utc_clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     ) -> None:
         self.contract_version = contract_version
+        self.page_policy, self.utc_clock = page_policy, utc_clock
         self.provider, self.profiles = provider, profiles
         self.settings, self.limits, self.pricing, self.rules, self.clock = settings, limits, pricing, rules, clock
         self.capabilities, self.sleep = capabilities, sleep
@@ -156,7 +166,7 @@ class StoryEngine:
                 request = self.contracts.request_schema.model_validate_json(json.dumps(raw, ensure_ascii=True, allow_nan=False))
             else:
                 raise ValueError("unsupported input representation")
-            brief = self.contracts.normalize(request)
+            brief = runtime.context.frozen.brief if runtime.context.frozen is not None else self.contracts.normalize(request)
             run = run.updated(raw_input=None, request=brief.request, brief=brief)
             if isinstance(brief, NormalizedBriefV2):
                 allocation = brief.execution
@@ -177,6 +187,10 @@ class StoryEngine:
     async def _attempt(
         self, run: RunState, request: LLMRequest, schema: type[Contract], session: Session,
     ) -> tuple[RunState, Contract | None]:
+        if session.frozen is not None:
+            session.frozen.check_cancelled(run)
+            if self.freeze_manifest() != session.frozen.manifest:
+                return self._fail(run, "CONFIGURATION_ERROR"), None
         run = self._refresh(run)
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED"), None
@@ -211,6 +225,8 @@ class StoryEngine:
             session.current = run
             started_wait = self.clock()
             await self.sleep(delay)
+            if session.frozen is not None:
+                session.frozen.check_cancelled(run)
             simulated_wait = max(0.0, delay - max(0.0, self.clock() - started_wait))
             run = self._refresh(run.updated(retry_after_seconds=0.0,
                                            simulated_seconds=run.simulated_seconds + simulated_wait))
@@ -228,6 +244,26 @@ class StoryEngine:
         run = run.updated(attempts=(*run.attempts, reserved), attempts_used=run.attempts_used + 1,
                           token_reservations=(*run.token_reservations, reserve_tokens))
         session.current = run  # Slot and conservative charge exist before any await.
+        if session.frozen is not None:
+            frozen = session.frozen
+            slot = reserved.attempt_number
+            proposal = AttemptProposal(operation_id=frozen.operation_id, request_id=run.request_id,
+                attempt_id=uuid5(frozen.operation_id, f"sync-attempt:{slot}"),
+                authorization_nonce=uuid5(frozen.operation_id, f"sync-authorization:{slot}"),
+                attempt_number=slot, stage=request.stage, provider=self.settings.provider,
+                manifest_digest=frozen.manifest.digest(), schema_digest=canonical_digest(schema.model_json_schema()),
+                request=request, input_token_bound=tokens_in, maximum_output_tokens=request.max_output_tokens,
+                reserved_tokens=reserve_tokens, reserved_cost_nanos=cost_nanos(reserve_cost),
+                mandatory_future_slots=required_slots-1, mandatory_future_tokens=future_tokens,
+                mandatory_future_cost_nanos=cost_nanos(future_cost), execution_expires_at=frozen.execution_expires_at)
+            await frozen.authorize(proposal, run)
+            if self.freeze_manifest() != frozen.manifest:
+                raise frozen.stop("AUTHORIZATION_UNCERTAIN", run)
+            run = self._refresh(run)
+            duration_limit = min(duration_limit, run.remaining_seconds, frozen.remaining())
+            if duration_limit <= 0:
+                raise frozen.stop("OUTCOME_UNCERTAIN", run)
+            request = LLMRequest.model_validate({**request.model_dump(), "remaining_seconds": duration_limit})
         started = self.clock()
         usage = TokenUsage(source="unknown")
         latency = 0.0
@@ -236,6 +272,7 @@ class StoryEngine:
         quality = run.quality
         retry_after = 0.0
         diagnostic = None
+        uncertain = False
         try:
             async with asyncio.timeout(duration_limit):
                 response = await self.provider.generate(request, schema)
@@ -243,6 +280,9 @@ class StoryEngine:
             if isinstance(response, ProviderFailure):
                 diagnostic = response.provider_diagnostic or diagnostic_for_code(response.error.code)
                 code = response.error.code
+                if session.frozen is not None:
+                    uncertain = (code in {"DEADLINE_EXCEEDED", "CANCELLED"} or
+                        (code == "PROVIDER_UNAVAILABLE" and diagnostic.upstream_http_status is None))
                 recoverable = (code in ("PROVIDER_UNAVAILABLE", "PROVIDER_OUTPUT_INVALID", "DEADLINE_EXCEEDED")
                                and response.error.retryable)
                 error = _error(code, request.stage, recoverable)
@@ -264,7 +304,7 @@ class StoryEngine:
                     if (request.stage == "writer" and run.rewrite_count and run.draft is not None
                             and tuple(page.page_id for page in payload.pages)
                             != tuple(page.page_id for page in run.draft.pages)):
-                        raise ValueError("rewrite must preserve request-local page IDs")
+                        raise OutputContractError("rewrite_page_ids_changed", path=("pages",))
             if latency > duration_limit and error is None:
                 error, payload = _error("DEADLINE_EXCEEDED", request.stage, True), None
             if (usage.source != "unknown" and (usage.input_tokens > tokens_in
@@ -274,15 +314,22 @@ class StoryEngine:
             latency = max(0.0, self.clock() - started)
             session.current = self._complete_attempt(run, reserved, usage, latency,
                                                      _error("CANCELLED", request.stage), quality, started)
+            if session.frozen is not None:
+                # Durable authorization remains unresolved; never start a detached recorder.
+                raise session.frozen.stop("CANCELLED", session.current) from None
             raise
         except TimeoutError:
+            uncertain = True
             error = _error("DEADLINE_EXCEEDED", request.stage, True)
         except (ConnectionError, OSError):
+            uncertain = True
             diagnostic = ProviderDiagnostic(category="connection_error")
             error = _error("PROVIDER_UNAVAILABLE", request.stage, True)
-        except (ValidationError, ValueError):
+        except (ValidationError, ValueError) as exc:
+            diagnostic = validation_diagnostic(exc)
             error = _error("PROVIDER_OUTPUT_INVALID", request.stage, True)
         except Exception:
+            uncertain = True
             error = _error("CONFIGURATION_ERROR", request.stage)
         latency = max(latency, self.clock() - started)
         run = self._complete_attempt(run, reserved, usage, latency, error, quality, started, diagnostic)
@@ -293,6 +340,8 @@ class StoryEngine:
         if run.remaining_tokens == 0 and payload is None:
             run = self._fail(run, "BUDGET_EXCEEDED", stop_reason="token_budget_exhausted")
         session.current = run
+        if session.frozen is not None:
+            await session.frozen.record(run, unknown=uncertain)
         return run, payload if error is None and run.status != "failure" else None
 
     def _complete_attempt(
@@ -387,12 +436,57 @@ class StoryEngine:
     def _after_quality(state: GraphState) -> Literal["rewrite", "end"]:
         return "rewrite" if state["run"].status == "running" else "end"
 
+    def freeze_manifest(self) -> FrozenEngineManifestV1:
+        if self.contract_version != "2": raise FrozenExecutionInvalid()
+        return FrozenEngineManifestV1(profile_version=self.contracts.profile_version,
+            planner_prompt_version=self.contracts.planner_prompt_version,
+            writer_prompt_version=self.contracts.writer_prompt_version,
+            plan_schema_digest=canonical_digest(self.contracts.plan_schema.model_json_schema()),
+            story_schema_digest=canonical_digest(self.contracts.story_schema.model_json_schema()),
+            token_bound_algorithm=self.capabilities.token_bound_version if self.capabilities else self.limits.token_bound_version,
+            settings=self.settings, limits=self.limits, rules=self.rules, page_policy=self.page_policy,
+            planner_pricing=self.pricing, writer_pricing=self.writer_pricing,
+            planner_capabilities=self.capabilities, writer_capabilities=self.writer_capabilities)
+
+    async def generate_frozen(self, brief: NormalizedBriefV2, *, operation_id: UUID, request_id: str,
+            manifest: FrozenEngineManifestV1, execution_expires_at: datetime,
+            hooks: SynchronousExecutionHooks, cancelled: Callable[[], bool]) -> GenerationResultV2:
+        try:
+            if not isinstance(brief, NormalizedBriefV2) or not isinstance(operation_id, UUID): raise ValueError()
+            brief = NormalizedBriefV2.model_validate_json(brief.model_dump_json(warnings=False))
+            manifest = FrozenEngineManifestV1.model_validate_json(manifest.model_dump_json(warnings=False))
+            if manifest != self.freeze_manifest(): raise ValueError()
+            if (quality_check_version(self.rules, "2") != "quality-v2+book-v2-1" or
+                self.rules.rubric_version != "language-v1" or brief.language_rubric_version != "language-v1" or
+                brief.profile.version != manifest.profile_version or
+                brief.constraints.policy_version != manifest.page_policy.version): raise ValueError()
+            if (not manifest.page_policy.minimum_pages <= brief.request.page_count <= manifest.page_policy.maximum_pages or
+                brief.execution.planner_output_tokens > manifest.settings.planner_output_tokens or
+                brief.execution.writer_output_tokens > manifest.settings.writer_output_tokens): raise ValueError()
+            if (not isinstance(request_id, str) or not request_id.strip() or len(request_id)>120 or
+                execution_expires_at.utcoffset() is None or not callable(cancelled)): raise ValueError()
+            execution_expires_at = execution_expires_at.astimezone(timezone.utc)
+            if hooks is None: raise ValueError()
+        except (ValueError, TypeError, AttributeError):
+            raise FrozenExecutionInvalid() from None
+        frozen = FrozenExecution(brief, operation_id, request_id, manifest, execution_expires_at,
+            hooks, cancelled, self.utc_clock)
+        if frozen.remaining() <= 0:
+            return GenerationFailure(request_id=request_id, usage=UsageSummary(), total_latency_seconds=0.,
+                error=_error("DEADLINE_EXCEEDED", "validation"), stop_reason="deadline_exceeded")
+        return await self._generate(brief.request, request_id=request_id, frozen=frozen)
+
     async def generate(self, request: object, *, request_id: str | None = None) -> GenerationResult | GenerationResultV2:
+        return await self._generate(request, request_id=request_id)
+
+    async def _generate(self, request: object, *, request_id: str | None = None,
+                        frozen: FrozenExecution | None = None) -> GenerationResult | GenerationResultV2:
         started = self.clock()
+        duration = min(self.settings.request_timeout_seconds, frozen.remaining()) if frozen else self.settings.request_timeout_seconds
         run = RunState(
             request_id=request_id or str(uuid4()), raw_input=request, started_at=started,
-            deadline=started + self.settings.request_timeout_seconds,
-            remaining_seconds=self.settings.request_timeout_seconds,
+            deadline=started + duration,
+            remaining_seconds=duration,
             remaining_tokens=self.limits.max_total_tokens, remaining_cost_usd=self.limits.max_cost_usd,
             versions=(("profiles", self.contracts.profile_version), ("quality", quality_check_version(self.rules, self.contract_version)),
                       ("rubric", self.rules.rubric_version), ("pricing", self.pricing.version),
@@ -405,21 +499,33 @@ class StoryEngine:
                       ("planner_prompt", self.contracts.planner_prompt_version),
                       ("writer_prompt", self.contracts.writer_prompt_version)),
         )
-        session = Session(run)
+        session = Session(run, frozen)
         try:
             # Explicitly prevent environment-enabled tracing from exporting child data.
             with tracing_context(enabled=False):
-                async with asyncio.timeout(self.settings.request_timeout_seconds):
+                async with asyncio.timeout(duration):
                     output = await self.graph.ainvoke({"run": run}, context=session,
                                                      config={"recursion_limit": 16, "callbacks": []})
             run = output["run"]
         except asyncio.CancelledError:
+            if frozen is not None: raise frozen.stop("CANCELLED", session.current) from None
             run = self._fail(session.current, "CANCELLED")
         except TimeoutError:
+            if frozen is not None: raise frozen.stop("OUTCOME_UNCERTAIN", session.current) from None
             run = self._fail(session.current, "DEADLINE_EXCEEDED")
+        except ExecutionBoundaryStopped as exc:
+            # LangGraph annotates task exceptions. Keep boundary serialization fixed/text-free.
+            raise ExecutionBoundaryStopped(exc.reason, exc.operation_id, exc.request_id,
+                exc.attempt_id, exc.safe_usage) from None
         except Exception:
+            if frozen is not None and frozen.current_attempt is not None and session.current.attempts_used > frozen.acknowledged_slots:
+                raise frozen.stop("OUTCOME_UNCERTAIN", session.current) from None
             run = self._fail(session.current, "CONFIGURATION_ERROR")
         run = self._refresh(run)
+        if frozen is not None:
+            frozen.check_cancelled(run)
+            if self.freeze_manifest() != frozen.manifest:
+                run = self._fail(run, "CONFIGURATION_ERROR")
         if run.remaining_seconds <= 0 and (run.error is None or run.error.code != "CANCELLED"):
             run = self._fail(run, "DEADLINE_EXCEEDED")
         total = max(0.0, self.clock() - run.started_at + run.simulated_seconds)

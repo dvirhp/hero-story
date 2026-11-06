@@ -10,6 +10,7 @@ from storyforge.domain.generation import GenerationError, QualityReport, TokenUs
 from storyforge.llm.protocol import LLMRequest, OutputT, ProviderFailure, ProviderSuccess
 from storyforge.quality.gate import inspect_output_safety
 from storyforge.quality.rules import DEFAULT_RULES, QualityRules
+from storyforge.validation.output_diagnostics import validation_diagnostic
 
 
 class FakeStep(Contract):
@@ -64,8 +65,8 @@ class FakeProvider:
                                       check_version=self._rules.version, rubric_version=self._rules.rubric_version))
         try:
             payload = output_schema.model_validate_json(step.response_json, strict=True)
-        except ValidationError:
+        except ValidationError as exc:
             return ProviderFailure(**common, error=GenerationError(
                 code="PROVIDER_OUTPUT_INVALID", stage=request.stage, retryable=True,
-                message="Provider output did not match schema"))
+                message="Provider output did not match schema"), provider_diagnostic=validation_diagnostic(exc))
         return ProviderSuccess[output_schema](**common, payload=payload)

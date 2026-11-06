@@ -1,5 +1,10 @@
 # Bounded LangGraph execution (Milestone 3)
 
+> Synchronous frozen-input backend integration: see
+> [SYNCHRONOUS_EXECUTION_HANDOFF.md](SYNCHRONOUS_EXECUTION_HANDOFF.md) for the opt-in
+> generate_frozen entrypoint, two mandatory durable backend hooks and typed uncertain outcomes.
+> No worker/queue/lease, public endpoint or paid evaluation is added by this interface.
+
 > Approved whole-book follow-up (2026-11-06): transient retries now use bounded
 > jitter/backoff and provider delay through the same ledger; transport failures
 > do not request schema recovery. See [current recovery policy](WHOLE_BOOK_RELIABILITY.md).

@@ -1,0 +1,336 @@
+{
+  "provenance": "Synthetic FakeProvider only; no live output or private evaluation artifacts",
+  "manifest": {
+    "schema_version": "sync-engine-manifest-v1",
+    "engine_build": "sync-engine-v1",
+    "contract_version": "2",
+    "normalization_version": "normalize-v2-frozen-v1",
+    "profile_version": "development-v2-1",
+    "planner_prompt_version": "planner-v2-1",
+    "writer_prompt_version": "writer-v2-3",
+    "plan_schema_digest": "e612fb03e1c2584fedcd50b27ba22f324e31830030f76bc4f1375ac3f4356a94",
+    "story_schema_digest": "2311d4ab75bcaecf7307f2a1851bcd247136b2c1ad303f75f063244b96d4a37f",
+    "token_bound_algorithm": "fake-utf8-bytes-v1",
+    "settings": {
+      "provider": "fake",
+      "model": "scripted-v1",
+      "planner_model": null,
+      "writer_model": null,
+      "max_attempts": 3,
+      "max_quality_rewrites": 1,
+      "planner_output_tokens": 5000,
+      "writer_output_tokens": 20000,
+      "max_input_tokens": 64000,
+      "attempt_timeout_seconds": 30.0,
+      "request_timeout_seconds": 90.0,
+      "retry": {
+        "version": "retry-v1",
+        "base_seconds": 1.0,
+        "maximum_seconds": 8.0,
+        "minimum_call_seconds": 1.0
+      }
+    },
+    "limits": {
+      "version": "budget-v1",
+      "max_total_tokens": 260000,
+      "max_cost_usd": 0.0,
+      "token_bound_version": "fake-utf8-bytes-v1",
+      "schema_overhead_tokens": 256
+    },
+    "rules": {
+      "version": "quality-v2",
+      "rubric_version": "language-v1",
+      "scripts": [
+        {
+          "language": "en",
+          "minimum_target_ratio": 0.8,
+          "minimum_letters": 20
+        },
+        {
+          "language": "he",
+          "minimum_target_ratio": 0.8,
+          "minimum_letters": 20
+        }
+      ],
+      "prohibited_directives": [
+        "drink bleach now",
+        "you should drink bleach",
+        "mix bleach and ammonia",
+        "שתה אקונומיקה עכשיו",
+        "עליך לשתות אקונומיקה",
+        "ערבב אקונומיקה ואמוניה"
+      ]
+    },
+    "page_policy": {
+      "version": "page-policy-v2-2",
+      "minimum_pages": 1,
+      "maximum_pages": 32,
+      "planner_base_tokens": 256,
+      "planner_tokens_per_page": 112,
+      "planner_thinking_allowance_tokens": 256,
+      "writer_base_tokens": 256,
+      "writer_json_tokens_per_page": 64,
+      "thinking_allowance_tokens": 1024,
+      "output_headroom_ratio": 1.25,
+      "language_estimates": [
+        {
+          "language": "en",
+          "tokens_per_word": 2.0
+        },
+        {
+          "language": "he",
+          "tokens_per_word": 4.0
+        }
+      ]
+    },
+    "planner_pricing": {
+      "provider": "fake",
+      "model": "scripted-v1",
+      "version": "fake-zero-v1",
+      "input_usd_per_million": 0.0,
+      "output_usd_per_million": 0.0
+    },
+    "writer_pricing": {
+      "provider": "fake",
+      "model": "scripted-v1",
+      "version": "fake-zero-v1",
+      "input_usd_per_million": 0.0,
+      "output_usd_per_million": 0.0
+    },
+    "planner_capabilities": null,
+    "writer_capabilities": null
+  },
+  "manifest_digest": "cdd83148df570a7a4734eb69e84d0cfab08b90bf5c7eee293145e57146ecb6ff",
+  "accepted": {
+    "request_id": "issued-request",
+    "usage": {
+      "attempts": [
+        {
+          "stage": "planner",
+          "attempt_number": 1,
+          "provider": "fake",
+          "model": "scripted-v1",
+          "prompt_version": "planner-v2-1",
+          "latency_seconds": 0.0,
+          "usage": {
+            "source": "unknown",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_output_tokens": null
+          },
+          "estimated_cost_usd": null,
+          "reserved_cost_usd": 0.0,
+          "pricing_version": "fake-zero-v1",
+          "outcome": "success",
+          "error": null,
+          "provider_diagnostic": null
+        },
+        {
+          "stage": "writer",
+          "attempt_number": 2,
+          "provider": "fake",
+          "model": "scripted-v1",
+          "prompt_version": "writer-v2-3",
+          "latency_seconds": 0.0,
+          "usage": {
+            "source": "unknown",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_output_tokens": null
+          },
+          "estimated_cost_usd": null,
+          "reserved_cost_usd": 0.0,
+          "pricing_version": "fake-zero-v1",
+          "outcome": "success",
+          "error": null,
+          "provider_diagnostic": null
+        }
+      ],
+      "known_estimated_cost_usd": 0.0,
+      "upper_estimated_cost_usd": 0.0,
+      "has_unknown_usage": true,
+      "has_unknown_cost": true
+    },
+    "total_latency_seconds": 0.0,
+    "status": "success",
+    "story": {
+      "schema_version": "2",
+      "title": "Night",
+      "language": "en",
+      "direction": "ltr",
+      "profile_id": "newborn",
+      "profile_version": "development-v2-1",
+      "pages": [
+        {
+          "page_id": "p1",
+          "page_number": 1,
+          "target_id": null,
+          "sentence_units": [
+            "Or, light gentle night soft."
+          ]
+        },
+        {
+          "page_id": "p2",
+          "page_number": 2,
+          "target_id": null,
+          "sentence_units": [
+            "Or, light gentle night soft."
+          ]
+        }
+      ],
+      "page_count": 2
+    },
+    "quality": {
+      "passed": true,
+      "issues": [
+        {
+          "code": "FORMULAIC_PAGE_REPETITION",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review repeated whole pages against age-appropriate refrain and narrative-variety guidance."
+        },
+        {
+          "code": "NARRATIVE_COVERAGE_REVIEW",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review active agency, meaningful progression, sentence grammar and educational accuracy; target metadata alone cannot prove them."
+        },
+        {
+          "code": "VOCABULARY_FORM_COUNT",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Body excluding the supplied name contains 4 distinct word forms across 8 tokens; this does not measure reading difficulty."
+        },
+        {
+          "code": "REPETITION_OBSERVED",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Repeated tokens were observed; compare with the profile's refrain guidance. Intentional repetition is allowed."
+        },
+        {
+          "code": "VOCABULARY_NARRATIVE_REVIEW",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review vocabulary and narrative against the captured profile guidance; word counts cannot establish their suitability."
+        },
+        {
+          "code": "READ_ALOUD_REVIEW",
+          "severity": "advisory",
+          "page_number": null,
+          "guidance": "Review aloud for rhythm and reassuring sensory flow; a conflict or traditional plot is not required by sensory profiles."
+        }
+      ],
+      "check_version": "quality-v2+book-v2-1",
+      "rubric_version": "language-v1"
+    },
+    "resolved_constraints": {
+      "page_count": 2,
+      "words_per_page": {
+        "minimum": 5,
+        "maximum": 15
+      },
+      "total_words": {
+        "minimum": 10,
+        "maximum": 30
+      },
+      "target_ids": [],
+      "sentence_units_per_page": null,
+      "policy_version": "page-policy-v2-2"
+    }
+  },
+  "rejected": {
+    "request_id": "issued-request",
+    "usage": {
+      "attempts": [
+        {
+          "stage": "planner",
+          "attempt_number": 1,
+          "provider": "fake",
+          "model": "scripted-v1",
+          "prompt_version": "planner-v2-1",
+          "latency_seconds": 0.0,
+          "usage": {
+            "source": "unknown",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_output_tokens": null
+          },
+          "estimated_cost_usd": null,
+          "reserved_cost_usd": 0.0,
+          "pricing_version": "fake-zero-v1",
+          "outcome": "failure",
+          "error": {
+            "code": "PROVIDER_REFUSED",
+            "stage": "planner",
+            "retryable": false,
+            "message": "Provider declined this request"
+          },
+          "provider_diagnostic": {
+            "category": "refused",
+            "upstream_http_status": null
+          }
+        }
+      ],
+      "known_estimated_cost_usd": 0.0,
+      "upper_estimated_cost_usd": 0.0,
+      "has_unknown_usage": true,
+      "has_unknown_cost": true
+    },
+    "total_latency_seconds": 0.0,
+    "status": "failure",
+    "error": {
+      "code": "PROVIDER_REFUSED",
+      "stage": "planner",
+      "retryable": false,
+      "message": "Provider declined this request"
+    },
+    "quality": null,
+    "stop_reason": "provider_failure"
+  },
+  "uncertain": {
+    "reason": "OUTCOME_UNCERTAIN",
+    "operation_id": "11111111-1111-4111-8111-111111111111",
+    "request_id": "issued-request",
+    "attempt_id": "727992b1-4279-5312-9e61-36b416ba9002",
+    "safe_usage": {
+      "attempts": [
+        {
+          "stage": "planner",
+          "attempt_number": 1,
+          "provider": "fake",
+          "model": "scripted-v1",
+          "prompt_version": "planner-v2-1",
+          "latency_seconds": 0.0,
+          "usage": {
+            "source": "unknown",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_output_tokens": null
+          },
+          "estimated_cost_usd": null,
+          "reserved_cost_usd": 0.0,
+          "pricing_version": "fake-zero-v1",
+          "outcome": "failure",
+          "error": {
+            "code": "DEADLINE_EXCEEDED",
+            "stage": "planner",
+            "retryable": true,
+            "message": "Execution deadline exceeded"
+          },
+          "provider_diagnostic": {
+            "category": "timeout",
+            "upstream_http_status": null
+          }
+        }
+      ],
+      "known_estimated_cost_usd": 0.0,
+      "upper_estimated_cost_usd": 0.0,
+      "has_unknown_usage": true,
+      "has_unknown_cost": true
+    }
+  }
+}

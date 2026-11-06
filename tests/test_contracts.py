@@ -162,14 +162,17 @@ def test_unknown_usage_preserves_reservation():
 
 def test_total_words_can_be_tighter_than_page_ranges(profiles, make_brief, make_story):
     from storyforge.development.models import DevelopmentConfig
+    from storyforge.domain.output_validation import OutputContractError
 
     data = profiles.model_dump(mode="json")
     data["bands"][0]["languages"][0]["hard"]["total_words"] = {"minimum": 30, "maximum": 50}
     config = DevelopmentConfig.model_validate_json(json.dumps(data))
     brief = make_brief(config=config)
     # Five words/page fits per-page limits but 20 total violates this configuration.
-    with pytest.raises(ValueError, match="total word count"):
+    with pytest.raises(OutputContractError) as failure:
         make_story(brief, 5).validate_for(brief)
+    assert failure.value.issue.code == "total_word_count"
+    assert failure.value.issue.observed_count == 20
     assert make_story(brief, 10).validate_for(brief)
 
 
