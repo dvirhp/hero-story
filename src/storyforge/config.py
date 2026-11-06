@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from storyforge.domain.base import Contract, Label, PositiveInt
+from storyforge.orchestration.recovery import RetrySettings
 
 
 class AppSettings(Contract):
@@ -23,6 +24,7 @@ class AppSettings(Contract):
     max_input_tokens: PositiveInt = 8000
     attempt_timeout_seconds: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 30.0
     request_timeout_seconds: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 90.0
+    retry: RetrySettings = RetrySettings()
 
     @model_validator(mode="after")
     def valid_limits(self) -> "AppSettings":

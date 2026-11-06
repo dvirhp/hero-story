@@ -11,6 +11,7 @@ from openai import APIConnectionError, APIResponseValidationError, APIStatusErro
 from pydantic import ValidationError
 
 from storyforge.domain.generation import GenerationError, QualityReport, TokenUsage
+from storyforge.domain.diagnostics import ProviderDiagnostic, diagnostic_for_code, diagnostic_for_http
 from storyforge.llm.configuration import ModelCapabilities, OpenAIConfig
 from storyforge.llm.protocol import LLMRequest, OutputT, ProviderFailure, ProviderSuccess
 from storyforge.llm.schema import structured_schema
@@ -74,7 +75,7 @@ class OpenAIProvider:
         started = self._clock()
         usage = TokenUsage(source="unknown")
 
-        def failure(code: str, retryable: bool = False, *, quality=None, retry_after=None) -> ProviderFailure:
+        def failure(code: str, retryable: bool = False, *, quality=None, retry_after=None, diagnostic=None) -> ProviderFailure:
             messages = {
                 "CONFIGURATION_ERROR": "Provider credentials, model or request configuration is invalid",
                 "PROVIDER_UNAVAILABLE": "Provider temporarily unavailable",
@@ -86,6 +87,7 @@ class OpenAIProvider:
             return ProviderFailure(provider="openai", model=request.model, usage=usage,
                                    latency_seconds=max(0.0, self._clock() - started), quality=quality,
                                    retry_after_seconds=retry_after,
+                                   provider_diagnostic=diagnostic or diagnostic_for_code(code),
                                    error=GenerationError(code=code, stage=request.stage, retryable=retryable,
                                                          message=messages[code]))
 
@@ -100,6 +102,8 @@ class OpenAIProvider:
                                  "schema": structured_schema(output_schema), "strict": True}},
                 max_output_tokens=request.max_output_tokens,
                 timeout=min(request.remaining_seconds, self._config.timeout_seconds),
+                **({"reasoning": {"effort": capabilities.openai_reasoning_effort}}
+                   if capabilities.openai_reasoning_effort is not None else {}),
                 store=False, background=False, stream=False, tools=[],
             )
             usage = normalize_usage(response.usage)
@@ -131,6 +135,10 @@ class OpenAIProvider:
             if response.error is not None:
                 transient = response.error.code in ("server_error", "rate_limit_exceeded")
                 return failure("PROVIDER_UNAVAILABLE" if transient else "CONFIGURATION_ERROR", transient)
+            if (response.status == "incomplete"
+                    and getattr(response.incomplete_details, "reason", None) == "max_output_tokens"):
+                return failure("PROVIDER_OUTPUT_INVALID", True,
+                               diagnostic=ProviderDiagnostic(category="output_truncated"))
             if response.status != "completed" or not text or unexpected:
                 return failure("PROVIDER_OUTPUT_INVALID", True)
             payload = output_schema.model_validate_json(text, strict=True)
@@ -141,15 +149,18 @@ class OpenAIProvider:
         except APITimeoutError:
             return failure("DEADLINE_EXCEEDED", True)
         except APIConnectionError:
-            return failure("PROVIDER_UNAVAILABLE", True)
+            return failure("PROVIDER_UNAVAILABLE", True, diagnostic=ProviderDiagnostic(category="connection_error"))
         except APIResponseValidationError:
             return failure("PROVIDER_OUTPUT_INVALID", True)
         except APIStatusError as exc:
-            if exc.status_code == 408:
-                return failure("DEADLINE_EXCEEDED", True)
+            diagnostic = diagnostic_for_http(exc.status_code)
+            if exc.status_code in (408, 504):
+                return failure("DEADLINE_EXCEEDED", True, retry_after=_retry_after(exc.response.headers),
+                               diagnostic=diagnostic)
             if exc.status_code in (409, 429) or exc.status_code >= 500:
-                return failure("PROVIDER_UNAVAILABLE", True, retry_after=_retry_after(exc.response.headers))
-            return failure("CONFIGURATION_ERROR")
+                return failure("PROVIDER_UNAVAILABLE", True, retry_after=_retry_after(exc.response.headers),
+                               diagnostic=diagnostic)
+            return failure("CONFIGURATION_ERROR", diagnostic=diagnostic)
         except (ValidationError, ValueError, AttributeError, TypeError):
             return failure("PROVIDER_OUTPUT_INVALID", True)
         except Exception:

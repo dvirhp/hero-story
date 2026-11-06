@@ -121,13 +121,17 @@ def test_invalid_v2_development_configuration(defect):
         DevelopmentProfilesV2.model_validate_json(json.dumps(raw))
 
 
-@pytest.mark.parametrize("defect", ["missing_language", "duplicate_language", "zero_ratio", "negative_allowance"])
+@pytest.mark.parametrize("defect", ["missing_language", "duplicate_language", "zero_ratio", "negative_allowance",
+                                  "negative_planner_allowance", "shrinking_headroom", "nonfinite_headroom"])
 def test_invalid_sizing_configuration(defect):
     raw = PagePolicy().model_dump(mode="json")
     if defect == "missing_language": raw["language_estimates"].pop()
     elif defect == "duplicate_language": raw["language_estimates"][1] = raw["language_estimates"][0]
     elif defect == "zero_ratio": raw["language_estimates"][0]["tokens_per_word"] = 0.0
-    else: raw["thinking_allowance_tokens"] = -1
+    elif defect == "negative_allowance": raw["thinking_allowance_tokens"] = -1
+    elif defect == "negative_planner_allowance": raw["planner_thinking_allowance_tokens"] = -1
+    elif defect == "shrinking_headroom": raw["output_headroom_ratio"] = 0.5
+    else: raw["output_headroom_ratio"] = float("inf")
     with pytest.raises(ValidationError):
         PagePolicy.model_validate_json(json.dumps(raw))
 

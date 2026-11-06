@@ -3,18 +3,18 @@
     "provider": "gemini",
     "planner_model": "gemini-3.5-flash-lite",
     "writer_model": "gemini-3.5-flash-lite",
-    "planner_output_tokens": 3000,
-    "writer_output_tokens": 6000,
+    "planner_output_tokens": 6144,
+    "writer_output_tokens": 16384,
     "max_input_tokens": 32000,
     "max_attempts": 3,
     "max_quality_rewrites": 1,
     "attempt_timeout_seconds": 45.0,
-    "request_timeout_seconds": 135.0
+    "request_timeout_seconds": 150.0
   },
   "limits": {
-    "version": "alphabet-27-proposal-v1",
-    "max_total_tokens": 111000,
-    "max_cost_usd": 0.075
+    "version": "whole-book-offline-v2",
+    "max_total_tokens": 140000,
+    "max_cost_usd": 0.15
   },
   "planner": {
     "capabilities": {
@@ -24,7 +24,8 @@
       "max_output_tokens": 65536,
       "input_overhead_tokens": 1024,
       "structured_outputs": true,
-      "token_bound_version": "gemini-utf8-upper-v1"
+      "token_bound_version": "gemini-utf8-upper-v1",
+      "gemini_thinking_level": "minimal"
     },
     "pricing": {
       "provider": "gemini",
@@ -45,7 +46,8 @@
       "max_output_tokens": 65536,
       "input_overhead_tokens": 1024,
       "structured_outputs": true,
-      "token_bound_version": "gemini-utf8-upper-v1"
+      "token_bound_version": "gemini-utf8-upper-v1",
+      "gemini_thinking_level": "minimal"
     },
     "pricing": {
       "provider": "gemini",
@@ -59,7 +61,7 @@
     }
   },
   "page_policy": {
-    "version": "page-policy-v2-1",
+    "version": "page-policy-v2-2",
     "minimum_pages": 1,
     "maximum_pages": 32
   }

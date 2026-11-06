@@ -82,6 +82,8 @@ def test_malformed_incomplete_refusal_safety_and_unexpected_parts(run_async, kin
         return httpx.Response(200, json=response)
     result = run_async(exercise(handler))
     assert result.error.code == code and len(seen) == 1  # No automatic continuation/tool call.
+    if kind in ("incomplete", "continuation"):
+        assert result.provider_diagnostic.category == "output_truncated"
     assert "private-diagnostic" not in result.model_dump_json()
     assert result.usage.source == "reported"
 
@@ -104,8 +106,23 @@ def test_status_errors_no_hidden_retries_or_diagnostics(run_async, status, code,
     assert len(seen) == 1 and result.usage.source == "unknown"
     assert "private-diagnostic" not in result.model_dump_json() + caplog.text
     assert "offline-explicit-not-a-real-key" not in caplog.text
-    if status in (409, 429, 500, 503):
+    if status in (408, 409, 429, 500, 503, 504):
         assert result.retry_after_seconds == 1.5
+
+
+def test_explicit_model_thinking_configuration(run_async, profiles):
+    _, steps = output_pair(profiles)
+    caps = capabilities().model_copy(update={"gemini_thinking_level": "minimal"})
+    seen = []
+    def handler(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json=sdk_response(steps[0].response_json))
+    result = run_async(exercise(handler, caps=caps))
+    assert result.status == "success" and len(seen) == 1
+    # The locked SDK serializes this nested config with protobuf field names
+    # and its normalized enum value, unlike surrounding camelCase fields.
+    assert seen[0]["generationConfig"]["thinkingConfig"] == {
+        "thinking_level": "MINIMAL", "include_thoughts": False}
 
 
 @pytest.mark.parametrize("error,code", [(httpx.ReadTimeout, "DEADLINE_EXCEEDED"), (httpx.ConnectError, "PROVIDER_UNAVAILABLE")])

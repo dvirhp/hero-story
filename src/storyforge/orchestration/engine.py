@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import random
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -29,6 +30,7 @@ from storyforge.llm.protocol import LLMProvider, LLMRequest, ProviderFailure
 from storyforge.llm.configuration import ModelCapabilities
 from storyforge.orchestration.budget import BudgetLimits, FakePricing, ModelPricing, reservation_policy
 from storyforge.orchestration.state import GraphState, RunState
+from storyforge.orchestration.recovery import consecutive_transient_failures, needs_schema_recovery
 from storyforge.orchestration.contracts import execution_contracts
 from storyforge.validation.page_policy import PagePolicy
 from storyforge.quality.gate import assess_story, inspect_output_safety, quality_check_version
@@ -68,6 +70,7 @@ class StoryEngine:
         writer_capabilities: ModelCapabilities | None = None,
         writer_pricing: ModelPricing | None = None,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        random_value: Callable[[], float] = random.random,
         contract_version: Literal["1", "2"] = "1",
         profiles_v2: DevelopmentProfilesV2 | None = None,
         page_policy: PagePolicy = PagePolicy(),
@@ -76,6 +79,7 @@ class StoryEngine:
         self.provider, self.profiles = provider, profiles
         self.settings, self.limits, self.pricing, self.rules, self.clock = settings, limits, pricing, rules, clock
         self.capabilities, self.sleep = capabilities, sleep
+        self.random_value = random_value
         self.contracts = execution_contracts(contract_version, profiles, settings, rules, page_policy, profiles_v2)
         self.input_bound = reservation_policy(settings.provider)
         if getattr(provider, "provider_name", settings.provider) != settings.provider:
@@ -92,6 +96,9 @@ class StoryEngine:
                     raise ValueError("Real execution requires matching stage capabilities, pricing and positive cost ceiling")
                 if settings.max_input_tokens + output > cap.context_tokens or output > cap.max_output_tokens:
                     raise ValueError("Configured token limits exceed declared model capacity")
+                if ((settings.provider != "gemini" and cap.gemini_thinking_level is not None)
+                        or (settings.provider != "openai" and cap.openai_reasoning_effort is not None)):
+                    raise ValueError("Thinking configuration must match the selected provider")
         graph = StateGraph(GraphState, context_schema=Session)
         for name, node in (("input_validation", self._validate), ("story_planner", self._planner),
                            ("story_writer", self._writer), ("quality_gate", self._quality)):
@@ -171,11 +178,6 @@ class StoryEngine:
         self, run: RunState, request: LLMRequest, schema: type[Contract], session: Session,
     ) -> tuple[RunState, Contract | None]:
         run = self._refresh(run)
-        if run.retry_after_seconds:
-            if run.retry_after_seconds >= run.remaining_seconds:
-                return self._fail(run, "DEADLINE_EXCEEDED"), None
-            await self.sleep(run.retry_after_seconds)
-            run = self._refresh(run.updated(retry_after_seconds=0.0))
         if run.remaining_seconds <= 0:
             return self._fail(run, "DEADLINE_EXCEEDED"), None
         capabilities = self._stage_capabilities(request.stage)
@@ -197,6 +199,24 @@ class StoryEngine:
             return self._fail(run, "BUDGET_EXCEEDED", stop_reason="token_budget_exhausted"), None
         if reserve_cost + future_cost > run.remaining_cost_usd:
             return self._fail(run, "BUDGET_EXCEEDED", stop_reason="cost_budget_exhausted"), None
+        failures = consecutive_transient_failures(run.attempts) if run.error else 0
+        if failures:
+            delay = self.settings.retry.delay(failures, self.random_value(), run.retry_after_seconds)
+            useful_time = required_slots * min(self.settings.attempt_timeout_seconds,
+                                               self.settings.retry.minimum_call_seconds)
+            if delay + useful_time >= run.remaining_seconds:
+                return self._fail(run, "DEADLINE_EXCEEDED"), None
+            # Waiting consumes deadline, not an invocation or a new reservation.
+            # Preserve the completed ledger if cancelled during backoff.
+            session.current = run
+            started_wait = self.clock()
+            await self.sleep(delay)
+            simulated_wait = max(0.0, delay - max(0.0, self.clock() - started_wait))
+            run = self._refresh(run.updated(retry_after_seconds=0.0,
+                                           simulated_seconds=run.simulated_seconds + simulated_wait))
+            session.current = run
+            if run.remaining_seconds <= useful_time:
+                return self._fail(run, "DEADLINE_EXCEEDED"), None
         duration_limit = min(self.settings.attempt_timeout_seconds, run.remaining_seconds)
         request = LLMRequest.model_validate({**request.model_dump(), "remaining_seconds": duration_limit})
         reserved = AttemptRecord(
@@ -310,7 +330,7 @@ class StoryEngine:
     async def _planner(self, state: GraphState, runtime: Runtime[Session]) -> GraphState:
         run = self._refresh(state["run"].updated(stage="planner"))
         request = self.contracts.build_prompt("planner", run.brief, self.settings.model_for("planner"), self._output_limit(run, "planner"),
-                                max(0.000001, run.remaining_seconds), schema_recovery=run.error is not None)
+                                max(0.000001, run.remaining_seconds), schema_recovery=self._schema_recovery(run))
         run, plan = await self._attempt(run, request, self.contracts.plan_schema, runtime.context)
         run = run.updated(plan=plan, error=None) if plan is not None else self._settle_failure(run)
         return self._publish(run, runtime.context)
@@ -322,7 +342,7 @@ class StoryEngine:
                                     max(0.000001, run.remaining_seconds), plan=run.plan,
                                     draft=run.draft if run.rewrite_count else None,
                                     quality=run.quality if run.rewrite_count else None,
-                                    schema_recovery=run.error is not None)
+                                    schema_recovery=self._schema_recovery(run))
         except ValidationError:
             return self._publish(self._fail(run, "BUDGET_EXCEEDED"), runtime.context)
         run, draft = await self._attempt(run, request, self.contracts.story_schema, runtime.context)
@@ -344,6 +364,10 @@ class StoryEngine:
         else:
             run = run.updated(rewrite_count=run.rewrite_count + 1, error=None)
         return self._publish(self._refresh(run), runtime.context)
+
+    @staticmethod
+    def _schema_recovery(run: RunState) -> bool:
+        return bool(run.error and run.attempts and needs_schema_recovery(run.attempts[-1]))
 
     @staticmethod
     def _after_validation(state: GraphState) -> Literal["plan", "end"]:
@@ -377,7 +401,7 @@ class StoryEngine:
                       ("writer_capabilities", self.writer_capabilities.version if self.writer_capabilities else "fake-v1"),
                       ("token_bound", self.capabilities.token_bound_version if self.capabilities else self.limits.token_bound_version),
                       ("model_capabilities", self.capabilities.version if self.capabilities else "fake-v1"),
-                      ("settings_schema", "settings-v1"),
+                      ("settings_schema", "settings-v2"), ("retry", self.settings.retry.version),
                       ("planner_prompt", self.contracts.planner_prompt_version),
                       ("writer_prompt", self.contracts.writer_prompt_version)),
         )

@@ -1,5 +1,10 @@
 # AI generation reliability design
 
+> Superseded implementation direction: the user approved whole-book hardening
+> only. Chunking, checkpointing and new orchestration are excluded. See
+> [implemented scope and current calibration](WHOLE_BOOK_RELIABILITY.md). Chunk/job
+> proposals below remain historical, unimplemented and unapproved.
+
 Status: **design for review; nothing below authorizes implementation or live calls**.
 Owner: Agent 1, AI generation engine. Reviewed against the repository on
 2026-11-05, based on `ec33b93` and `7105be9`. Existing model settings, budgets,

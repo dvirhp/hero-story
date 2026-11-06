@@ -35,3 +35,6 @@ class ModelCapabilities(Contract):
     input_overhead_tokens: PositiveInt
     structured_outputs: Literal[True]
     token_bound_version: Label = "openai-utf8-upper-v1"
+    # Explicit server-reviewed model settings; None preserves older runtimes.
+    gemini_thinking_level: Literal["minimal", "low", "medium", "high"] | None = None
+    openai_reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] | None = None

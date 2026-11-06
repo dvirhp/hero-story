@@ -347,10 +347,13 @@ def test_per_attempt_timeout_recovers_when_overall_time_remains(profiles, scenar
     request, plan, story = scenario()
     provider = FakeProvider((FakeStep(response_json=plan, latency_seconds=31.0),
                              FakeStep(response_json=plan), FakeStep(response_json=story)))
-    result = run_async(StoryEngine(provider, profiles, clock=lambda: 0.0).generate(request))
+    async def sleep(delay):
+        assert delay == 0.5
+    result = run_async(StoryEngine(provider, profiles, clock=lambda: 0.0,
+                                  sleep=sleep, random_value=lambda: 0.0).generate(request))
     assert result.status == "success"
     assert len(provider.calls) == 3
-    assert result.total_latency_seconds == 30.0
+    assert result.total_latency_seconds == 30.5
     assert result.usage.attempts[0].error.code == "DEADLINE_EXCEEDED"
 
 

@@ -1,5 +1,10 @@
 # Bounded LangGraph execution (Milestone 3)
 
+> Approved whole-book follow-up (2026-11-06): transient retries now use bounded
+> jitter/backoff and provider delay through the same ledger; transport failures
+> do not request schema recovery. See [current recovery policy](WHOLE_BOOK_RELIABILITY.md).
+> The historical immediate-retry description below is superseded.
+
 > Approved page-count update: new work uses [explicit-length v2](PAGE_COUNT_V2.md). The user supplies page_count; age controls developmental guidance and page density. Deprecated v1 keeps its original behavior. Historical milestone sections below describe v1 unless labeled v2. No live calls were made in this follow-up; Milestone 7 remains unapproved.
 
 

@@ -1,5 +1,11 @@
 # Current long-book capacity and reliability
 
+> Historical assessment at commit `86da2f2`. The approved 2026-11-06 whole-book
+> implementation changes allocations, retry scheduling and the isolated runtime;
+> see [current behavior and evaluation plan](WHOLE_BOOK_RELIABILITY.md). The tables
+> below describe the former configuration, not current capacity. No new live
+> generation evidence is claimed.
+
 Status: **offline assessment and controlled-evaluation proposal only**. No live
 provider call or runtime configuration change. Complements
 [reliability design](AI_GENERATION_RELIABILITY_DESIGN.md) and

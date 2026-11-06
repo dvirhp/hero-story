@@ -153,6 +153,9 @@ class GeminiProvider:
                         system_instruction=request.instructions, response_mime_type="application/json",
                         response_json_schema=gemini_schema(output_schema),
                         max_output_tokens=request.max_output_tokens,
+                        thinking_config=(types.ThinkingConfig(thinking_level=cap.gemini_thinking_level,
+                                                              include_thoughts=False)
+                                         if cap.gemini_thinking_level is not None else None),
                         tools=[], automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
                         automatic_continuation=False, store=False,
                         http_options=types.HttpOptions(timeout=max(1, math.ceil(timeout * 1000)),
@@ -188,6 +191,9 @@ class GeminiProvider:
                     or any(c.finish_reason in refusals for c in candidates)
                     or any(rating.blocked for c in candidates for rating in c.safety_ratings or [])):
                 return failure("PROVIDER_REFUSED")
+            if len(candidates) == 1 and candidates[0].finish_reason in ("MAX_TOKENS", "CONTINUATION"):
+                return failure("PROVIDER_OUTPUT_INVALID", True,
+                               diagnostic=ProviderDiagnostic(category="output_truncated"))
             if len(candidates) != 1 or candidates[0].finish_reason != "STOP" or not text or unexpected:
                 return failure("PROVIDER_OUTPUT_INVALID", True)
             payload = output_schema.model_validate_json(text, strict=True)
@@ -203,7 +209,7 @@ class GeminiProvider:
             status = getattr(exc.response, "status_code", None)
             diagnostic = diagnostic_for_http(status if type(status) is int else exc.code)
             if exc.code in (408, 504):
-                return failure("DEADLINE_EXCEEDED", True, diagnostic=diagnostic)
+                return failure("DEADLINE_EXCEEDED", True, retry_after=_retry_after(exc), diagnostic=diagnostic)
             if exc.code in (409, 429) or (isinstance(exc.code, int) and exc.code >= 500):
                 return failure("PROVIDER_UNAVAILABLE", True, retry_after=_retry_after(exc), diagnostic=diagnostic)
             return failure("CONFIGURATION_ERROR", diagnostic=diagnostic)

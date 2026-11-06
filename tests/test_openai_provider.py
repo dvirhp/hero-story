@@ -145,3 +145,24 @@ def test_sdk_cancellation_propagates(run_async, capabilities):
         raise asyncio.CancelledError()
     with pytest.raises(asyncio.CancelledError):
         run_async(exercise(handler, capabilities))
+
+
+def test_truncation_has_distinct_diagnostic_even_with_valid_json(run_async, capabilities):
+    def handler(request):
+        response = sdk_response("{}", status="incomplete")
+        response["incomplete_details"] = {"reason": "max_output_tokens"}
+        return httpx.Response(200, json=response)
+    result = run_async(exercise(handler, capabilities))
+    assert result.error.code == "PROVIDER_OUTPUT_INVALID" and result.error.retryable
+    assert result.provider_diagnostic.category == "output_truncated"
+
+
+def test_explicit_model_reasoning_configuration(run_async, capabilities, output_pair):
+    _, steps = output_pair()
+    seen = []
+    def handler(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json=sdk_response(steps[0].response_json))
+    caps = capabilities.model_copy(update={"openai_reasoning_effort": "low"})
+    result = run_async(exercise(handler, caps))
+    assert result.status == "success" and seen[0]["reasoning"] == {"effort": "low"}

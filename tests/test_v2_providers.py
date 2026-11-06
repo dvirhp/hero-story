@@ -33,8 +33,8 @@ def roy_preflight():
 def test_roy_configuration_and_worst_case_recovery_budget():
     runtime, _, brief = roy_preflight()
     allocation, settings = brief.execution, runtime.settings
-    assert allocation.planner_output_tokens == 2792
-    assert allocation.writer_output_tokens == 4128
+    assert allocation.planner_output_tokens == 3536
+    assert allocation.writer_output_tokens == 6744
     assert settings.max_attempts == 3 and settings.max_quality_rewrites == 1
     planner, writer = fixture_steps_v2(brief)
     plan = StoryPlanV2.model_validate_json(planner.response_json)
@@ -51,7 +51,7 @@ def test_roy_configuration_and_worst_case_recovery_budget():
     assert 3 * settings.max_input_tokens + outputs <= runtime.limits.max_total_tokens
     ceiling = runtime.planner.pricing.reservation_cost(settings.max_input_tokens, allocation.planner_output_tokens)
     ceiling += 2 * runtime.writer.pricing.reservation_cost(settings.max_input_tokens, allocation.writer_output_tokens)
-    assert ceiling == pytest.approx(0.05642) and ceiling <= runtime.limits.max_cost_usd
+    assert ceiling == pytest.approx(0.07136) and ceiling <= runtime.limits.max_cost_usd
 
 
 @pytest.mark.parametrize("provider_name", ["gemini", "openai"])
@@ -73,6 +73,8 @@ def test_roy_v2_through_real_adapter_mocked_transport(run_async, profiles, provi
         for stage in ("planner", "writer"):
             caps.append(runtime.planner.capabilities.model_copy(update={
                 "model": f"offline-{stage}",
+                "gemini_thinking_level": "minimal" if provider_name == "gemini" else None,
+                "openai_reasoning_effort": "low" if provider_name == "openai" else None,
                 "token_bound_version": "gemini-utf8-upper-v1" if provider_name == "gemini" else "openai-utf8-upper-v1"}))
             prices.append(runtime.planner.pricing.model_copy(update={"model": f"offline-{stage}", "provider": provider_name}))
         settings = runtime.settings.model_copy(update={"provider": provider_name, "planner_model": "offline-planner", "writer_model": "offline-writer"})

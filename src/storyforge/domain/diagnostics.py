@@ -10,7 +10,7 @@ FailureCategory = Literal[
     "invalid_request", "authentication", "permission_denied", "not_found", "conflict",
     "rate_or_quota_limit", "server_error", "connection_error", "dns_error", "tls_error",
     "transport_error", "timeout", "configuration_error", "invalid_output", "refused",
-    "policy_rejected", "cancelled", "unknown",
+    "policy_rejected", "cancelled", "unknown", "output_truncated",
 ]
 
 

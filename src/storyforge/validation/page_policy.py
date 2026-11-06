@@ -16,14 +16,16 @@ class LanguageTokenEstimate(Contract):
 
 
 class PagePolicy(Contract):
-    version: Label = "page-policy-v2-1"
+    version: Label = "page-policy-v2-2"
     minimum_pages: PositiveInt = 1
     maximum_pages: PositiveInt = 32
-    planner_base_tokens: PositiveInt = 200
-    planner_tokens_per_page: PositiveInt = 96
-    writer_base_tokens: PositiveInt = 200
-    writer_json_tokens_per_page: PositiveInt = 40
-    thinking_allowance_tokens: Annotated[int, Field(ge=0)] = 256
+    planner_base_tokens: PositiveInt = 256
+    planner_tokens_per_page: PositiveInt = 112
+    planner_thinking_allowance_tokens: Annotated[int, Field(ge=0)] = 256
+    writer_base_tokens: PositiveInt = 256
+    writer_json_tokens_per_page: PositiveInt = 64
+    thinking_allowance_tokens: Annotated[int, Field(ge=0)] = 1024
+    output_headroom_ratio: Annotated[float, Field(ge=1, allow_inf_nan=False)] = 1.25
     language_estimates: tuple[LanguageTokenEstimate, ...] = (
         LanguageTokenEstimate(language="en", tokens_per_word=2.0),
         LanguageTokenEstimate(language="he", tokens_per_word=4.0),
@@ -42,9 +44,13 @@ class PagePolicy(Contract):
         if not self.minimum_pages <= pages <= self.maximum_pages:
             raise ValueError("Requested page count outside configured service range")
         ratio = next(item.tokens_per_word for item in self.language_estimates if item.language == language)
-        planner = self.planner_base_tokens + pages * self.planner_tokens_per_page
-        writer = (self.writer_base_tokens + self.thinking_allowance_tokens
-                  + pages * (self.writer_json_tokens_per_page + math.ceil(max_words_per_page * ratio)))
+        planner = (self.planner_base_tokens + pages * self.planner_tokens_per_page
+                   + self.planner_thinking_allowance_tokens)
+        # Visible JSON (including page metadata) gets headroom independently of
+        # thinking. These are versioned offline estimates, not tokenizer claims.
+        visible = self.writer_base_tokens + pages * (
+            self.writer_json_tokens_per_page + math.ceil(max_words_per_page * ratio))
+        writer = math.ceil(visible * self.output_headroom_ratio) + self.thinking_allowance_tokens
         # Never clamp and pretend the requested book still has sufficient space.
         if planner > settings.planner_output_tokens or writer > settings.writer_output_tokens:
             raise OverflowError("Book estimate exceeds configured stage output ceilings")

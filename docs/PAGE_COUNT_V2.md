@@ -1,5 +1,9 @@
 # Explicit page count: implemented v2 contract
 
+> Current sizing is `page-policy-v2-2`; the original sizing formula below is
+> historical. See [whole-book allocations, thinking and budgets](WHOLE_BOOK_RELIABILITY.md).
+> Page counts, density, validation and acceptance criteria remain unchanged.
+
 This approved Milestone 6 follow-up adds user-controlled book length. It does not
 start Milestone 7 or authorize a live request. The original newborn smoke request
 and its runtime file are unchanged. The user reports that earlier live test
