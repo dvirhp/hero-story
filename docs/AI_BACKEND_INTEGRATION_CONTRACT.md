@@ -7,8 +7,8 @@ No implementation, shared DTO, database migration or runtime change is authorize
 ## Sources and reconciliation
 
 This reconciles [the engine reliability design](AI_GENERATION_RELIABILITY_DESIGN.md)
-at `19d63f7` with Agent 3's **latest committed** Phase A revision in
-`C:/Users/dvir3/storyforge-persistence`, branch
+at `19d63f7` with Agent 3's **latest committed** Phase A revision in the
+persistence worktree, branch
 `feature/storyforge-persistence-foundation`, HEAD `7e38326`:
 `docs/ARCHITECTURE.md`, `docs/API_CONTRACTS.md`, `docs/DATABASE_SCHEMA.md` and
 `docs/PERSISTENCE_HANDOFF.md`. Agent 3 committed this revision during review;

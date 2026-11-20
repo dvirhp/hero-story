@@ -3,7 +3,7 @@
 Status: **assessment/proposal only**, except the separately approved D-01 Fake
 fixture fix. No new semantic gate, educational pack, LLM judge, prompt rewrite or
 paid evaluation is implemented. Evidence: Agent 4 QA commit `51d5f43`, inspected
-read-only at `C:/Users/dvir3/storyforge-qa/docs/AI_ENGINE_QA_REPORT.md` and its
+read-only in the QA branch at `docs/AI_ENGINE_QA_REPORT.md` and its
 `tests/test_qa_engine_diagnosis.py`. Existing gate policy remains authoritative in
 [VALIDATION_AND_QUALITY.md](VALIDATION_AND_QUALITY.md).
 
