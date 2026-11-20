@@ -46,7 +46,7 @@ py -m venv .tools
 .\.tools\Scripts\uv.exe build
 ```
 
-Default tests use fake providers and block network sockets; no API key is required. To run the local fake-backed API:
+Default tests use fake providers and block network sockets; no API key is required. See [CI checks and local equivalents](docs/CI.md). To run the local fake-backed API:
 
 ```sh
 uv run uvicorn storyforge.api.app:create_app --factory --host 127.0.0.1 --port 8000 --no-access-log
